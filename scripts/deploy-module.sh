@@ -33,6 +33,23 @@ log_step() {
 }
 
 # ===================================
+# Docker Compose 명령어 감지
+# ===================================
+detect_docker_compose() {
+    if command -v docker-compose &> /dev/null; then
+        echo "docker-compose"
+    elif docker compose version &> /dev/null; then
+        echo "docker compose"
+    else
+        log_error "Docker Compose not found. Please install Docker Compose."
+        exit 1
+    fi
+}
+
+DOCKER_COMPOSE=$(detect_docker_compose)
+log_info "Using Docker Compose command: $DOCKER_COMPOSE"
+
+# ===================================
 # 파라미터 검증
 # ===================================
 MODULE_NAME=$1
@@ -81,8 +98,8 @@ check_data_infra() {
     log_step "🔍 Checking data infrastructure..."
     if ! docker ps | grep -q baro-redis; then
         log_warn "Data infrastructure not running. Starting data infrastructure first..."
-        docker-compose -f docker-compose.data.yml pull
-        docker-compose -f docker-compose.data.yml up -d
+        $DOCKER_COMPOSE -f docker-compose.data.yml pull
+        $DOCKER_COMPOSE -f docker-compose.data.yml up -d
         log_info "Waiting for data infrastructure to be ready (20 seconds)..."
         sleep 20
     else
@@ -94,8 +111,8 @@ check_cloud_infra() {
     log_step "🔍 Checking Spring Cloud infrastructure..."
     if ! docker ps | grep -q baro-eureka; then
         log_warn "Spring Cloud infrastructure not running. Starting cloud infrastructure first..."
-        docker-compose -f docker-compose.cloud.yml pull
-        docker-compose -f docker-compose.cloud.yml up -d
+        $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
+        $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
         log_info "Waiting for Spring Cloud to be ready (30 seconds)..."
         sleep 30
     else
@@ -119,16 +136,16 @@ deploy_module() {
     CURRENT_IMAGE=$(docker inspect "baro-${module}" --format='{{.Config.Image}}' 2>/dev/null || echo "none")
     
     log_step "📥 Pulling latest image for $module..."
-    docker-compose -f "$compose_file" pull
+    $DOCKER_COMPOSE -f "$compose_file" pull
     
     # Pull한 이미지 정보
-    NEW_IMAGE=$(docker-compose -f "$compose_file" config | grep "image:" | head -1 | awk '{print $2}')
+    NEW_IMAGE=$($DOCKER_COMPOSE -f "$compose_file" config | grep "image:" | head -1 | awk '{print $2}')
     
     log_step "🛑 Stopping existing container for $module..."
-    docker-compose -f "$compose_file" down || true
+    $DOCKER_COMPOSE -f "$compose_file" down || true
     
     log_step "🏃 Starting $module..."
-    docker-compose -f "$compose_file" up -d
+    $DOCKER_COMPOSE -f "$compose_file" up -d
     
     # 배포 이력 저장
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deploy: $module | Previous: $CURRENT_IMAGE | New: $NEW_IMAGE" >> ~/deployment-history.log
@@ -145,14 +162,14 @@ deploy_all() {
     
     # 1. 데이터 인프라
     log_info "Step 1/4: Deploying data infrastructure..."
-    docker-compose -f docker-compose.data.yml pull
-    docker-compose -f docker-compose.data.yml up -d
+    $DOCKER_COMPOSE -f docker-compose.data.yml pull
+    $DOCKER_COMPOSE -f docker-compose.data.yml up -d
     sleep 20
     
     # 2. Spring Cloud 인프라
     log_info "Step 2/4: Deploying Spring Cloud infrastructure..."
-    docker-compose -f docker-compose.cloud.yml pull
-    docker-compose -f docker-compose.cloud.yml up -d
+    $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
+    $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
     sleep 30
     
     # 3. 비즈니스 모듈들
@@ -171,28 +188,28 @@ deploy_all() {
 case $MODULE_NAME in
     data)
         log_step "Deploying data infrastructure..."
-        docker-compose -f docker-compose.data.yml pull
-        docker-compose -f docker-compose.data.yml down || true
-        docker-compose -f docker-compose.data.yml up -d
+        $DOCKER_COMPOSE -f docker-compose.data.yml pull
+        $DOCKER_COMPOSE -f docker-compose.data.yml down || true
+        $DOCKER_COMPOSE -f docker-compose.data.yml up -d
         log_info "✅ Data infrastructure deployed successfully!"
         ;;
     
     cloud)
         log_step "Deploying Spring Cloud infrastructure..."
         check_data_infra
-        docker-compose -f docker-compose.cloud.yml pull
-        docker-compose -f docker-compose.cloud.yml down || true
-        docker-compose -f docker-compose.cloud.yml up -d
+        $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
+        $DOCKER_COMPOSE -f docker-compose.cloud.yml down || true
+        $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
         log_info "✅ Spring Cloud infrastructure deployed successfully!"
         ;;
     
     # infra)
     #     log_step "Deploying all infrastructure (data + cloud)..."
-    #     docker-compose -f docker-compose.data.yml pull
-    #     docker-compose -f docker-compose.data.yml up -d
+    #     $DOCKER_COMPOSE -f docker-compose.data.yml pull
+    #     $DOCKER_COMPOSE -f docker-compose.data.yml up -d
     #     sleep 20
-    #     docker-compose -f docker-compose.cloud.yml pull
-    #     docker-compose -f docker-compose.cloud.yml up -d
+    #     $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
+    #     $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
     #     log_info "✅ All infrastructure deployed successfully!"
     #     ;;
     
