@@ -58,7 +58,7 @@ baro-farm/
 - **Framework**: Spring Boot 4.0.0
 - **Java**: JetBrains JDK 21
 - **Build Tool**: Gradle 8.14
-- **Spring Cloud**: 2025.0.0
+- **Spring Cloud**: 2025.1.0
   - Netflix Eureka (Service Discovery)
   - Spring Cloud Gateway
   - Spring Cloud Config
@@ -221,31 +221,34 @@ main                          # 최종 배포 (Production)
 
 ### 브랜치 네이밍 규칙
 
+> **💡 브랜치명은 영문으로, 커밋 메시지는 한글로 작성합니다.**  
 | 브랜치 | 용도 | 예시 |
 |--------|------|------|
 | `main` | 최종 배포 버전 | - |
 | `main-{모듈}` | 모듈별 안정 버전 | `main-buyer` |
 | `dev-{모듈}` | 모듈별 개발 통합 | `dev-buyer` |
-| `feature/{서비스}-{기능}` | 기능 개발 | `feature/cart-add-item` |
-| `fix/{서비스}-{버그}` | 버그 수정 | `fix/product-search-error` |
-<!-- | `hotfix/{긴급수정}` | 긴급 버그 수정 | `hotfix/payment-failure` | -->
+| `feature/issue-{이슈번호}-{기능설명-영문}` | 기능 개발 | `feature/issue-123-add-cart-item` |
+| `fix/issue-{이슈번호}-{버그설명-영문}` | 버그 수정 | `fix/issue-456-product-search-error` |
+| `hotfix/issue-{이슈번호}-{긴급수정-영문}` | 긴급 버그 수정 | `hotfix/issue-789-payment-failure` |
 
 ### 작업 흐름
 
 ```bash
-# 1. dev 브랜치에서 feature 브랜치 생성
-git checkout dev-buyer
-git checkout -b feature/cart-add-item
+# 1. GitHub에서 이슈 생성 (예: #123 장바구니 담기 기능)
 
-# 2. 작업 후 커밋
+# 2. dev 브랜치에서 feature 브랜치 생성
+git checkout dev-buyer
+git checkout -b feature/issue-123-add-cart-item
+
+# 3. 작업 후 커밋 (커밋 메시지는 한글 사용)
 git add .
-git commit -m "[feat] 장바구니 담기 기능 추가"
+git commit -m "[Feat] #123 - 장바구니 담기 기능 추가"
 
-# 3. dev 브랜치로 머지
+# 4. dev 브랜치로 머지
 git checkout dev-buyer
-git merge feature/cart-add-item
+git merge feature/issue-123-add-cart-item
 
-# 4. 테스트 후 main 브랜치로 머지
+# 5. 테스트 후 main 브랜치로 머지
 git checkout main-buyer
 git merge dev-buyer
 ```
@@ -253,13 +256,13 @@ git merge dev-buyer
 ### 커밋 메시지 규칙
 
 ```
-[타입] 설명
+[타입] #이슈번호 - 설명
 
 예시:
-[Feat] 회원가입 기능 추가
-[Fix] 수량 변경 버그 수정
-[Refactor] 상품 조회 로직 개선
-[Docs] README 브랜치 전략 추가
+[Feat] #123 - 회원가입 기능 추가
+[Fix] #456 - 수량 변경 버그 수정
+[Refactor] #789 - 상품 조회 로직 개선
+[Docs] #321 - README 브랜치 전략 추가
 ```
 
 | 타입 | 설명 |

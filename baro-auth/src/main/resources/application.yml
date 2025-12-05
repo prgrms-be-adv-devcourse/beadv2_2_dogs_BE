@@ -28,3 +28,4 @@ jwt:
   secret: barofarm-secret-key-for-jwt-authentication-must-be-256-bits-long
   expiration: 3600000
 
+

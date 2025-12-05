@@ -9,6 +9,9 @@ echo "🔍 Pre-commit hook 실행 중..."
 # 프로젝트 루트 디렉토리로 이동
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
+# Gradle 데몬 중지 (lock 파일 문제 방지)
+./gradlew --stop > /dev/null 2>&1
+
 # 코드 품질 검사 (Spotless + Checkstyle)
 echo ""
 echo "📝 코드 품질 검사 중..."
