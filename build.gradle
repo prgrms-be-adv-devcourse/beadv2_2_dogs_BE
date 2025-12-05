@@ -30,7 +30,7 @@ subprojects {
     }
 
     ext {
-        set('springCloudVersion', "2025.0.0")
+        set('springCloudVersion', "2025.1.0")
     }
 
     dependencyManagement {
@@ -101,18 +101,8 @@ tasks.register('format') {
     dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'spotlessApply' } }
 }
 
-// 서비스 모듈은 jar만 생성 (라이브러리로 사용)
-[
-    ':baro-auth:auth-service',
-    ':baro-buyer:buyer-service', ':baro-buyer:cart-service', ':baro-buyer:product-service',
-    ':baro-seller:seller-service', ':baro-seller:farm-service',
-    ':baro-order:order-service', ':baro-order:payment-service',
-    ':baro-support:settlement-service', ':baro-support:delivery-service', ':baro-support:notification-service',
-    ':baro-support:experience-service', ':baro-support:search-service', ':baro-support:review-service',
-    ':baro-cloud:gateway-service', ':baro-cloud:config-server', ':baro-cloud:eureka-server'
-].each { servicePath ->
-    project(servicePath) {
-        bootJar.enabled = false
-        jar.enabled = true
-    }
+// baro-cloud 부모 모듈은 빌드 제외
+project(':baro-cloud') {
+    bootJar.enabled = false
+    jar.enabled = false
 }

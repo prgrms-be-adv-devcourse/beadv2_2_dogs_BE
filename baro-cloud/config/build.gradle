@@ -1,0 +1,15 @@
+dependencies {
+    implementation 'org.springframework.cloud:spring-cloud-config-server'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+}
+
+bootJar {
+    enabled = true
+    mainClass = 'com.barofarm.config.ConfigApplication'
+}
+
+jar {
+    enabled = false
+}
+
+

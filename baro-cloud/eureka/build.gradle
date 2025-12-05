@@ -1,0 +1,14 @@
+dependencies {
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
+}
+
+bootJar {
+    enabled = true
+    mainClass = 'com.barofarm.eureka.EurekaApplication'
+}
+
+jar {
+    enabled = false
+}
+
+
