@@ -1,0 +1,23 @@
+version: '3.8'
+
+# Support 모듈
+# 정산, 배송, 알림, 체험, 검색, 리뷰 관리
+
+services:
+  baro-support:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/baro-support:${IMAGE_TAG:-latest}
+    container_name: baro-support
+    ports:
+      - "8089:8089"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    restart: unless-stopped
+    networks:
+      - baro-network
+
+networks:
+  baro-network:
+    external: true
+
