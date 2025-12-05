@@ -1,8 +1,10 @@
 package com.barofarm.auth.api;
 
-// signup, login, /me 등이 들어갈 예정
+// signup, login, /me 등 인증 관련 API
 
+import com.barofarm.auth.api.dto.SignupRequest;
 import com.barofarm.auth.application.AuthService;
+import com.barofarm.auth.application.dto.SignUpResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,16 +23,8 @@ public class AuthController {
   }
 
   @PostMapping("/signup")
-  public ResponseEntity<AuthService.SignUpResponse> signup(@RequestBody SignupRequest request) {
+  public ResponseEntity<SignUpResponse> signup(@RequestBody SignupRequest request) {
     var response = authService.signUp(request.toServiceRequest());
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
-  }
-
-  // API용 DTO → Service DTO 변환
-  public record SignupRequest(
-      String email, String password, String name, String phone, boolean marketingConsent) {
-    public AuthService.SignUpRequest toServiceRequest() {
-      return new AuthService.SignUpRequest(email, password, name, phone, marketingConsent);
-    }
   }
 }

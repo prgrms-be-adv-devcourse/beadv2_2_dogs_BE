@@ -70,7 +70,7 @@ http
 
 251205 20:40 기준 할거 (-10시 까지)
 0. 지금 된거 : 이메일 인증
-1. 목표1 . AuthService + 테스트 완성
+1. 목표1 . AuthService + 테스트 완성 (V)
 2. 목표2 . AuthController에 /auth/signup 연결
 3. 이후:
     - JWT 발급/검증

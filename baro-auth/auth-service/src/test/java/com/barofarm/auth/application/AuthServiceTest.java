@@ -11,6 +11,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.barofarm.auth.api.exception.BusinessException;
+import com.barofarm.auth.application.dto.SignUpRequest;
+import com.barofarm.auth.application.dto.SignUpResponse;
 import com.barofarm.auth.domain.credential.AuthCredential;
 import com.barofarm.auth.domain.user.User;
 import com.barofarm.auth.infrastructure.jpa.AuthCredentialJpaRepository;
@@ -26,7 +28,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService 단위 테스트")
-public class AuthServiceTest {
+class AuthServiceTest {
 
   @Mock UserJpaRepository userRepository;
 
@@ -39,19 +41,19 @@ public class AuthServiceTest {
   @InjectMocks AuthService authService;
 
   @Test
-  @DisplayName("회원가입 성공: 인증 완료 시 자격 증명·유저 저장")
+  @DisplayName("회원가입 성공: 인증 완료 이후 정상 저장")
   void signUpRequestTest() {
 
     // given
-    AuthService.SignUpRequest req =
-        new AuthService.SignUpRequest("test@example.com", "password", "테스터", "010-1111-2222", true);
+    SignUpRequest req =
+        new SignUpRequest("test@example.com", "password", "테스터", "010-1111-2222", true);
 
-    // 이메일 인증이 끝난 상태로 설정
+    // 이메일 인증은 이미 완료된 상태로 가정
     doNothing().when(emailVerificationService).ensureVerified(req.email());
     when(authCredentialJpaRepository.existsByLoginEmail(req.email())).thenReturn(false);
     when(passwordEncoder.encode("password")).thenReturn("ENCODED_PW");
 
-    // save 호출 시 전달받은 객체를 그대로 반환하도록 간단히 mocking
+    // save 호출 시 전달받은 객체 그대로 반환하도록 mocking
     when(userRepository.save(any(User.class)))
         .thenAnswer(
             invocation -> {
@@ -59,7 +61,7 @@ public class AuthServiceTest {
               return u;
             });
     // when
-    AuthService.SignUpResponse res = authService.signUp(req);
+    SignUpResponse res = authService.signUp(req);
 
     // then
     assertThat(res.email()).isEqualTo(req.email());
@@ -68,13 +70,12 @@ public class AuthServiceTest {
   }
 
   @Test
-  @DisplayName("회원가입 실패: 이메일 인증 미완료 시 예외 발생")
+  @DisplayName("회원가입 실패: 이메일 인증 미완료")
   void signupFailedTest() {
     // given
-    AuthService.SignUpRequest req =
-        new AuthService.SignUpRequest("test@exam.com", "pw", "가나다", "010-1111-2222", true);
+    SignUpRequest req = new SignUpRequest("test@exam.com", "pw", "가나다", "010-1111-2222", true);
 
-    doThrow(new BusinessException(HttpStatus.BAD_GATEWAY, "이메일이 인증되지 않았습니다."))
+    doThrow(new BusinessException(HttpStatus.BAD_GATEWAY, "이메일 인증이 완료되지 않았습니다."))
         .when(emailVerificationService)
         .ensureVerified(req.email());
 
@@ -86,11 +87,10 @@ public class AuthServiceTest {
   }
 
   @Test
-  @DisplayName("회원가입 실패: 이미 존재하는 이메일로 요청하면 예외 발생")
+  @DisplayName("회원가입 실패: 이미 존재하는 이메일로 요청 시 예외")
   void signup_fails_when_email_already_exists() {
     // given
-    AuthService.SignUpRequest req =
-        new AuthService.SignUpRequest("test@example.com", "pw", "홍길동", "010-1111-2222", true);
+    SignUpRequest req = new SignUpRequest("test@example.com", "pw", "홍길동", "010-1111-2222", true);
 
     doNothing().when(emailVerificationService).ensureVerified(req.email());
     when(authCredentialJpaRepository.existsByLoginEmail(req.email())).thenReturn(true);
