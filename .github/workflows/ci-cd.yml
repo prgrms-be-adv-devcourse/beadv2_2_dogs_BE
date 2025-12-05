@@ -176,9 +176,9 @@ jobs:
           scp -i private_key.pem -o StrictHostKeyChecking=no \
             ./docker-compose.*.yml ${USER}@${HOST}:/home/${USER}/
           
-          # 모듈별 배포 스크립트 실행
+          # 모듈별 배포 스크립트 실행 (GITHUB_TOKEN 전달)
           ssh -i private_key.pem -o StrictHostKeyChecking=no \
-            ${USER}@${HOST} "bash /home/${USER}/deploy-module.sh ${MODULE_NAME}"
+            ${USER}@${HOST} "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} bash /home/${USER}/deploy-module.sh ${MODULE_NAME}"
           
           rm -f private_key.pem
       
