@@ -53,14 +53,16 @@ services:
   # Message Queue
   # ===================================
   zookeeper:
-    image: bitnami/zookeeper:3.9.2
+    image: zookeeper:3.9
     container_name: baro-zookeeper
     ports:
       - "2181:2181"
     environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
+      - ZOO_MY_ID=1
+      - ZOO_SERVERS=server.1=0.0.0.0:2888:3888;2181
     volumes:
-      - zookeeper-data:/bitnami/zookeeper
+      - zookeeper-data:/data
+      - zookeeper-log:/datalog
     restart: unless-stopped
     networks:
       - baro-network
@@ -102,6 +104,8 @@ volumes:
   mysql-data:
     driver: local
   zookeeper-data:
+    driver: local
+  zookeeper-log:
     driver: local
   kafka-data:
     driver: local
