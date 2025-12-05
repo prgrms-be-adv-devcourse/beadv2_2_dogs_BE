@@ -58,11 +58,23 @@ baro-farm/
 - **Framework**: Spring Boot 4.0.0
 - **Java**: JetBrains JDK 21
 - **Build Tool**: Gradle 8.14
-- **Spring Cloud**: 2025.1.0
+- **Spring Cloud**: 2025.0.0
   - Netflix Eureka (Service Discovery)
   - Spring Cloud Gateway
   - Spring Cloud Config
   - OpenFeign (서비스 간 통신)
+- **Database**
+  - Spring Data JPA
+  - MySQL 8.0
+- **Cache**
+  - Redis 7.2
+  - Spring Data Redis
+- **Message Queue**
+  - Apache Kafka 3.6
+  - Spring for Apache Kafka
+- **Code Quality**
+  - Spotless 7.0.2 (Google Java Format 1.25.2)
+  - Checkstyle 10.21.4
 
 ## 🛠️ 개발 환경 설정
 
@@ -113,7 +125,40 @@ Git hooks가 설치되어 있으면 커밋할 때 자동으로 검사합니다.
 
 ## 🏃 서비스 실행 방법
 
-### Gradle로 실행
+### 1️⃣ 인프라 서비스 실행 (선행 요구사항)
+
+**Docker Compose로 한 번에 실행 (권장):**
+
+```bash
+# 모든 인프라 서비스 실행 (Redis + Kafka + Zookeeper)
+docker-compose up -d
+
+# 특정 서비스만 실행
+docker-compose -f docker-compose-redis.yml up -d   # Redis만
+docker-compose -f docker-compose-kafka.yml up -d   # Kafka만
+
+# 중지
+docker-compose down
+```
+
+**개별 실행:**
+
+```bash
+# Redis (6379)
+docker run -d --name baro-redis -p 6379:6379 redis:7.2
+
+# Kafka (9092)
+docker run -d --name baro-zookeeper -p 2181:2181 -e ALLOW_ANONYMOUS_LOGIN=yes bitnami/zookeeper:latest
+docker run -d --name baro-kafka -p 9092:9092 -e KAFKA_ZOOKEEPER_CONNECT=host.docker.internal:2181 bitnami/kafka:3.6
+```
+
+**📚 상세 가이드:**
+- [Redis 설정 가이드](docs/REDIS_SETUP.md) - 설치, 연동, 사용 예시
+- [Kafka 설정 가이드](docs/KAFKA_SETUP.md) - 설치, 연동, 토픽 관리
+
+### 2️⃣ Spring Boot 서비스 실행
+
+#### Gradle로 실행
 
 ```bash
 # 1. Eureka Server (서비스 디스커버리)
@@ -133,7 +178,7 @@ Git hooks가 설치되어 있으면 커밋할 때 자동으로 검사합니다.
 ./gradlew :baro-support:bootRun   # 지원 모듈 (6개 도메인)
 ```
 
-### JAR로 실행
+#### JAR로 실행
 
 ```bash
 # 빌드
@@ -152,16 +197,18 @@ java -jar baro-support/build/libs/baro-support-0.0.1-SNAPSHOT.jar
 
 ## 🌐 서비스 포트 정보
 
-| 모듈 | 포트 | 포함 도메인 |
-|------|------|------------|
-| eureka | 8761 | Service Registry |
-| config | 8888 | Config Server |
-| gateway | 8080 | API Gateway |
-| baro-auth | 8081 | auth |
-| baro-buyer | 8082 | buyer, cart, product |
-| baro-seller | 8085 | seller, farm |
-| baro-order | 8087 | order, payment |
-| baro-support | 8089 | settlement, delivery, notification, experience, search, review |
+| 구분 | 모듈 | 포트 | 포함 도메인 |
+|------|------|------|------------|
+| **인프라** | redis | 6379 | Cache Server |
+| | kafka | 9092 | Message Broker |
+| **Spring Cloud** | eureka | 8761 | Service Registry |
+| | config | 8888 | Config Server |
+| | gateway | 8080 | API Gateway |
+| **비즈니스** | baro-auth | 8081 | auth |
+| | baro-buyer | 8082 | buyer, cart, product |
+| | baro-seller | 8085 | seller, farm |
+| | baro-order | 8087 | order, payment |
+| | baro-support | 8089 | settlement, delivery, notification, experience, search, review |
 
 ## 🔗 주요 URL
 
@@ -273,6 +320,87 @@ git merge dev-buyer
 | `Refactor` | 코드 리팩토링 |
 | `Test` | 테스트 코드, 리팩토링 테스트 코드 추가 |
 | `Chore` | 패키지 매니저 수정, 그 외 기타 수정 (ex: .gitignore) |
+
+## 🚀 CI/CD
+
+### GitHub Actions 자동 배포
+
+이 프로젝트는 GitHub Actions를 통해 자동으로 빌드, 테스트, 배포됩니다.
+
+#### 파이프라인
+
+```
+Push to main → CI (빌드/테스트) → Docker Image Build → 
+Docker Hub Push → AWS EC2 Deploy → Health Check
+```
+
+#### 배포 프로세스
+
+```bash
+# 1. 코드 커밋 및 Push
+git add .
+git commit -m "[Feat] #123 - 새로운 기능 추가"
+git push origin dev-{모듈}
+- main-{모듈}에 PR 요청
+
+# 2. GitHub Actions 자동 실행
+- 코드 품질 검사 (Spotless, Checkstyle)
+- 빌드 및 테스트
+- Docker 이미지 빌드
+- AWS EC2 배포
+
+# 3. 배포 확인
+# http://your-ec2-ip:8761 (Eureka Dashboard)
+# http://your-ec2-ip:8080 (API Gateway)
+```
+
+#### 필요한 GitHub Secrets
+
+| Secret | 설명 | 필요 여부 |
+|--------|------|----------|
+| `GITHUB_TOKEN` | GitHub Container Registry 인증 (자동 제공) | ✅ 자동 |
+| `EC2_HOST` | EC2 Public IP | ✅ 필수 |
+| `EC2_USERNAME` | EC2 SSH 사용자명 (예: ubuntu) | ✅ 필수 |
+| `EC2_SSH_KEY` | EC2 SSH Private Key (.pem 파일 내용) | ✅ 필수 |
+
+**참고:** `GITHUB_TOKEN`은 GitHub Actions가 자동으로 제공하므로 별도 설정 불필요!
+
+### 버전 관리 및 롤백
+
+#### 자동 생성되는 이미지 태그
+
+```
+ghcr.io/do-develop-space/baro-auth:
+├── latest                         # 최신 버전
+├── main-auth                      # 브랜치명
+├── main-auth-abc123d              # 브랜치-커밋SHA
+└── main-auth-20241205-143022      # 브랜치-타임스탬프
+```
+
+#### 롤백 방법
+
+```bash
+# EC2에서 실행
+
+# 1. 사용 가능한 버전 확인
+bash list-versions.sh auth
+
+# 2. 이전 버전으로 롤백
+bash rollback.sh auth main-auth-def456e
+
+# 3. 확인
+curl http://localhost:8081/actuator/health
+```
+
+#### 자동 정리
+
+- ✅ 배포 성공 후 오래된 이미지 자동 삭제
+- ✅ 최근 5개 버전만 GHCR에 유지
+- ✅ EC2 로컬 이미지 수동 정리 가능 (`cleanup-images.sh`)
+
+**📚 상세 가이드:**
+- [CI/CD 설정 가이드](docs/CICD_GUIDE.md) - 전체 설정 및 트러블슈팅
+- [버전 관리 가이드](docs/VERSION_MANAGEMENT.md) - 롤백 및 버전 관리
 
 ## 📝 라이선스
 

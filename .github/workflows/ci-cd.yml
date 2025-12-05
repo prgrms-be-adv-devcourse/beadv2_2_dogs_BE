@@ -1,0 +1,235 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      # - main
+      - main-*
+      # - dev-*
+  pull_request:
+    branches:
+      # - main
+      - main-*
+      # - dev-*
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: do-develop-space  # 개인 GitHub 계정
+
+jobs:
+  # ==================================================
+  # CI: Build, Test, Code Quality
+  # ==================================================
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+      
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      
+      - name: Code formatting check (Spotless)
+        run: ./gradlew spotlessCheck
+      
+      - name: Lint check (Checkstyle)
+        run: ./gradlew checkstyleMain
+      
+      - name: Build with Gradle
+        run: ./gradlew build -x test
+      
+      - name: Run tests
+        run: ./gradlew test
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/build/test-results/test/'
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            baro-auth/build/libs/*.jar
+            baro-buyer/build/libs/*.jar
+            baro-seller/build/libs/*.jar
+            baro-order/build/libs/*.jar
+            baro-support/build/libs/*.jar
+            baro-cloud/*/build/libs/*.jar
+
+  # ==================================================
+  # Docker: Build and Push Images
+  # ==================================================
+  docker-build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/main-'))
+    
+    strategy:
+      matrix:
+        service:
+          - baro-auth
+          - baro-buyer
+          - baro-seller
+          - baro-order
+          - baro-support
+          - eureka
+          - gateway
+          - config
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: do-develop-space  # 개인 계정
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          tags: |
+            type=raw,value=latest
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-,format=short
+            type=raw,value={{branch}}-{{date 'YYYYMMDD-HHmmss'}}
+          flavor: |
+            latest=true
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:buildcache,mode=max
+
+  # ==================================================
+  # CD: Deploy to AWS EC2 (모듈별)
+  # ==================================================
+  deploy:
+    name: Deploy Module to AWS EC2
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: startsWith(github.ref, 'refs/heads/main-')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Extract module name
+        id: module
+        run: |
+          # main-auth -> auth, main-buyer -> buyer
+          MODULE=$(echo ${GITHUB_REF#refs/heads/main-} | tr '[:upper:]' '[:lower:]')
+          echo "name=$MODULE" >> $GITHUB_OUTPUT
+          echo "Deploying module: $MODULE"
+      
+      - name: Deploy to EC2
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USERNAME }}
+          MODULE_NAME: ${{ steps.module.outputs.name }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          
+          # EC2에 배포 스크립트 및 docker-compose 파일들 복사
+          scp -i private_key.pem -o StrictHostKeyChecking=no \
+            ./scripts/deploy-module.sh ${USER}@${HOST}:/home/${USER}/
+          
+          scp -i private_key.pem -o StrictHostKeyChecking=no \
+            ./docker-compose.*.yml ${USER}@${HOST}:/home/${USER}/
+          
+          # 모듈별 배포 스크립트 실행
+          ssh -i private_key.pem -o StrictHostKeyChecking=no \
+            ${USER}@${HOST} "bash /home/${USER}/deploy-module.sh ${MODULE_NAME}"
+          
+          rm -f private_key.pem
+      
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Deployment successful for module: ${{ steps.module.outputs.name }}"
+          else
+            echo "❌ Deployment failed for module: ${{ steps.module.outputs.name }}"
+          fi
+
+  # ==================================================
+  # Cleanup: 오래된 이미지 정리
+  # ==================================================
+  cleanup:
+    name: Cleanup Old Images
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: success()
+    
+    steps:
+      - name: Delete old container images
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: ${{ matrix.service }}
+          package-type: 'container'
+          min-versions-to-keep: 5
+          delete-only-untagged-versions: 'false'
+    
+    strategy:
+      matrix:
+        service:
+          - baro-auth
+          - baro-buyer
+          - baro-seller
+          - baro-order
+          - baro-support
+          - eureka
+          - gateway
+          - config
+
+  # ==================================================
+  # Notification (선택사항)
+  # ==================================================
+  # notify:
+  #   name: Send Notifications
+  #   runs-on: ubuntu-latest
+  #   needs: [build-and-test, docker-build, deploy]
+  #   if: always()
+  #   
+  #   steps:
+  #     - name: Send Slack notification
+  #       uses: 8398a7/action-slack@v3
+  #       with:
+  #         status: ${{ job.status }}
+  #         text: 'CI/CD Pipeline completed'
+  #         webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+

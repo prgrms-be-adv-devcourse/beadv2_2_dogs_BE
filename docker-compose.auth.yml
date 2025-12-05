@@ -1,0 +1,24 @@
+version: '3.8'
+
+# Auth 모듈
+# 인증/인가 서비스
+
+services:
+  baro-auth:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/baro-auth:${IMAGE_TAG:-latest}
+    container_name: baro-auth
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
+    restart: unless-stopped
+    networks:
+      - baro-network
+
+networks:
+  baro-network:
+    external: true
+

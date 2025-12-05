@@ -1,0 +1,23 @@
+version: '3.8'
+
+# Seller 모듈
+# 판매자, 농장 관리
+
+services:
+  baro-seller:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/baro-seller:${IMAGE_TAG:-latest}
+    container_name: baro-seller
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    restart: unless-stopped
+    networks:
+      - baro-network
+
+networks:
+  baro-network:
+    external: true
+
