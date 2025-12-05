@@ -70,7 +70,7 @@ baro-farm/
   - Redis 7.2
   - Spring Data Redis
 - **Message Queue**
-  - Apache Kafka 3.7.2
+  - Confluent Kafka 7.6.0 (Apache Kafka 호환)
   - Spring for Apache Kafka
 - **Code Quality**
   - Spotless 7.0.2 (Google Java Format 1.25.2)
@@ -147,9 +147,9 @@ docker-compose down
 # Redis (6379)
 docker run -d --name baro-redis -p 6379:6379 redis:7.2
 
-# Kafka (9092)
-docker run -d --name baro-zookeeper -p 2181:2181 -e ALLOW_ANONYMOUS_LOGIN=yes bitnami/zookeeper:3.9
-docker run -d --name baro-kafka -p 9092:9092 -e KAFKA_ZOOKEEPER_CONNECT=host.docker.internal:2181 bitnami/kafka:3.6
+# Kafka (9092) - Confluent Platform
+docker run -d --name baro-zookeeper -p 2181:2181 -e ZOOKEEPER_CLIENT_PORT=2181 confluentinc/cp-zookeeper:7.6.0
+docker run -d --name baro-kafka -p 9092:9092 -e KAFKA_ZOOKEEPER_CONNECT=host.docker.internal:2181 -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 confluentinc/cp-kafka:7.6.0
 ```
 
 **📚 상세 가이드:**
