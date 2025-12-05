@@ -71,7 +71,7 @@ services:
       retries: 5
 
   kafka:
-    image: bitnami/kafka:3.6
+    image: bitnami/kafka:3.7.2
     container_name: baro-kafka
     ports:
       - "9092:9092"

@@ -70,7 +70,7 @@ baro-farm/
   - Redis 7.2
   - Spring Data Redis
 - **Message Queue**
-  - Apache Kafka 3.6
+  - Apache Kafka 3.7.2
   - Spring for Apache Kafka
 - **Code Quality**
   - Spotless 7.0.2 (Google Java Format 1.25.2)
