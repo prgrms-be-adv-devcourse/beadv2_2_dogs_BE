@@ -1,4 +1,3 @@
 package com.barofarm.buyer.product.domain;
 
-public class ProductRepository {
-}
+public class ProductRepository {}
