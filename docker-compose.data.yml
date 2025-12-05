@@ -53,7 +53,7 @@ services:
   # Message Queue
   # ===================================
   zookeeper:
-    image: bitnami/zookeeper:latest
+    image: bitnami/zookeeper:3.9.2
     container_name: baro-zookeeper
     ports:
       - "2181:2181"

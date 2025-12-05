@@ -148,7 +148,7 @@ docker-compose down
 docker run -d --name baro-redis -p 6379:6379 redis:7.2
 
 # Kafka (9092)
-docker run -d --name baro-zookeeper -p 2181:2181 -e ALLOW_ANONYMOUS_LOGIN=yes bitnami/zookeeper:latest
+docker run -d --name baro-zookeeper -p 2181:2181 -e ALLOW_ANONYMOUS_LOGIN=yes bitnami/zookeeper:3.9.2
 docker run -d --name baro-kafka -p 9092:9092 -e KAFKA_ZOOKEEPER_CONNECT=host.docker.internal:2181 bitnami/kafka:3.6
 ```
 
