@@ -10,12 +10,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class ConsoleEmailCodeSender implements EmailCodeSender {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ConsoleEmailCodeSender.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ConsoleEmailCodeSender.class);
 
-    @Override
-    public void send(String email, String code) {
-        // TODO: 메일 전송 로직 향후 구현
-        LOG.info("[ConsoleEmailCodeSender] Sending email code {} to {}", code, email);
-    }
-
+  @Override
+  public void send(String email, String code) {
+    // TODO: 메일 전송 로직 향후 구현
+    LOG.info("[ConsoleEmailCodeSender] Sending email code {} to {}", code, email);
+  }
 }
