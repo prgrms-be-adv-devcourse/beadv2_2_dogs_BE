@@ -9,14 +9,14 @@ import com.barofarm.buyer.product.domain.Product;
 import com.barofarm.buyer.product.domain.ProductRepository;
 import com.barofarm.buyer.product.domain.ProductStatus;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
+@Service
+@RequiredArgsConstructor
 public class ProductService {
 
   private final ProductRepository productRepository;
-
-  public ProductService(ProductRepository productRepository) {
-    this.productRepository = productRepository;
-  }
 
   public ProductDetailInfo getProductDetail(UUID id) {
     Product product =
@@ -28,6 +28,12 @@ public class ProductService {
   }
 
   public ProductDetailInfo createProduct(ProductCreateCommand command) {
+    //      MemberRole memberRole = MemberRole.from(role);
+    //
+    //      if (memberRole != MemberRole.SELLER) {
+    //          throw new CustomException(ErrorCode.FORBIDDEN_ONLY_SELLER);
+    //      }
+
     Product product =
         Product.create(
             command.sellerId(),
@@ -49,6 +55,14 @@ public class ProductService {
             .findById(id)
             .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
 
+    //    MemberRole memberRole = MemberRole.from(role);
+    //
+    //    if (memberRole != MemberRole.SELLER) {
+    //      throw new CustomException(ErrorCode.FORBIDDEN_ONLY_SELLER);
+    //    }
+
+    product.validateOwner(command.memberId());
+
     product.update(
         command.productName(),
         command.description(),
@@ -60,14 +74,22 @@ public class ProductService {
     return ProductDetailInfo.from(product);
   }
 
-  public void deleteProduct(UUID id, UUID memberId) {
+  public void deleteProduct(UUID id, UUID memberId, String role) {
     Product product =
         productRepository
             .findById(id)
             .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
 
+    //    MemberRole memberRole = MemberRole.from(role);
+    //
+    //    if (memberRole != MemberRole.SELLER) {
+    //      throw new CustomException(ErrorCode.FORBIDDEN_ONLY_SELLER);
+    //    }
+
     product.validateOwner(memberId);
 
     productRepository.deleteById(id);
+
+    return;
   }
 }

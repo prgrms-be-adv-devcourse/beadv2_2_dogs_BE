@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record ProductCreateCommand(
     UUID sellerId,
+    String role,
     String productName,
     String description,
     ProductCategory productCategory,

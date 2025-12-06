@@ -8,13 +8,15 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ErrorCode {
 
-  // 400 에러
-  PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 제품입니다."),
-  PRODUCT_NOT_ON_SALE(HttpStatus.BAD_REQUEST, "해당 상품은 현재 판매 중이 아닙니다."),
-  FORBIDDEN_NOT_PRODUCT_OWNER(HttpStatus.FORBIDDEN, "요청한 사용자는 해당 상품의 소유자가 아닙니다."),
+  // 공통
+  INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "잘못된 입력입니다."),
+  UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
 
-  // 500 에러
-  INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류입니다.");
+  // Product
+  PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."),
+  FORBIDDEN_NOT_PRODUCT_OWNER(HttpStatus.FORBIDDEN, "상품 소유자가 아닙니다."),
+  FORBIDDEN_ONLY_SELLER(HttpStatus.FORBIDDEN, "해당 요청은 판매자만 수행할 수 있습니다."),
+  PRODUCT_NOT_ON_SALE(HttpStatus.BAD_REQUEST, "해당 상품은 현재 판매 중이 아닙니다.");
 
   private final HttpStatus status;
   private final String message;
