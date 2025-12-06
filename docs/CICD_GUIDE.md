@@ -205,8 +205,8 @@ sudo usermod -aG docker ubuntu
 newgrp docker
 
 # 작업 디렉토리 생성
-mkdir -p ~/baro-farm
-cd ~/baro-farm
+mkdir -p ~/apps/BE
+cd ~/apps/BE
 
 # 환경 변수 파일 생성 (선택사항)
 cat > .env << EOF
@@ -273,7 +273,7 @@ GitHub Actions 탭에서 워크플로우 진행 상황 확인
 ssh -i your-key.pem ubuntu@your-ec2-ip
 
 # 최신 이미지 Pull
-cd ~/baro-farm
+cd ~/apps/BE
 docker-compose -f docker-compose.{모듈명}.yml pull
 
 # 서비스 재시작

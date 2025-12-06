@@ -75,7 +75,10 @@ fi
 # 환경 변수
 # ===================================
 GITHUB_USERNAME="${GITHUB_USERNAME:-do-develop-space}"
-PROJECT_DIR="${HOME}"
+PROJECT_DIR="${HOME}/apps/BE"
+
+# 디렉토리 생성 (없으면)
+mkdir -p ${PROJECT_DIR}
 
 cd ${PROJECT_DIR}
 
@@ -148,10 +151,10 @@ deploy_module() {
     $DOCKER_COMPOSE -f "$compose_file" up -d
     
     # 배포 이력 저장
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deploy: $module | Previous: $CURRENT_IMAGE | New: $NEW_IMAGE" >> ~/deployment-history.log
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deploy: $module | Previous: $CURRENT_IMAGE | New: $NEW_IMAGE" >> ${PROJECT_DIR}/deployment-history.log
     
     log_info "✅ Module $module deployed successfully!"
-    log_info "📝 Deployment recorded in ~/deployment-history.log"
+    log_info "📝 Deployment recorded in ${PROJECT_DIR}/deployment-history.log"
 }
 
 # ===================================

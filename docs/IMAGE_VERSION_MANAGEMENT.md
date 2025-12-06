@@ -243,7 +243,7 @@ bash cleanup-images.sh 10  # 최근 10개 버전만 유지
 # Cron Job 등록 예시
 # 매주 일요일 새벽 3시에 자동 정리
 crontab -e
-0 3 * * 0 /home/ubuntu/cleanup-images.sh 10 >> /home/ubuntu/cleanup.log 2>&1
+0 3 * * 0 /home/ubuntu/apps/BE/cleanup-images.sh 10 >> /home/ubuntu/apps/BE/cleanup.log 2>&1
 ```
 
 ---

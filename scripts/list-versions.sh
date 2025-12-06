@@ -50,9 +50,9 @@ echo ""
 # ===================================
 # 2. 배포 이력 확인
 # ===================================
-if [ -f ~/deployment-history.log ]; then
+if [ -f ~/apps/BE/deployment-history.log ]; then
     echo -e "${YELLOW}📋 Recent deployments:${NC}"
-    grep "$PACKAGE_NAME" ~/deployment-history.log | tail -5 || echo "  No deployment history"
+    grep "$PACKAGE_NAME" ~/apps/BE/deployment-history.log | tail -5 || echo "  No deployment history"
     echo ""
 fi
 
