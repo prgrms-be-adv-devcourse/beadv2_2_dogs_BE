@@ -1,5 +1,7 @@
 package com.barofarm.buyer.product.domain;
 
+import com.barofarm.buyer.common.exception.CustomException;
+import com.barofarm.buyer.common.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,11 +14,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "product")
 @NoArgsConstructor
+@Getter
 public class Product {
 
   @Id private UUID id;
@@ -89,6 +93,27 @@ public class Product {
         .stockQuantity(stockQuantity)
         .productStatus(productStatus)
         .build();
+  }
+
+  public void update(
+      String productName,
+      String description,
+      ProductCategory productCategory,
+      BigDecimal price,
+      Integer stockQuantity,
+      ProductStatus productStatus) {
+    this.productName = productName;
+    this.description = description;
+    this.productCategory = productCategory;
+    this.price = price;
+    this.stockQuantity = stockQuantity;
+    this.productStatus = productStatus;
+  }
+
+  public void validateOwner(UUID memberId) {
+    if (!this.sellerId.equals(memberId)) {
+      throw new CustomException(ErrorCode.FORBIDDEN_NOT_PRODUCT_OWNER);
+    }
   }
 
   @PrePersist
