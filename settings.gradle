@@ -5,48 +5,17 @@ plugins {
 rootProject.name = 'baro-farm'
 
 // ============================================
-// A. Auth Module
+// 비즈니스 모듈 (모듈러 모놀리스)
 // ============================================
-include 'baro-auth'
-include 'baro-auth:auth-service'
+include 'baro-auth'      // A. 인증 모듈
+include 'baro-buyer'     // B. 구매자 모듈 (buyer, cart, product)
+include 'baro-seller'    // C. 판매자 모듈 (seller, farm)
+include 'baro-order'     // D. 주문 모듈 (order, payment)
+include 'baro-support'   // E. 지원 모듈 (settlement, delivery, notification, experience, search, review)
 
 // ============================================
-// B. Buyer Module
+// 인프라 모듈 (개별 배포)
 // ============================================
-include 'baro-buyer'
-include 'baro-buyer:buyer-service'
-include 'baro-buyer:cart-service'
-include 'baro-buyer:product-service'
-
-// ============================================
-// C. Seller Module
-// ============================================
-include 'baro-seller'
-include 'baro-seller:seller-service'
-include 'baro-seller:farm-service'
-
-// ============================================
-// D. Order Module
-// ============================================
-include 'baro-order'
-include 'baro-order:order-service'
-include 'baro-order:payment-service'
-
-// ============================================
-// E. Support Module
-// ============================================
-include 'baro-support'
-include 'baro-support:settlement-service'
-include 'baro-support:delivery-service'
-include 'baro-support:notification-service'
-include 'baro-support:experience-service'
-include 'baro-support:search-service'
-include 'baro-support:review-service'
-
-// ============================================
-// F. Cloud Module (Spring Cloud)
-// ============================================
-include 'baro-cloud'
-include 'baro-cloud:gateway-service'
-include 'baro-cloud:config-server'
-include 'baro-cloud:eureka-server'
+include 'baro-cloud:gateway'
+include 'baro-cloud:config'
+include 'baro-cloud:eureka'
