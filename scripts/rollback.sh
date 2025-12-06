@@ -60,7 +60,10 @@ fi
 # ===================================
 GITHUB_USERNAME="${GITHUB_USERNAME:-do-develop-space}"
 DOCKER_REGISTRY="ghcr.io/${GITHUB_USERNAME}"
-PROJECT_DIR="${HOME}"
+PROJECT_DIR="${HOME}/apps/BE"
+
+# 디렉토리 생성 (없으면)
+mkdir -p ${PROJECT_DIR}
 
 cd ${PROJECT_DIR}
 
