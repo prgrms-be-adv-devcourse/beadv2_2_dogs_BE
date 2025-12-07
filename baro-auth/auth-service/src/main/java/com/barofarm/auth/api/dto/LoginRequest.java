@@ -1,6 +1,6 @@
 package com.barofarm.auth.api.dto;
 
-import com.barofarm.auth.application.dto.LoginCommand;
+import com.barofarm.auth.application.usecase.LoginCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record LoginRequest(

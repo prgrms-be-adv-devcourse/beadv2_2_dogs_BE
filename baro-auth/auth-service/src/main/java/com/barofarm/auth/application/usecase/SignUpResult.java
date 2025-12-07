@@ -1,4 +1,4 @@
-package com.barofarm.auth.application.dto;
+package com.barofarm.auth.application.usecase;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

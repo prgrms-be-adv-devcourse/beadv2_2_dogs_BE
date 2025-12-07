@@ -77,4 +77,5 @@ http
     - /auth/login, /auth/me 구현 (v)
     - 다른 서비스 (buyer-service, seller-service에서) JWT 기반 인증 연동하기
 
-4. AOP, Gateway관련
+4. 토큰 담는 곳 아직 구현 안함 -> 이후 이거 이용해서 게이트웨이 및 buyer / seller랑
+5. AOP, Gateway관련

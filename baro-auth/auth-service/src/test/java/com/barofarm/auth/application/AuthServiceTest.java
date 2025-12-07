@@ -11,8 +11,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.barofarm.auth.api.exception.BusinessException;
-import com.barofarm.auth.application.dto.SignUpCommand;
-import com.barofarm.auth.application.dto.SignUpResult;
+import com.barofarm.auth.application.usecase.SignUpCommand;
+import com.barofarm.auth.application.usecase.SignUpResult;
 import com.barofarm.auth.domain.credential.AuthCredential;
 import com.barofarm.auth.domain.user.User;
 import com.barofarm.auth.infrastructure.jpa.AuthCredentialJpaRepository;

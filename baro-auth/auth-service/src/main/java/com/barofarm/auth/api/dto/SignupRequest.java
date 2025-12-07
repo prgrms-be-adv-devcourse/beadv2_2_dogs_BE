@@ -1,6 +1,6 @@
 package com.barofarm.auth.api.dto;
 
-import com.barofarm.auth.application.dto.SignUpCommand;
+import com.barofarm.auth.application.usecase.SignUpCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record SignupRequest(
