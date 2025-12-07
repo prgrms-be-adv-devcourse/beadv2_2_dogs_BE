@@ -11,8 +11,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.barofarm.auth.api.exception.BusinessException;
-import com.barofarm.auth.application.dto.SignUpRequest;
-import com.barofarm.auth.application.dto.SignUpResponse;
+import com.barofarm.auth.application.dto.SignUpCommand;
+import com.barofarm.auth.application.dto.SignUpResult;
 import com.barofarm.auth.domain.credential.AuthCredential;
 import com.barofarm.auth.domain.user.User;
 import com.barofarm.auth.infrastructure.jpa.AuthCredentialJpaRepository;
@@ -45,8 +45,8 @@ class AuthServiceTest {
   void signUpRequestTest() {
 
     // given
-    SignUpRequest req =
-        new SignUpRequest("test@example.com", "password", "테스터", "010-1111-2222", true);
+    SignUpCommand req =
+        new SignUpCommand("test@example.com", "password", "테스터", "010-1111-2222", true);
 
     // 이메일 인증은 이미 완료된 상태로 가정
     doNothing().when(emailVerificationService).ensureVerified(req.email());
@@ -61,7 +61,7 @@ class AuthServiceTest {
               return u;
             });
     // when
-    SignUpResponse res = authService.signUp(req);
+    SignUpResult res = authService.signUp(req);
 
     // then
     assertThat(res.email()).isEqualTo(req.email());
@@ -73,7 +73,7 @@ class AuthServiceTest {
   @DisplayName("회원가입 실패: 이메일 인증 미완료")
   void signupFailedTest() {
     // given
-    SignUpRequest req = new SignUpRequest("test@exam.com", "pw", "가나다", "010-1111-2222", true);
+    SignUpCommand req = new SignUpCommand("test@exam.com", "pw", "가나다", "010-1111-2222", true);
 
     doThrow(new BusinessException(HttpStatus.BAD_GATEWAY, "이메일 인증이 완료되지 않았습니다."))
         .when(emailVerificationService)
@@ -90,7 +90,7 @@ class AuthServiceTest {
   @DisplayName("회원가입 실패: 이미 존재하는 이메일로 요청 시 예외")
   void signup_fails_when_email_already_exists() {
     // given
-    SignUpRequest req = new SignUpRequest("test@example.com", "pw", "홍길동", "010-1111-2222", true);
+    SignUpCommand req = new SignUpCommand("test@example.com", "pw", "홍길동", "010-1111-2222", true);
 
     doNothing().when(emailVerificationService).ensureVerified(req.email());
     when(authCredentialJpaRepository.existsByLoginEmail(req.email())).thenReturn(true);
