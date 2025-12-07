@@ -1,4 +1,11 @@
 package com.barofarm.auth.application.dto;
 
-// 고민: 회원 가입후에 토큰을 바로 줄지 말지? -> 주는걸로
-public record SignUpResult(Long userId, String email, String accessToken, String refreshToken) {}
+import io.swagger.v3.oas.annotations.media.Schema;
+
+public record SignUpResult(
+    @Schema(description = "New user ID", example = "1") Long userId,
+    @Schema(description = "Email", example = "user@example.com") String email,
+    @Schema(description = "Access token", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+        String accessToken,
+    @Schema(description = "Refresh token", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+        String refreshToken) {}
