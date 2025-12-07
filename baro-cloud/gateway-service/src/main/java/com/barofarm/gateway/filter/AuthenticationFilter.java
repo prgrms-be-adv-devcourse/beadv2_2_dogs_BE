@@ -32,6 +32,14 @@ public class AuthenticationFilter
     return (exchange, chain) -> {
       ServerHttpRequest request = exchange.getRequest();
 
+      String path = request.getPath().value();
+      // 스웨거 문서 호출은 인증을 건너뛰어야 401/403 없이 로드된다.
+      if (path.startsWith("/api/auth/swagger-ui")
+          || path.startsWith("/api/auth/v3/api-docs")
+          || path.startsWith("/api/auth/swagger-resources")) {
+        return chain.filter(exchange);
+      }
+
       String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
       if (authHeader == null) {
         return onError(exchange, "No Authorization header", HttpStatus.UNAUTHORIZED);

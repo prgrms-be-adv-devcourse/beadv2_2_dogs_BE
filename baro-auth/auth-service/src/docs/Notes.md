@@ -71,10 +71,10 @@ http
 251207 20:40 기준 할거 (-10시 까지)
 0. 지금 된거 : 이메일 인증
 1. 목표1 . AuthService + 테스트 완성 (V)
-2. 목표2 . AuthController에 /auth/signup 연결
+2. 목표2 . AuthController에 /auth/signup 연결 (V)
 3. 이후:
-    - JWT 발급/검증
-    - /auth/login, /auth/me 구현
+    - JWT 발급/검증(V)
+    - /auth/login, /auth/me 구현 (v)
     - 다른 서비스 (buyer-service, seller-service에서) JWT 기반 인증 연동하기
 
 4. AOP, Gateway관련

@@ -1,5 +1,6 @@
 package com.barofarm.auth.infrastructure.config;
 
+import com.barofarm.auth.infrastructure.security.JwtAuthenticationEntryPoint;
 import com.barofarm.auth.infrastructure.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,29 +13,45 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableMethodSecurity // 메서드 단위로 보안 활성화해주는 어노
+@EnableMethodSecurity // 메소드별로 보안 설정을 활성화
 public class SecurityConfig {
-  private final JwtAuthenticationFilter jwtAuthenticationFilter; // 헤더 읽고, 유효성 검증하고, S.컨텍스트에 심어줌
+  private final JwtAuthenticationFilter jwtAuthenticationFilter; // 요청마다 JWT를 검증
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-  public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+  public SecurityConfig(
+      JwtAuthenticationFilter jwtAuthenticationFilter,
+      JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) {
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
   }
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-    http.csrf(csrf -> csrf.disable()) // 세션 안써서 노필요
+    http.csrf(csrf -> csrf.disable())
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/auth/login", "/auth/signup", "/auth/verification/**")
+                auth
+                    // 1) 완전 공개 URL
+                    .requestMatchers(
+                        "/auth/login",
+                        "/auth/signup",
+                        "/auth/verification/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**",
+                        "/webjars/**",
+                        "/configuration/**")
                     .permitAll()
+                    // 2) 나머지는 인증 필요
                     .anyRequest()
                     .authenticated())
-        .addFilterBefore(
-            jwtAuthenticationFilter, // 직접 만든거 <<--이게 먼저
-            UsernamePasswordAuthenticationFilter.class // 여기선 이제 컨텍스트에 있는거 보고 판단
-            );
+        .exceptionHandling(e -> e.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
     return http.build();
   }
 
