@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "Auth", description = "Sign up / login / profile")
+@Tag(name = "Auth", description = "회원가입 / 로그인 / 내 정보 조회")
 public class AuthController {
 
     private final AuthService authService;
@@ -32,28 +32,28 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    @Operation(summary = "Sign up", description = "Create user with email/password/name/phone/marketing")
-    @ApiResponses({@ApiResponse(responseCode = "201", description = "Created"),
-            @ApiResponse(responseCode = "400", description = "Validation error"),
-            @ApiResponse(responseCode = "409", description = "Email already exists")})
+    @Operation(summary = "회원가입", description = "이메일/비밀번호/이름/전화번호/마케팅 동의로 사용자 생성")
+    @ApiResponses({@ApiResponse(responseCode = "201", description = "생성됨"),
+            @ApiResponse(responseCode = "400", description = "요청 값 검증 실패"),
+            @ApiResponse(responseCode = "409", description = "이미 존재하는 이메일")})
     public ResponseEntity<SignUpResult> signup(@RequestBody SignupRequest request) {
         var response = authService.signUp(request.toServiceRequest());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Login", description = "Login with email/password and issue tokens")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Login success"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")})
+    @Operation(summary = "로그인", description = "이메일/비밀번호로 로그인하고 토큰 발급")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "로그인 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패")})
     public ResponseEntity<LoginResult> login(@RequestBody LoginRequest request) {
         var response = authService.login(request.toServiceRequest());
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")
-    @Operation(summary = "My profile", description = "Returns current authenticated user info")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "OK"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")})
+    @Operation(summary = "내 프로필", description = "현재 인증된 사용자 정보를 반환")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요")})
     public ResponseEntity<MeResponse> getCurrentUser(@AuthenticationPrincipal AuthUserPrincipal principal) {
 
         MeResponse response = new MeResponse(principal.getUserId(), principal.getUsername(), principal.getRole());
