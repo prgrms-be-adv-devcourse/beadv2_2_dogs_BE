@@ -33,7 +33,7 @@ public class ProductSearchService {
         new ProductDocument(
             request.productId(),
             request.productName(),
-            request.category(),
+            request.productCategory(),
             request.price(),
             request.status(),
             Instant.now());
