@@ -5,11 +5,16 @@ import com.barofarm.auth.application.usecase.LoginCommand;
 import com.barofarm.auth.application.usecase.LoginResult;
 import com.barofarm.auth.application.usecase.SignUpCommand;
 import com.barofarm.auth.application.usecase.SignUpResult;
+import com.barofarm.auth.application.usecase.TokenResult;
 import com.barofarm.auth.domain.credential.AuthCredential;
+import com.barofarm.auth.domain.token.RefreshToken;
 import com.barofarm.auth.domain.user.User;
 import com.barofarm.auth.infrastructure.jpa.AuthCredentialJpaRepository;
+import com.barofarm.auth.infrastructure.jpa.RefreshTokenJpaRepository;
 import com.barofarm.auth.infrastructure.jpa.UserJpaRepository;
 import com.barofarm.auth.infrastructure.security.JwtTokenProvider;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,23 +26,27 @@ public class AuthService {
 
     private final UserJpaRepository userRepository;
     private final AuthCredentialJpaRepository credentialRepository;
+    private final RefreshTokenJpaRepository refreshTokenRepository;
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final Clock clock;
 
     public AuthService(UserJpaRepository userRepository, AuthCredentialJpaRepository credentialRepository,
-            EmailVerificationService emailVerificationService, PasswordEncoder passwordEncoder,
-            JwtTokenProvider jwtTokenProvider) {
+            RefreshTokenJpaRepository refreshTokenRepository, EmailVerificationService emailVerificationService,
+            PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, Clock clock) {
         this.userRepository = userRepository;
         this.credentialRepository = credentialRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
         this.emailVerificationService = emailVerificationService;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.clock = clock;
     }
 
     public SignUpResult signUp(SignUpCommand request) {
 
-        // 1. 이메일 인증 여부 확인
+        // 1. 이메일 인증 완료 확인
         emailVerificationService.ensureVerified(request.email());
 
         // 2. 이메일 중복 체크 -> USER와 AuthCredential 모두에서 email이 unique여야 함 -> Auth
@@ -54,9 +63,14 @@ public class AuthService {
         AuthCredential credential = AuthCredential.create(user.getId(), request.email(), encodedPassword);
         credentialRepository.save(credential);
 
-        // [추가] 토큰 발급
+        // 토큰 발급
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), "USER");
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail(), "USER");
+
+        // 기존 리프레시 토큰 제거 후 새 토큰 저장
+        refreshTokenRepository.deleteAllByUserId(user.getId());
+        refreshTokenRepository.save(
+                RefreshToken.issue(user.getId(), refreshToken, jwtTokenProvider.getRefreshTokenValidity()));
 
         return new SignUpResult(user.getId(), request.email(), accessToken, refreshToken);
     }
@@ -79,6 +93,44 @@ public class AuthService {
         String accessToken = jwtTokenProvider.generateAccessToken(userId, email, "USER");
         String refreshToken = jwtTokenProvider.generateRefreshToken(userId, email, "USER");
 
+        refreshTokenRepository.deleteAllByUserId(userId);
+        refreshTokenRepository.save(
+                RefreshToken.issue(userId, refreshToken, jwtTokenProvider.getRefreshTokenValidity()));
+
         return new LoginResult(userId, email, accessToken, refreshToken);
+    }
+
+    public TokenResult refresh(String refreshToken) {
+        RefreshToken stored = refreshTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."));
+
+        if (stored.isRevoked() || stored.isExpired(LocalDateTime.now(clock))) {
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, "사용할 수 없는 리프레시 토큰입니다.");
+        }
+
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 만료되었거나 위조되었습니다.");
+        }
+
+        Long userId = stored.getUserId();
+        String email = jwtTokenProvider.getEmail(refreshToken);
+
+        // 회전: 기존 토큰 폐기 후 새 토큰 저장
+        stored.revoke();
+        refreshTokenRepository.save(stored);
+
+        String newAccessToken = jwtTokenProvider.generateAccessToken(userId, email, "USER");
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId, email, "USER");
+        refreshTokenRepository.save(
+                RefreshToken.issue(userId, newRefreshToken, jwtTokenProvider.getRefreshTokenValidity()));
+
+        return new TokenResult(userId, email, newAccessToken, newRefreshToken);
+    }
+
+    public void logout(String refreshToken) {
+        refreshTokenRepository.findByToken(refreshToken).ifPresent(token -> {
+            token.revoke();
+            refreshTokenRepository.save(token);
+        });
     }
 }

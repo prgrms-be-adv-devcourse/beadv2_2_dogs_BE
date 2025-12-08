@@ -35,6 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 0-1) Swagger & 공개 URL은 아예 필터에서 건너뛰기 [개발과정에선]
         if (requestURI.startsWith("/swagger-ui") || requestURI.startsWith("/v3/api-docs")
                 || requestURI.startsWith("/auth/login") || requestURI.startsWith("/auth/signup")
+                || requestURI.startsWith("/auth/refresh") || requestURI.startsWith("/auth/logout")
                 || requestURI.startsWith("/auth/verification")) {
             filterChain.doFilter(request, response);
             return;

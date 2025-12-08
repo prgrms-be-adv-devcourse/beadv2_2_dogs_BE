@@ -26,10 +26,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         AuthCredential credential = credentialRepository.findByLoginEmail(email)
                 .orElseThrow(() -> new BusinessException(HttpStatus.BAD_GATEWAY, "" + email));
 
-        // userType / role 은 나중에 확장 가능
+        // userType / role 는 추후 확장 고려
         Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
 
-        return new org.springframework.security.core.userdetails.User(credential.getLoginEmail(),
-                credential.getPasswordHash(), authorities);
+        // UserDetails principal을 AuthUserPrincipal로 전달해 userId/role을 컨트롤러에서 활용
+        return new AuthUserPrincipal(credential.getUserId(), credential.getLoginEmail(), "USER");
     }
 }

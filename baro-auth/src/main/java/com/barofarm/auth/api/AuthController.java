@@ -1,11 +1,14 @@
 package com.barofarm.auth.api;
 
 import com.barofarm.auth.api.dto.LoginRequest;
+import com.barofarm.auth.api.dto.LogoutRequest;
 import com.barofarm.auth.api.dto.MeResponse;
+import com.barofarm.auth.api.dto.RefreshTokenRequest;
 import com.barofarm.auth.api.dto.SignupRequest;
 import com.barofarm.auth.application.AuthService;
 import com.barofarm.auth.application.usecase.LoginResult;
 import com.barofarm.auth.application.usecase.SignUpResult;
+import com.barofarm.auth.application.usecase.TokenResult;
 import com.barofarm.auth.infrastructure.security.AuthUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -48,6 +51,23 @@ public class AuthController {
     public ResponseEntity<LoginResult> login(@RequestBody LoginRequest request) {
         var response = authService.login(request.toServiceRequest());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "리프레시 토큰 재발급", description = "리프레시 토큰으로 액세스/리프레시 토큰을 재발급")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "재발급 성공"),
+            @ApiResponse(responseCode = "401", description = "리프레시 토큰 오류")})
+    public ResponseEntity<TokenResult> refresh(@RequestBody RefreshTokenRequest request) {
+        TokenResult response = authService.refresh(request.refreshToken());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "로그아웃", description = "리프레시 토큰을 폐기하여 로그아웃 처리")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "로그아웃 성공")})
+    public ResponseEntity<Void> logout(@RequestBody LogoutRequest request) {
+        authService.logout(request.refreshToken());
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
