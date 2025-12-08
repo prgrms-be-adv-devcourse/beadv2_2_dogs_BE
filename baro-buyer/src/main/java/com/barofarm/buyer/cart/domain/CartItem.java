@@ -58,6 +58,21 @@ public class CartItem {
     this.unitPrice = unitPrice;
   }
 
+  /* ====== 정적 팩토리 메소드 ====== */
+
+  /** 새 장바구니 항목 생성 */
+  public static CartItem create(UUID productId, Integer quantity, Long unitPrice, String optionInfoJson) {
+    CartItem item = new CartItem();
+    item.id = UUID.randomUUID();
+    item.productId = productId;
+    item.quantity = quantity;
+    item.unitPrice = unitPrice;
+    item.optionInfoJson = optionInfoJson;
+    item.createdAt = LocalDateTime.now();
+    item.updatedAt = LocalDateTime.now();
+    return item;
+  }
+
   /* ====== 비즈니스 메소드 ====== */
 
   /** 수량 증가 */

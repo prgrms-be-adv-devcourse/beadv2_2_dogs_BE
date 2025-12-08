@@ -45,6 +45,19 @@ public class Cart {
     this.items = items;
   }
 
+  /* ====== 정적 팩토리 메소드 ====== */
+
+  /** 새 장바구니 생성 */
+  public static Cart create(UUID buyerId) {
+    Cart cart = new Cart();
+    cart.id = UUID.randomUUID();
+    cart.buyerId = buyerId;
+    cart.items = new ArrayList<>();
+    cart.createdAt = LocalDateTime.now();
+    cart.updatedAt = LocalDateTime.now();
+    return cart;
+  }
+
   /* ====== 비즈니스 메소드 정리 ====== */
 
   /** 장바구니에 상품 추가 (같은 상품+옵션이면 병합) */
@@ -106,7 +119,9 @@ public class Cart {
   }
 
   private CartItem findSameItem(CartItem newItem) {
-    return items.stream().filter(i -> i.isSameProductAndOption(newItem)).findFirst().orElse(null);
+    return items.stream().filter(i -> i.isSameProductAndOption(newItem))
+        .findFirst()
+        .orElse(null);
   }
 
   /** 옵션 변경 후 병합 처리 */

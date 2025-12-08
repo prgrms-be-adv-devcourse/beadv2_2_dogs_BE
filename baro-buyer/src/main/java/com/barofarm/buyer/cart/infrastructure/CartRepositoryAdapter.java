@@ -7,7 +7,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-/** CartRepository 구현체 Domain Layer의 CartRepository 인터페이스를 구현 */
 @Repository
 @RequiredArgsConstructor
 public class CartRepositoryAdapter implements CartRepository {
@@ -27,15 +26,5 @@ public class CartRepositoryAdapter implements CartRepository {
   @Override
   public Optional<Cart> findByBuyerId(UUID buyerId) {
     return jpaRepository.findByBuyerId(buyerId);
-  }
-
-  @Override
-  public void deleteById(UUID cartId) {
-    jpaRepository.deleteById(cartId);
-  }
-
-  @Override
-  public boolean existsByBuyerId(UUID buyerId) {
-    return jpaRepository.existsByBuyerId(buyerId);
   }
 }
