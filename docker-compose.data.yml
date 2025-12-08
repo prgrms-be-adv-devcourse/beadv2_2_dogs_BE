@@ -92,8 +92,8 @@ services:
       start_period: 40s
 
 volumes:
-  redis-data:
-    driver: local
+  # redis-data:
+  #   driver: local
   mysql-data:
     driver: local
   kafka-data:
