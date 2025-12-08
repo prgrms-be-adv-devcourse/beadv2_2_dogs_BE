@@ -1,5 +1,7 @@
 package com.barofarm.seller.farm;
 
+import com.barofarm.seller.common.response.CustomPage;
+import com.barofarm.seller.common.response.ResponseDto;
 import com.barofarm.seller.config.BaseControllerSupport;
 import com.barofarm.seller.farm.application.dto.response.FarmCreateInfo;
 import com.barofarm.seller.farm.application.dto.response.FarmDetailInfo;
@@ -13,9 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.List;
 import java.util.UUID;
@@ -58,21 +58,21 @@ class FarmControllerTest extends BaseControllerSupport {
             );
 
             given(farmService.createFarm(eq(mockSellerId), any()))
-                .willReturn(ResponseEntity.status(HttpStatus.CREATED).body(response));
+                .willReturn(ResponseDto.ok(response));
 
             // when & then
             mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/farms")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(farmId.toString()))
-                .andExpect(jsonPath("$.name").value("테스트 농장"))
-                .andExpect(jsonPath("$.description").value("테스트 설명"))
-                .andExpect(jsonPath("$.address").value("서울시 송파구 잠실동"))
-                .andExpect(jsonPath("$.phone").value("010-1234-5678"))
-                .andExpect(jsonPath("$.status").value(ACTIVE.toString()))
-                .andExpect(jsonPath("$.sellerId").value("550e8400-e29b-41d4-a716-446655440000"));
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.id").value(farmId.toString()))
+                .andExpect(jsonPath("$.data.name").value("테스트 농장"))
+                .andExpect(jsonPath("$.data.description").value("테스트 설명"))
+                .andExpect(jsonPath("$.data.address").value("서울시 송파구 잠실동"))
+                .andExpect(jsonPath("$.data.phone").value("010-1234-5678"))
+                .andExpect(jsonPath("$.data.status").value(ACTIVE.toString()))
+                .andExpect(jsonPath("$.data.sellerId").value("550e8400-e29b-41d4-a716-446655440000"));
         }
 
         @ParameterizedTest(name = "{index}: name={0}, description={1}, address={2}, phone={3}")
@@ -151,21 +151,21 @@ class FarmControllerTest extends BaseControllerSupport {
             );
 
             given(farmService.updateFarm(eq(farmId), any()))
-                .willReturn(ResponseEntity.ok(response));
+                .willReturn(ResponseDto.ok(response));
 
             // when & then
             mockMvc.perform(put("/api/v1/farms/{id}", farmId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(farmId.toString()))
-                .andExpect(jsonPath("$.name").value("수정된 농장"))
-                .andExpect(jsonPath("$.description").value("수정된 설명"))
-                .andExpect(jsonPath("$.address").value("경기도 성남시 분당구"))
-                .andExpect(jsonPath("$.phone").value("010-9999-8888"))
-                .andExpect(jsonPath("$.status").value(ACTIVE.toString()))
-                .andExpect(jsonPath("$.sellerId").value("550e8400-e29b-41d4-a716-446655440000"));
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.id").value(farmId.toString()))
+                .andExpect(jsonPath("$.data.name").value("수정된 농장"))
+                .andExpect(jsonPath("$.data.description").value("수정된 설명"))
+                .andExpect(jsonPath("$.data.address").value("경기도 성남시 분당구"))
+                .andExpect(jsonPath("$.data.phone").value("010-9999-8888"))
+                .andExpect(jsonPath("$.data.status").value(ACTIVE.toString()))
+                .andExpect(jsonPath("$.data.sellerId").value("550e8400-e29b-41d4-a716-446655440000"));
         }
 
         @ParameterizedTest(name = "{index}: name={0}, description={1}, address={2}, phone={3}")
@@ -239,19 +239,19 @@ class FarmControllerTest extends BaseControllerSupport {
             );
 
             given(farmService.findFarm(eq(farmId)))
-                .willReturn(ResponseEntity.ok(response));
+                .willReturn(ResponseDto.ok(response));
 
             // when & then
             mockMvc.perform(get("/api/v1/farms/{id}", farmId))
-                .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(farmId.toString()))
-                .andExpect(jsonPath("$.name").value("테스트 농장"))
-                .andExpect(jsonPath("$.description").value("테스트 설명"))
-                .andExpect(jsonPath("$.address").value("서울시 송파구 잠실동"))
-                .andExpect(jsonPath("$.phone").value("010-1234-5678"))
-                .andExpect(jsonPath("$.status").value(ACTIVE.toString()))
-                .andExpect(jsonPath("$.sellerId").value(sellerId.toString()));
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.id").value(farmId.toString()))
+                .andExpect(jsonPath("$.data.name").value("테스트 농장"))
+                .andExpect(jsonPath("$.data.description").value("테스트 설명"))
+                .andExpect(jsonPath("$.data.address").value("서울시 송파구 잠실동"))
+                .andExpect(jsonPath("$.data.phone").value("010-1234-5678"))
+                .andExpect(jsonPath("$.data.status").value(ACTIVE.toString()))
+                .andExpect(jsonPath("$.data.sellerId").value(sellerId.toString()));
         }
     }
 
@@ -267,7 +267,7 @@ class FarmControllerTest extends BaseControllerSupport {
             UUID farmId2 = UUID.randomUUID();
             UUID sellerId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
 
-            List<FarmDetailInfo> response = List.of(
+            List<FarmDetailInfo> content = List.of(
                 new FarmDetailInfo(
                     farmId1,
                     "테스트 농장 1",
@@ -288,29 +288,42 @@ class FarmControllerTest extends BaseControllerSupport {
                 )
             );
 
+            CustomPage<FarmDetailInfo> customPage = new CustomPage<>(
+                content,
+                0,
+                10,
+                2,
+                1,
+                true,
+                true,
+                false,
+                false
+            );
+
             given(farmService.findFarmList(any(Pageable.class)))
-                .willReturn(ResponseEntity.ok(response));
+                .willReturn(ResponseDto.ok(customPage));
 
             // when & then
             mockMvc.perform(get("/api/v1/farms")
                     .param("page", "0")
                     .param("size", "10")
                     .param("sort", "name,asc"))
-                .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(farmId1.toString()))
-                .andExpect(jsonPath("$[0].name").value("테스트 농장 1"))
-                .andExpect(jsonPath("$[0].description").value("테스트 설명 1"))
-                .andExpect(jsonPath("$[0].address").value("서울시 송파구 잠실동 1"))
-                .andExpect(jsonPath("$[0].phone").value("010-1111-1111"))
-                .andExpect(jsonPath("$[0].status").value(ACTIVE.toString()))
-                .andExpect(jsonPath("$[1].id").value(farmId2.toString()))
-                .andExpect(jsonPath("$[1].name").value("테스트 농장 2"))
-                .andExpect(jsonPath("$[1].description").value("테스트 설명 2"))
-                .andExpect(jsonPath("$[1].address").value("서울시 송파구 잠실동 2"))
-                .andExpect(jsonPath("$[1].phone").value("010-2222-2222"))
-                .andExpect(jsonPath("$[1].status").value(ACTIVE.toString()));
+                .andExpect(jsonPath("$.data.content.length()").value(2))
+                .andExpect(jsonPath("$.data.content[0].id").value(farmId1.toString()))
+                .andExpect(jsonPath("$.data.content[0].name").value("테스트 농장 1"))
+                .andExpect(jsonPath("$.data.content[0].description").value("테스트 설명 1"))
+                .andExpect(jsonPath("$.data.content[0].address").value("서울시 송파구 잠실동 1"))
+                .andExpect(jsonPath("$.data.content[0].phone").value("010-1111-1111"))
+                .andExpect(jsonPath("$.data.content[0].status").value(ACTIVE.toString()))
+                .andExpect(jsonPath("$.data.content[0].sellerId").value(sellerId.toString()))
+                .andExpect(jsonPath("$.data.content[1].id").value(farmId2.toString()))
+                .andExpect(jsonPath("$.data.content[1].name").value("테스트 농장 2"))
+                .andExpect(jsonPath("$.data.content[1].description").value("테스트 설명 2"))
+                .andExpect(jsonPath("$.data.content[1].address").value("서울시 송파구 잠실동 2"))
+                .andExpect(jsonPath("$.data.content[1].phone").value("010-2222-2222"))
+                .andExpect(jsonPath("$.data.content[1].status").value(ACTIVE.toString()))
+                .andExpect(jsonPath("$.data.content[1].sellerId").value(sellerId.toString()));
         }
     }
 
@@ -326,7 +339,10 @@ class FarmControllerTest extends BaseControllerSupport {
 
             // when & then
             mockMvc.perform(delete("/api/v1/farms/{id}", farmId))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.message").doesNotExist());
         }
     }
 }

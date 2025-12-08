@@ -1,4 +1,4 @@
-package com.barofarm.seller.common;
+package com.barofarm.seller.common.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;

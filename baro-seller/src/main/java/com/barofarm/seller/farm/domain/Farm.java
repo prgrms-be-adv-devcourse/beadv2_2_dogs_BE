@@ -1,6 +1,6 @@
 package com.barofarm.seller.farm.domain;
 
-import com.barofarm.seller.common.BaseEntity;
+import com.barofarm.seller.common.entity.BaseEntity;
 import com.barofarm.seller.seller.domain.Seller;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

@@ -1,5 +1,8 @@
 package com.barofarm.seller.farm;
 
+import com.barofarm.seller.common.exception.CustomException;
+import com.barofarm.seller.common.response.CustomPage;
+import com.barofarm.seller.common.response.ResponseDto;
 import com.barofarm.seller.config.BaseServiceTest;
 import com.barofarm.seller.farm.application.dto.request.FarmCreateCommand;
 import com.barofarm.seller.farm.application.dto.request.FarmUpdateCommand;
@@ -7,17 +10,13 @@ import com.barofarm.seller.farm.application.dto.response.FarmCreateInfo;
 import com.barofarm.seller.farm.application.dto.response.FarmDetailInfo;
 import com.barofarm.seller.farm.application.dto.response.FarmUpdateInfo;
 import com.barofarm.seller.farm.domain.Farm;
-import com.barofarm.seller.farm.exception.FarmException;
 import com.barofarm.seller.seller.domain.Seller;
-import com.barofarm.seller.seller.exception.SellerException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import java.util.List;
 import java.util.UUID;
 import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_NOT_FOUND;
 import static com.barofarm.seller.seller.exception.SellerErrorCode.SELLER_NOT_FOUND;
@@ -44,15 +43,17 @@ class FarmServiceTest extends BaseServiceTest {
             );
 
             // when
-            ResponseEntity<FarmCreateInfo> response = farmService.createFarm(seller.getId(), command);
+            ResponseDto<FarmCreateInfo> response = farmService.createFarm(seller.getId(), command);
 
             // then
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-            assertThat(response.getBody().name()).isEqualTo("테스트 농장");
-            assertThat(response.getBody().description()).isEqualTo("테스트 설명");
-            assertThat(response.getBody().address()).isEqualTo("서울시 송파구 잠실동");
-            assertThat(response.getBody().phone()).isEqualTo("010-1234-5678");
-            assertThat(response.getBody().sellerId()).isEqualTo(seller.getId());
+            FarmCreateInfo data = response.data();
+            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+            assertThat(response.message()).isNull();
+            assertThat(data).isNotNull();
+            assertThat(data.name()).isEqualTo(command.name());
+            assertThat(data.description()).isEqualTo(command.description());
+            assertThat(data.address()).isEqualTo(command.address());
+            assertThat(data.phone()).isEqualTo(command.phone());
         }
 
         @Test
@@ -70,7 +71,7 @@ class FarmServiceTest extends BaseServiceTest {
 
             // when & then
             assertThatThrownBy(() -> farmService.createFarm(notExistSellerId, command))
-                .isInstanceOf(SellerException.class)
+                .isInstanceOf(CustomException.class)
                 .hasMessage(SELLER_NOT_FOUND.getMessage());
         }
     }
@@ -94,15 +95,17 @@ class FarmServiceTest extends BaseServiceTest {
             );
 
             // when
-            ResponseEntity<FarmUpdateInfo> response = farmService.updateFarm(farm.getId(), command);
+            ResponseDto<FarmUpdateInfo> response = farmService.updateFarm(farm.getId(), command);
 
             // then
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody().name()).isEqualTo("테스트 농장");
-            assertThat(response.getBody().description()).isEqualTo("테스트 설명");
-            assertThat(response.getBody().address()).isEqualTo("서울시 송파구 잠실동");
-            assertThat(response.getBody().phone()).isEqualTo("010-1234-5678");
-            assertThat(response.getBody().id()).isEqualTo(farm.getId());
+            FarmUpdateInfo data = response.data();
+            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+            assertThat(response.message()).isNull();
+            assertThat(data).isNotNull();
+            assertThat(data.name()).isEqualTo(command.name());
+            assertThat(data.description()).isEqualTo(command.description());
+            assertThat(data.address()).isEqualTo(command.address());
+            assertThat(data.phone()).isEqualTo(command.phone());
         }
 
         @Test
@@ -120,7 +123,7 @@ class FarmServiceTest extends BaseServiceTest {
 
             // when & then
             assertThatThrownBy(() -> farmService.updateFarm(notExistFarmId, farmUpdateCommand))
-                .isInstanceOf(FarmException.class)
+                .isInstanceOf(CustomException.class)
                 .hasMessage(FARM_NOT_FOUND.getMessage());
         }
     }
@@ -137,15 +140,17 @@ class FarmServiceTest extends BaseServiceTest {
             Farm farm = saveFarm(seller);
 
             // when
-            ResponseEntity<FarmDetailInfo> response = farmService.findFarm(farm.getId());
+            ResponseDto<FarmDetailInfo> response = farmService.findFarm(farm.getId());
 
             // then
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody().name()).isEqualTo("테스트 농장");
-            assertThat(response.getBody().description()).isEqualTo("테스트 설명");
-            assertThat(response.getBody().address()).isEqualTo("서울시 송파구 잠실동");
-            assertThat(response.getBody().phone()).isEqualTo("010-1234-5678");
-            assertThat(response.getBody().id()).isEqualTo(farm.getId());
+            FarmDetailInfo info = response.data();
+            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+            assertThat(info.id()).isEqualTo(farm.getId());
+            assertThat(info.name()).isEqualTo(farm.getName());
+            assertThat(info.description()).isEqualTo(farm.getDescription());
+            assertThat(info.address()).isEqualTo(farm.getAddress());
+            assertThat(info.phone()).isEqualTo(farm.getPhone());
+            assertThat(info.sellerId()).isEqualTo(seller.getId());
         }
 
         @Test
@@ -156,7 +161,7 @@ class FarmServiceTest extends BaseServiceTest {
 
             // when & then
             assertThatThrownBy(() -> farmService.findFarm(notExistFarmId))
-                .isInstanceOf(FarmException.class)
+                .isInstanceOf(CustomException.class)
                 .hasMessage(FARM_NOT_FOUND.getMessage());
         }
     }
@@ -166,16 +171,16 @@ class FarmServiceTest extends BaseServiceTest {
     class DeleteFarm {
 
         @Test
-        @DisplayName("정상적으로 농장을 삭제하고 204 응답을 반환한다")
+        @DisplayName("정상적으로 농장을 삭제하고 200 응답을 반환한다")
         void success() {
             // given
             Seller seller = saveSeller();
             Farm farm = saveFarm(seller);
 
-            ResponseEntity<Void> response = farmService.deleteFarm(farm.getId());
+            ResponseDto<Void> response = farmService.deleteFarm(farm.getId());
 
             // when & then
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
             assertThat(farmRepository.findById(farm.getId())).isEmpty();
         }
 
@@ -187,7 +192,7 @@ class FarmServiceTest extends BaseServiceTest {
 
             // when & then
             assertThatThrownBy(() -> farmService.findFarm(notExistFarmId))
-                .isInstanceOf(FarmException.class)
+                .isInstanceOf(CustomException.class)
                 .hasMessage(FARM_NOT_FOUND.getMessage());
         }
     }
@@ -205,15 +210,15 @@ class FarmServiceTest extends BaseServiceTest {
             Farm farm2 = saveFarm(seller);
             Farm farm3 = saveFarm(seller);
             Farm farm4 = saveFarm(seller);
-
             Pageable pageable = PageRequest.of(0, 2);
+
             // when
-            ResponseEntity<List<FarmDetailInfo>> response = farmService.findFarmList(pageable);
+            ResponseDto<CustomPage<FarmDetailInfo>> response = farmService.findFarmList(pageable);
 
             // then
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().size()).isEqualTo(2);
+            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+            assertThat(response.data()).isNotNull();
+            assertThat(response.data().content().size()).isEqualTo(2);
         }
     }
 
