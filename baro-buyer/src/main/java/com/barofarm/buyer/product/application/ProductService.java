@@ -8,10 +8,10 @@ import com.barofarm.buyer.product.domain.Product;
 import com.barofarm.buyer.product.domain.ProductRepository;
 import com.barofarm.buyer.product.domain.ProductStatus;
 import com.barofarm.buyer.product.exception.FarmErrorCode;
-import jakarta.transaction.Transactional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +20,7 @@ public class ProductService {
 
   private final ProductRepository productRepository;
 
+  @Transactional(readOnly = true)
   public ProductDetailInfo getProductDetail(UUID id) {
     Product product =
         productRepository
