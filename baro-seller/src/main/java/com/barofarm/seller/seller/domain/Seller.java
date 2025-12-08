@@ -36,6 +36,9 @@ public class Seller extends BaseEntity {
     @Column(name = "seller_status", nullable = false, length = 20)
     private Status status;
 
+    public boolean isActive() {
+        return this.status == Status.APPROVED;
+    }
 
     private Seller(UUID id,
                    String storeName,
@@ -62,7 +65,7 @@ public class Seller extends BaseEntity {
             businessOwnerName,
             settlementBank,
             settlementAccount,
-            Status.PENDING
+            Status.APPROVED
         );
     }
 }
