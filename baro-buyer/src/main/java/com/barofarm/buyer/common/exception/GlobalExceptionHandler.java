@@ -11,7 +11,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(CustomException.class)
   public ResponseEntity<ResponseDto<Void>> handleCustomException(CustomException e) {
-    HttpStatus status = e.getErrorCode().getHttpStatus();
+    HttpStatus status = e.getErrorCode().getStatus();
 
     return ResponseEntity.status(status)
         .body(ResponseDto.error(status, e.getErrorCode().getMessage()));
