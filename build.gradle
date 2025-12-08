@@ -30,7 +30,7 @@ subprojects {
     }
 
     ext {
-        set('springCloudVersion', "2023.0.5")
+        set('springCloudVersion', "2023.0.3")
     }
 
     dependencyManagement {
@@ -112,7 +112,7 @@ tasks.register('format') {
     ':baro-cloud:gateway-service', ':baro-cloud:config-server', ':baro-cloud:eureka-server'
 ].each { servicePath ->
     project(servicePath) {
-        bootJar.enabled = false
+        bootJar.enabled = true
         jar.enabled = true
     }
 }

@@ -16,6 +16,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+/**
+ * JWT 인증 필터. [1] Gateway 라우트에서 AuthenticationFilter를 적용한 요청만 통과하며, Authorization 헤더의 Bearer 토큰을
+ * 검증한다. [2] 검증된 사용자 식별자/역할을 X-User-* 헤더로 Downstream 서비스에 전달해 추가 인증 로직을 단순화한다. [3] Swagger 같은 공개 경로는
+ * 필터를 우회하여 개발 편의를 보장한다.
+ */
 @Component
 public class AuthenticationFilter
     extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
@@ -33,14 +38,13 @@ public class AuthenticationFilter
       ServerHttpRequest request = exchange.getRequest();
 
       String path = request.getPath().value();
-      // 스웨거 문서 호출은 인증을 건너뛰어야 401/403 없이 로드된다.
-      if (path.startsWith("/api/auth/swagger-ui")
-          || path.startsWith("/api/auth/v3/api-docs")
-          || path.startsWith("/api/auth/swagger-resources")) {
+      // [3] 문서/테스트 경로는 인증 없이 접근 가능하도록 즉시 통과(모든 서비스 공통 Swagger 경로)
+      if (isSwaggerPath(path)) {
         return chain.filter(exchange);
       }
 
       String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+      // [1] 인증 헤더가 없거나 Bearer 스킴이 아니면 즉시 401 반환
       if (authHeader == null) {
         return onError(exchange, "No Authorization header", HttpStatus.UNAUTHORIZED);
       }
@@ -51,9 +55,9 @@ public class AuthenticationFilter
       String token = authHeader.substring(7);
 
       try {
-        Claims claims = validateToken(token);
+        Claims claims = validateToken(token); // [1] 서명 검증 + 만료 확인
 
-        // 사용자 정보를 헤더에 추가
+        // [2] Downstream 서비스가 재파싱 없이 사용자 정보를 활용하도록 헤더에 주입
         ServerHttpRequest modifiedRequest =
             request
                 .mutate()
@@ -70,13 +74,23 @@ public class AuthenticationFilter
 
   private Claims validateToken(String token) {
     SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-    return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+    return Jwts.parser()
+        .verifyWith(key)
+        .build()
+        .parseSignedClaims(token)
+        .getPayload(); // [1] HMAC-SHA256 서명 검증 및 클레임 추출
+  }
+
+  private boolean isSwaggerPath(String path) {
+    return path.contains("/swagger-ui")
+        || path.contains("/v3/api-docs")
+        || path.contains("/swagger-resources");
   }
 
   private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus status) {
     ServerHttpResponse response = exchange.getResponse();
     response.setStatusCode(status);
-    return response.setComplete();
+    return response.setComplete(); // [1] 바디 없이 상태 코드만 반환(게이트웨이 표준)
   }
 
   public static class Config {

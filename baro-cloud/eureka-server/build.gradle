@@ -1,4 +1,5 @@
 dependencies {
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server' // [1] 서비스 등록/발견 레지스트리 활성화
+    implementation 'org.springframework.boot:spring-boot-starter-actuator' // [2] 헬스/메트릭 노출로 상태 모니터링
 }
 

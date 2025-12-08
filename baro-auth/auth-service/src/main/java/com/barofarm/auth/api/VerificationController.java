@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 // 코드 발송 및 검증하기(이메일 코드 발송, 인증 코드)
 @RestController
-@RequestMapping("/auth/verification")
+@RequestMapping("auth/verification")
 @Tag(name = "Email Verification", description = "이메일 인증코드 발송 및 확인")
 public class VerificationController {
 

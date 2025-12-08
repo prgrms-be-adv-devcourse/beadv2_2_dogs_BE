@@ -79,3 +79,75 @@ http
 
 4. 토큰 담는 곳 아직 구현 안함 -> 이후 이거 이용해서 게이트웨이 및 buyer / seller랑
 5. AOP, Gateway관련
+
+---
+[251208 구조 다시 정리]
+
+## 로그인부터 API 호출까지의 전체 플로우
+
+### 단계 1: 로그인 & 토큰 발급
+
+```
+1. 사용자 → API Gateway
+   POST /auth/login
+   Body: { "email": "user@example.com", "password": "123456" }
+
+2. API Gateway → Auth-service
+   (라우팅만 수행, 검증 안 함)
+
+3. Auth-service
+   - 이메일/비밀번호 검증
+   - DB에서 사용자 정보 조회
+   - JWT 생성:
+     * sub: userId (예: 123)
+     * roles: ["ROLE_BUYER"]
+     * exp: 30분 후
+
+4. Auth-service → 클라이언트
+   Response: {
+     "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+     "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+   }
+```
+
+**JWT Payload 예시:**
+```json
+{
+  "sub": "123",
+  "roles": ["ROLE_BUYER"],
+  "email": "user@example.com",
+  "iat": 1701234567,
+  "exp": 1701236367
+}
+```
+
+### 단계 2: 보호된 API 호출
+
+```
+1. 사용자 → API Gateway
+   GET /buyers/me
+   Headers: {
+     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIs..."
+   }
+
+2. API Gateway
+   [패턴 A] JWT 검증 후 통과/차단
+   [패턴 B] 검증 없이 라우팅만 수행
+   → buyer-service로 전달
+
+3. Buyer-service
+   - JWT 검증 (자체 SecurityConfig)
+   - ROLE_BUYER 권한 확인
+   - userId 추출하여 비즈니스 로직 수행
+
+4. Buyer-service → 클라이언트
+   Response: {
+     "id": 123,
+     "name": "홍길동",
+     "email": "user@example.com"
+   }
+```
+
+---
+
+

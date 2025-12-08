@@ -1,21 +1,25 @@
 server:
-  port: 8888
+  port: 8888 # [1] README 기준 Config Server 고정 포트(다른 서비스가 부트 단계에서 찾기 쉽게 고정)
 
 spring:
   application:
-    name: config-server
+    name: config-server # [2] 설정 조회 URL과 Eureka 서비스 ID에 사용
   profiles:
-    active: native
+    active: native # [3] 로컬 개발에서는 classpath:/config 사용(Git 없이 동작)
   cloud:
     config:
       server:
         native:
-          search-locations: classpath:/config
+          search-locations: classpath:/config # [4] native 모드에서 설정 파일이 위치한 경로(배포 시 git 모드로 교체)
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://localhost:8761/eureka/ # [5] README 포트(8761) 기반 Eureka 주소
   instance:
-    prefer-ip-address: true
+    prefer-ip-address: true # [6] 호스트명 대신 IP 노출로 DNS 미설정 환경에서 연결 실패 방지
+
+# [footnotes]
+# [1] Config Server는 게이트웨이/마이크로서비스보다 먼저 기동해야 설정 부트스트랩 오류를 막을 수 있다.
+# [3] 운영/테스트 환경에서는 spring.profiles.active=git 과 함께 spring.cloud.config.server.git.* 설정을 추가해 중앙 Git 저장소를 사용한다.
 
