@@ -398,7 +398,7 @@ docker logs baro-gateway
 # - 환경 변수 누락
 
 # 순서대로 시작
-docker-compose -f docker-compose.prod.yml up -d redis kafka zookeeper
+docker-compose -f docker-compose.prod.yml up -d redis kafka
 sleep 30
 docker-compose -f docker-compose.prod.yml up -d eureka
 sleep 30

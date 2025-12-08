@@ -71,6 +71,7 @@ baro-farm/
   - Spring Data Redis
 - **Message Queue**
   - Confluent Kafka 7.6.0 (Apache Kafka 호환)
+  - KRaft 모드 (Zookeeper 불필요)
   - Spring for Apache Kafka
 - **Code Quality**
   - Spotless 7.0.2 (Google Java Format 1.25.2)
@@ -130,15 +131,15 @@ Git hooks가 설치되어 있으면 커밋할 때 자동으로 검사합니다.
 **Docker Compose로 한 번에 실행 (권장):**
 
 ```bash
-# 모든 인프라 서비스 실행 (Redis + Kafka + Zookeeper)
-docker-compose up -d
+# 모든 인프라 서비스 실행 (Redis + Kafka KRaft 모드)
+docker-compose -f docker-compose.data.yml up -d
 
 # 특정 서비스만 실행
-docker-compose -f docker-compose-redis.yml up -d   # Redis만
-docker-compose -f docker-compose-kafka.yml up -d   # Kafka만
+docker-compose -f docker-compose.data.yml up -d redis   # Redis만
+docker-compose -f docker-compose.data.yml up -d kafka   # Kafka만
 
 # 중지
-docker-compose down
+docker-compose -f docker-compose.data.yml down
 ```
 
 **개별 실행:**
@@ -147,9 +148,23 @@ docker-compose down
 # Redis (6379)
 docker run -d --name baro-redis -p 6379:6379 redis:7.2
 
-# Kafka (9092) - Confluent Platform
-docker run -d --name baro-zookeeper -p 2181:2181 -e ZOOKEEPER_CLIENT_PORT=2181 confluentinc/cp-zookeeper:7.6.0
-docker run -d --name baro-kafka -p 9092:9092 -e KAFKA_ZOOKEEPER_CONNECT=host.docker.internal:2181 -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 confluentinc/cp-kafka:7.6.0
+# Kafka (9092) - KRaft 모드 (Zookeeper 불필요)
+docker run -d --name baro-kafka \
+  -p 9092:9092 \
+  -p 9093:9093 \
+  -e KAFKA_PROCESS_ROLES=broker,controller \
+  -e KAFKA_NODE_ID=1 \
+  -e KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093 \
+  -e KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093 \
+  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
+  -e KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+  -e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT \
+  -e KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT \
+  -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+  -e KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 \
+  -e KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 \
+  -e KAFKA_AUTO_CREATE_TOPICS_ENABLE=true \
+  confluentinc/cp-kafka:7.6.0
 ```
 
 **📚 상세 가이드:**
@@ -200,7 +215,7 @@ java -jar baro-support/build/libs/baro-support-0.0.1-SNAPSHOT.jar
 | 구분 | 모듈 | 포트 | 포함 도메인 |
 |------|------|------|------------|
 | **인프라** | redis | 6379 | Cache Server |
-| | kafka | 9092 | Message Broker |
+| | kafka | 9092, 9093 | Message Broker (KRaft 모드) |
 | **Spring Cloud** | eureka | 8761 | Service Registry |
 | | config | 8888 | Config Server |
 | | gateway | 8080 | API Gateway |
