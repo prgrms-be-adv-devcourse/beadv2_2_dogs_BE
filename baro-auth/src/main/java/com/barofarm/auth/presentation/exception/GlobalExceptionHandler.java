@@ -1,4 +1,4 @@
-package com.barofarm.auth.api.exception;
+package com.barofarm.auth.presentation.exception;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

@@ -1,15 +1,15 @@
-package com.barofarm.auth.api;
+package com.barofarm.auth.presentation;
 
-import com.barofarm.auth.api.dto.LoginRequest;
-import com.barofarm.auth.api.dto.LogoutRequest;
-import com.barofarm.auth.api.dto.MeResponse;
-import com.barofarm.auth.api.dto.RefreshTokenRequest;
-import com.barofarm.auth.api.dto.SignupRequest;
 import com.barofarm.auth.application.AuthService;
 import com.barofarm.auth.application.usecase.LoginResult;
 import com.barofarm.auth.application.usecase.SignUpResult;
 import com.barofarm.auth.application.usecase.TokenResult;
 import com.barofarm.auth.infrastructure.security.AuthUserPrincipal;
+import com.barofarm.auth.presentation.dto.LoginRequest;
+import com.barofarm.auth.presentation.dto.LogoutRequest;
+import com.barofarm.auth.presentation.dto.MeResponse;
+import com.barofarm.auth.presentation.dto.RefreshTokenRequest;
+import com.barofarm.auth.presentation.dto.SignupRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -74,6 +74,7 @@ public class AuthController {
     @Operation(summary = "내 프로필", description = "현재 인증된 사용자 정보를 반환")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "성공"),
             @ApiResponse(responseCode = "401", description = "인증 필요")})
+    @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<MeResponse> getCurrentUser(@AuthenticationPrincipal AuthUserPrincipal principal) {
 
         MeResponse response = new MeResponse(principal.getUserId(), principal.getUsername(), principal.getRole());

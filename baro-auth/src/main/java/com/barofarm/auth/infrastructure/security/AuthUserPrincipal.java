@@ -2,23 +2,24 @@ package com.barofarm.auth.infrastructure.security;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 public class AuthUserPrincipal implements UserDetails {
 
-    private final Long userId;
+    private final UUID userId;
     private final String email;
     private final String role;
 
-    public AuthUserPrincipal(Long userId, String email, String role) {
+    public AuthUserPrincipal(UUID userId, String email, String role) {
         this.userId = userId;
         this.email = email;
         this.role = role;
     }
 
-    public Long getUserId() {
+    public UUID getUserId() {
         return userId;
     }
 
@@ -33,7 +34,7 @@ public class AuthUserPrincipal implements UserDetails {
 
     @Override
     public String getPassword() {
-        return ""; // JWT 기반이라 여기선 사용하지 않음
+        return ""; // JWT 인증이라 비밀번호는 사용하지 않음
     }
 
     @Override

@@ -1,21 +1,34 @@
 package com.barofarm.auth.domain.user;
 
+import com.barofarm.auth.common.entity.BaseEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.util.UUID;
+import lombok.Getter;
 
+@Getter
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends BaseEntity{
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", columnDefinition = "BINARY(16)")
+    private UUID id;
 
+    @Column(name = "email", nullable = false, length = 320, unique = true)
     private String email;
+
+    @Column(name = "name", nullable = false, length = 50)
     private String name;
+
+    @Column(name = "phone", nullable = false, length = 30)
     private String phone;
+
+    @Column(name = "marketing_consent", nullable = false)
     private boolean marketingConsent;
 
     // 생성자 보호
@@ -34,24 +47,4 @@ public class User {
         return new User(email, name, phone, marketingConsent);
     }
 
-    // getter만 만들어 놓기 일단
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public boolean isMarketingConsent() {
-        return marketingConsent;
-    }
 }

@@ -1,4 +1,4 @@
-package com.barofarm.auth.api.exception;
+package com.barofarm.auth.presentation.exception;
 
 public class ErrorResponse {
     private final String message;

@@ -1,8 +1,8 @@
-package com.barofarm.auth.api;
+package com.barofarm.auth.presentation;
 
-import com.barofarm.auth.api.dto.SendCodeRequest;
-import com.barofarm.auth.api.dto.VerifyCodeRequest;
 import com.barofarm.auth.application.EmailVerificationService;
+import com.barofarm.auth.presentation.dto.SendCodeRequest;
+import com.barofarm.auth.presentation.dto.VerifyCodeRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

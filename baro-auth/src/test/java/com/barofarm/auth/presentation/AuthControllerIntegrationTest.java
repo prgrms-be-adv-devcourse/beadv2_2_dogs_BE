@@ -1,4 +1,4 @@
-package com.barofarm.auth.api;
+package com.barofarm.auth.presentation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -6,9 +6,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.barofarm.auth.api.dto.LoginRequest;
-import com.barofarm.auth.api.dto.SignupRequest;
-import com.barofarm.auth.api.dto.VerifyCodeRequest;
 import com.barofarm.auth.domain.credential.AuthCredential;
 import com.barofarm.auth.domain.token.RefreshToken;
 import com.barofarm.auth.domain.user.User;
@@ -18,9 +15,15 @@ import com.barofarm.auth.infrastructure.jpa.EmailVerificationJpaRepository;
 import com.barofarm.auth.infrastructure.jpa.RefreshTokenJpaRepository;
 import com.barofarm.auth.infrastructure.jpa.UserJpaRepository;
 import com.barofarm.auth.infrastructure.security.JwtTokenProvider;
+import com.barofarm.auth.presentation.dto.LoginRequest;
+import com.barofarm.auth.presentation.dto.SignupRequest;
+import com.barofarm.auth.presentation.dto.VerifyCodeRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HexFormat;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,6 +41,8 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc
 @Transactional
 class AuthControllerIntegrationTest {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     @Autowired
     private MockMvc mockMvc;
@@ -85,10 +90,10 @@ class AuthControllerIntegrationTest {
             SignupRequest payload = new SignupRequest(email, password, "Jane Doe", "010-1234-5678", true);
 
             // when & then
-            MvcResult result = mockMvc.perform(post("/auth/signup").contentType(MediaType.APPLICATION_JSON)
+            mockMvc.perform(post("/auth/signup").contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(payload))).andExpect(status().isCreated())
                     .andExpect(jsonPath("$.email").value(email)).andExpect(jsonPath("$.accessToken").isNotEmpty())
-                    .andExpect(jsonPath("$.refreshToken").isNotEmpty()).andReturn();
+                    .andExpect(jsonPath("$.refreshToken").isNotEmpty());
 
             // then: DB 상태 검증
             assertThat(userRepository.count()).isEqualTo(1);
@@ -101,7 +106,8 @@ class AuthControllerIntegrationTest {
 
             assertThat(savedUser.getEmail()).isEqualTo(email);
             assertThat(savedUser.isMarketingConsent()).isTrue();
-            assertThat(passwordEncoder.matches(password, savedCredential.getPasswordHash())).isTrue();
+            assertThat(passwordEncoder.matches(password + savedCredential.getSalt(), savedCredential.getPasswordHash()))
+                    .isTrue();
             assertThat(savedRefresh.getUserId()).isEqualTo(savedUser.getId());
             assertThat(savedRefresh.isRevoked()).isFalse();
             // 인증 기록은 삭제되어야 한다
@@ -125,15 +131,16 @@ class AuthControllerIntegrationTest {
             String email = "login@example.com";
             String rawPassword = "Secr3t!";
             User user = userRepository.save(User.create(email, "Login User", "010-0000-0000", false));
-            credentialRepository.save(AuthCredential.create(user.getId(), email, passwordEncoder.encode(rawPassword)));
+            saveCredential(user.getId(), email, rawPassword);
 
             LoginRequest payload = new LoginRequest(email, rawPassword);
 
             // when & then
             mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(payload))).andExpect(status().isOk())
-                    .andExpect(jsonPath("$.userId").value(user.getId())).andExpect(jsonPath("$.email").value(email))
-                    .andExpect(jsonPath("$.accessToken").isNotEmpty()).andExpect(jsonPath("$.refreshToken").isNotEmpty());
+                    .andExpect(jsonPath("$.userId").value(user.getId().toString()))
+                    .andExpect(jsonPath("$.email").value(email)).andExpect(jsonPath("$.accessToken").isNotEmpty())
+                    .andExpect(jsonPath("$.refreshToken").isNotEmpty());
 
             assertThat(refreshTokenRepository.count()).isEqualTo(1);
         }
@@ -144,7 +151,7 @@ class AuthControllerIntegrationTest {
             // given
             String email = "login-fail@example.com";
             User user = userRepository.save(User.create(email, "Login Fail", "010-9999-9999", false));
-            credentialRepository.save(AuthCredential.create(user.getId(), email, passwordEncoder.encode("Correct1!")));
+            saveCredential(user.getId(), email, "Correct1!");
 
             LoginRequest payload = new LoginRequest(email, "WrongPass1!");
 
@@ -164,12 +171,12 @@ class AuthControllerIntegrationTest {
             // given
             String email = "me@example.com";
             User user = userRepository.save(User.create(email, "Me User", "010-7777-7777", false));
-            credentialRepository.save(AuthCredential.create(user.getId(), email, passwordEncoder.encode("MePass1!")));
+            saveCredential(user.getId(), email, "MePass1!");
             String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), email, "USER");
 
             // when & then
             mockMvc.perform(get("/auth/me").header("Authorization", bearer(accessToken)))
-                    .andExpect(status().isOk()).andExpect(jsonPath("$.userId").value(user.getId()))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.userId").value(user.getId().toString()))
                     .andExpect(jsonPath("$.email").value(email)).andExpect(jsonPath("$.role").value("USER"));
         }
     }
@@ -185,7 +192,7 @@ class AuthControllerIntegrationTest {
             String email = "rotate@example.com";
             String rawPassword = "Rotate1!";
             User user = userRepository.save(User.create(email, "Rotate User", "010-3333-3333", false));
-            credentialRepository.save(AuthCredential.create(user.getId(), email, passwordEncoder.encode(rawPassword)));
+            saveCredential(user.getId(), email, rawPassword);
 
             LoginRequest loginPayload = new LoginRequest(email, rawPassword);
             MvcResult loginResult = mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
@@ -215,7 +222,8 @@ class AuthControllerIntegrationTest {
             String email = "expired@example.com";
             User user = userRepository.save(User.create(email, "Expired User", "010-4444-4444", false));
             String expiredToken = jwtTokenProvider.generateRefreshToken(user.getId(), email, "USER");
-            RefreshToken expired = RefreshToken.issueWithExpiry(user.getId(), expiredToken, LocalDateTime.now().minusMinutes(1));
+            RefreshToken expired = RefreshToken.issueWithExpiry(user.getId(), expiredToken,
+                    LocalDateTime.now().minusMinutes(1));
             expired.revoke();
             refreshTokenRepository.save(expired);
 
@@ -285,7 +293,19 @@ class AuthControllerIntegrationTest {
         emailVerificationJpaRepository.save(verification);
     }
 
+    private void saveCredential(UUID userId, String email, String rawPassword) {
+        String salt = generateSalt();
+        String hash = passwordEncoder.encode(rawPassword + salt);
+        credentialRepository.save(AuthCredential.create(userId, email, hash, salt));
+    }
+
     private String bearer(String token) {
         return "Bearer " + token;
+    }
+
+    private String generateSalt() {
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        return HexFormat.of().formatHex(bytes);
     }
 }

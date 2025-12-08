@@ -8,7 +8,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import lombok.Getter;
 
+@Getter
 @Entity
 @Table(name = "email_verification")
 public class EmailVerification {

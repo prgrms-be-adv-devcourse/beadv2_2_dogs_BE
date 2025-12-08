@@ -1,5 +1,6 @@
 package com.barofarm.auth.domain.token;
 
+import com.barofarm.auth.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,17 +9,19 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_token")
-public class RefreshToken {
+public class RefreshToken extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID id;
 
-    @Column(nullable = false)
-    private Long userId;
+    @Column(nullable = false, columnDefinition = "BINARY(16)")
+    private UUID userId;
 
     @Column(nullable = false, unique = true, length = 512)
     private String token;
@@ -29,27 +32,23 @@ public class RefreshToken {
     @Column(nullable = false)
     private boolean revoked;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     protected RefreshToken() {
     }
 
-    private RefreshToken(Long userId, String token, LocalDateTime expiresAt) {
+    private RefreshToken(UUID userId, String token, LocalDateTime expiresAt) {
         this.userId = userId;
         this.token = token;
         this.expiresAt = expiresAt;
         this.revoked = false;
-        this.createdAt = LocalDateTime.now();
     }
 
-    public static RefreshToken issue(Long userId, String token, Duration validity) {
+    public static RefreshToken issue(UUID userId, String token, Duration validity) {
         LocalDateTime expiresAt = LocalDateTime.now().plus(validity);
         return new RefreshToken(userId, token, expiresAt);
     }
 
     /** 테스트 등에서 만료 토큰 직접 생성 시 사용 */
-    public static RefreshToken issueWithExpiry(Long userId, String token, LocalDateTime expiresAt) {
+    public static RefreshToken issueWithExpiry(UUID userId, String token, LocalDateTime expiresAt) {
         return new RefreshToken(userId, token, expiresAt);
     }
 
@@ -61,11 +60,11 @@ public class RefreshToken {
         this.revoked = true;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public Long getUserId() {
+    public UUID getUserId() {
         return userId;
     }
 
@@ -79,9 +78,5 @@ public class RefreshToken {
 
     public boolean isRevoked() {
         return revoked;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
     }
 }

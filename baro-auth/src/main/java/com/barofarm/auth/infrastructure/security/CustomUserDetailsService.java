@@ -1,8 +1,8 @@
 package com.barofarm.auth.infrastructure.security;
 
-import com.barofarm.auth.api.exception.BusinessException;
 import com.barofarm.auth.domain.credential.AuthCredential;
 import com.barofarm.auth.infrastructure.jpa.AuthCredentialJpaRepository;
+import com.barofarm.auth.presentation.exception.BusinessException;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.http.HttpStatus;

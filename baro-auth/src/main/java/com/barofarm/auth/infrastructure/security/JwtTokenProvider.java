@@ -27,19 +27,19 @@ public class JwtTokenProvider {
         this.refreshTokenValidityMs = refreshTokenValidityMs;
     }
 
-    public String generateAccessToken(Long userId, String email, String userType) {
+    public String generateAccessToken(UUID userId, String email, String userType) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenValidityMs);
 
-        return Jwts.builder().setSubject(email).claim("uid", userId).claim("ut", userType).setIssuedAt(now)
-                .setExpiration(expiry).signWith(key, SignatureAlgorithm.HS256).compact();
+        return Jwts.builder().setSubject(email).claim("uid", userId.toString()).claim("ut", userType)
+                .setIssuedAt(now).setExpiration(expiry).signWith(key, SignatureAlgorithm.HS256).compact();
     }
 
-    public String generateRefreshToken(Long userId, String email, String userType) {
+    public String generateRefreshToken(UUID userId, String email, String userType) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + refreshTokenValidityMs);
 
-        return Jwts.builder().setSubject(email).claim("uid", userId).claim("ut", userType)
+        return Jwts.builder().setSubject(email).claim("uid", userId.toString()).claim("ut", userType)
                 .claim("jti", UUID.randomUUID().toString()).setIssuedAt(now).setExpiration(expiry)
                 .signWith(key, SignatureAlgorithm.HS256).compact();
     }
@@ -57,9 +57,9 @@ public class JwtTokenProvider {
         return parseClaims(token).getSubject();
     }
 
-    public Long getUserId(String token) {
-        Number uid = parseClaims(token).get("uid", Number.class);
-        return uid == null ? null : uid.longValue();
+    public UUID getUserId(String token) {
+        String uid = parseClaims(token).get("uid", String.class);
+        return uid == null ? null : UUID.fromString(uid);
     }
 
     public Duration getRefreshTokenValidity() {

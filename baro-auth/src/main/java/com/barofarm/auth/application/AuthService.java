@@ -1,6 +1,5 @@
 package com.barofarm.auth.application;
 
-import com.barofarm.auth.api.exception.BusinessException;
 import com.barofarm.auth.application.usecase.LoginCommand;
 import com.barofarm.auth.application.usecase.LoginResult;
 import com.barofarm.auth.application.usecase.SignUpCommand;
@@ -13,8 +12,12 @@ import com.barofarm.auth.infrastructure.jpa.AuthCredentialJpaRepository;
 import com.barofarm.auth.infrastructure.jpa.RefreshTokenJpaRepository;
 import com.barofarm.auth.infrastructure.jpa.UserJpaRepository;
 import com.barofarm.auth.infrastructure.security.JwtTokenProvider;
+import com.barofarm.auth.presentation.exception.BusinessException;
+import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.HexFormat;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class AuthService {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserJpaRepository userRepository;
     private final AuthCredentialJpaRepository credentialRepository;
@@ -58,9 +63,10 @@ public class AuthService {
         User user = User.create(request.email(), request.name(), request.phone(), request.marketingConsent());
         userRepository.save(user);
 
-        // 4. AuthCredential 생성 및 저장
-        String encodedPassword = passwordEncoder.encode(request.password());
-        AuthCredential credential = AuthCredential.create(user.getId(), request.email(), encodedPassword);
+        // 4. AuthCredential 생성 및 저장 (salt 포함)
+        String salt = generateSalt();
+        String encodedPassword = passwordEncoder.encode(request.password() + salt);
+        AuthCredential credential = AuthCredential.create(user.getId(), request.email(), encodedPassword, salt);
         credentialRepository.save(credential);
 
         // 토큰 발급
@@ -81,12 +87,12 @@ public class AuthService {
         AuthCredential credential = credentialRepository.findByLoginEmail(loginCommand.email())
                 .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."));
 
-        // 2. 비밀번호 매칭
-        if (!passwordEncoder.matches(loginCommand.password(), credential.getPasswordHash())) {
+        // 2. 비밀번호 매칭 (salt 활용)
+        if (!passwordEncoder.matches(loginCommand.password() + credential.getSalt(), credential.getPasswordHash())) {
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        Long userId = credential.getUserId();
+        UUID userId = credential.getUserId();
         String email = credential.getLoginEmail();
 
         // 3. 토큰 발급
@@ -112,7 +118,7 @@ public class AuthService {
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 만료되었거나 위조되었습니다.");
         }
 
-        Long userId = stored.getUserId();
+        UUID userId = stored.getUserId();
         String email = jwtTokenProvider.getEmail(refreshToken);
 
         // 회전: 기존 토큰 폐기 후 새 토큰 저장
@@ -132,5 +138,11 @@ public class AuthService {
             token.revoke();
             refreshTokenRepository.save(token);
         });
+    }
+
+    private String generateSalt() {
+        byte[] bytes = new byte[32]; // 32 bytes -> 64 hex chars
+        RANDOM.nextBytes(bytes);
+        return HexFormat.of().formatHex(bytes);
     }
 }
