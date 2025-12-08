@@ -75,7 +75,7 @@ subprojects {
             target 'src/*/java/**/*.java'
             importOrder()
             removeUnusedImports()
-            googleJavaFormat('1.25.2')
+            leadingTabsToSpaces(4)
             trimTrailingWhitespace()
             endWithNewline()
         }

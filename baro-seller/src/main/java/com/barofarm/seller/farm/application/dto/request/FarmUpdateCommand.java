@@ -7,4 +7,3 @@ public record FarmUpdateCommand (
     String phone
 ) {
 }
-

@@ -1,8 +1,12 @@
 package com.barofarm.seller.farm;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.barofarm.seller.config.BaseRepositoryTest;
 import com.barofarm.seller.farm.domain.Farm;
 import com.barofarm.seller.farm.infrastructure.FarmRepositoryAdapter;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -10,9 +14,6 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import java.util.Optional;
-import java.util.UUID;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(FarmRepositoryAdapter.class)
 @DataJpaTest

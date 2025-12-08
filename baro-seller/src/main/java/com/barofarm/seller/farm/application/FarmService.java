@@ -1,5 +1,8 @@
 package com.barofarm.seller.farm.application;
 
+import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_NOT_FOUND;
+import static com.barofarm.seller.seller.exception.SellerErrorCode.SELLER_NOT_FOUND;
+
 import com.barofarm.seller.common.exception.CustomException;
 import com.barofarm.seller.common.response.CustomPage;
 import com.barofarm.seller.common.response.ResponseDto;
@@ -12,14 +15,12 @@ import com.barofarm.seller.farm.domain.Farm;
 import com.barofarm.seller.farm.domain.FarmRepository;
 import com.barofarm.seller.seller.domain.Seller;
 import com.barofarm.seller.seller.domain.SellerRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.UUID;
-import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_NOT_FOUND;
-import static com.barofarm.seller.seller.exception.SellerErrorCode.SELLER_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor

@@ -2,7 +2,6 @@ package com.barofarm.seller.farm.application.dto.response;
 
 import com.barofarm.seller.farm.domain.Farm;
 import com.barofarm.seller.farm.domain.Status;
-
 import java.util.UUID;
 
 public record FarmUpdateInfo(

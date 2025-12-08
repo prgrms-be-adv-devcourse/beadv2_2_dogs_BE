@@ -2,10 +2,10 @@ package com.barofarm.seller.seller.infrastructure;
 
 import com.barofarm.seller.seller.domain.Seller;
 import com.barofarm.seller.seller.domain.SellerRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

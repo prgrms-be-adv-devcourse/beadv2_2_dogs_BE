@@ -2,12 +2,12 @@ package com.barofarm.seller.farm.infrastructure;
 
 import com.barofarm.seller.farm.domain.Farm;
 import com.barofarm.seller.farm.domain.FarmRepository;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
-import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor

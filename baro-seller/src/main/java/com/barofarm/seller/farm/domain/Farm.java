@@ -3,10 +3,10 @@ package com.barofarm.seller.farm.domain;
 import com.barofarm.seller.common.entity.BaseEntity;
 import com.barofarm.seller.seller.domain.Seller;
 import jakarta.persistence.*;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.util.UUID;
 
 @Entity
 @Getter
