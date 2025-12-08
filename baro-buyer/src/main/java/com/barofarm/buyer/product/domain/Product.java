@@ -113,7 +113,9 @@ public class Product extends BaseEntity {
 
   private void validateConstructorParams(
       UUID sellerId, String productName, ProductCategory category, Integer price, Integer stock) {
-    if (sellerId == null) throw new CustomException(ProductErrorCode.SELLER_NULL);
+    if (sellerId == null) {
+      throw new CustomException(ProductErrorCode.SELLER_NULL);
+    }
     validateCommonFields(productName, category, price, stock);
   }
 
@@ -124,22 +126,36 @@ public class Product extends BaseEntity {
       Integer stock,
       ProductStatus status) {
     validateCommonFields(productName, category, price, stock);
-    if (status == null) throw new CustomException(ProductErrorCode.STATUS_NULL);
+    if (status == null) {
+      throw new CustomException(ProductErrorCode.STATUS_NULL);
+    }
   }
 
   private void validateCommonFields(
       String productName, ProductCategory category, Integer price, Integer stock) {
-    if (productName == null) throw new CustomException(ProductErrorCode.PRODUCT_NAME_NULL);
-    if (productName.isBlank()) throw new CustomException(ProductErrorCode.PRODUCT_NAME_EMPTY);
-    if (productName.length() > 50)
+    if (productName == null) {
+      throw new CustomException(ProductErrorCode.PRODUCT_NAME_NULL);
+    }
+    if (productName.isBlank()) {
+      throw new CustomException(ProductErrorCode.PRODUCT_NAME_EMPTY);
+    }
+    if (productName.length() > 50) {
       throw new CustomException(ProductErrorCode.PRODUCT_NAME_TOO_LONG);
-
-    if (category == null) throw new CustomException(ProductErrorCode.CATEGORY_NULL);
-
-    if (price == null) throw new CustomException(ProductErrorCode.PRICE_NULL);
-    if (price < 0) throw new CustomException(ProductErrorCode.INVALID_PRICE);
-
-    if (stock == null) throw new CustomException(ProductErrorCode.STOCK_NULL);
-    if (stock < 0) throw new CustomException(ProductErrorCode.INVALID_STOCK);
+    }
+    if (category == null) {
+      throw new CustomException(ProductErrorCode.CATEGORY_NULL);
+    }
+    if (price == null) {
+      throw new CustomException(ProductErrorCode.PRICE_NULL);
+    }
+    if (price < 0) {
+      throw new CustomException(ProductErrorCode.INVALID_PRICE);
+    }
+    if (stock == null) {
+      throw new CustomException(ProductErrorCode.STOCK_NULL);
+    }
+    if (stock < 0) {
+      throw new CustomException(ProductErrorCode.INVALID_STOCK);
+    }
   }
 }
