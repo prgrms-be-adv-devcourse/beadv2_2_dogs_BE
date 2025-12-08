@@ -3,7 +3,6 @@ package com.barofarm.buyer.product.application.dto;
 import com.barofarm.buyer.product.domain.Product;
 import com.barofarm.buyer.product.domain.ProductCategory;
 import com.barofarm.buyer.product.domain.ProductStatus;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -13,7 +12,7 @@ public record ProductDetailInfo(
     String productName,
     String description,
     ProductCategory productCategory,
-    BigDecimal price,
+    Integer price,
     Integer stockQuantity,
     ProductStatus productStatus,
     LocalDateTime createdAt,

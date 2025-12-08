@@ -1,7 +1,6 @@
 package com.barofarm.buyer.product.application.dto;
 
 import com.barofarm.buyer.product.domain.ProductCategory;
-import java.math.BigDecimal;
 import java.util.UUID;
 
 public record ProductCreateCommand(
@@ -10,5 +9,5 @@ public record ProductCreateCommand(
     String productName,
     String description,
     ProductCategory productCategory,
-    BigDecimal price,
+    Integer price,
     Integer stockQuantity) {}
