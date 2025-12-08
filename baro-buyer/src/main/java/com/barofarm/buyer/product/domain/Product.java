@@ -1,17 +1,15 @@
 package com.barofarm.buyer.product.domain;
 
+import com.barofarm.buyer.common.entity.BaseEntity;
 import com.barofarm.buyer.common.exception.CustomException;
-import com.barofarm.buyer.common.exception.ErrorCode;
+import com.barofarm.buyer.product.exception.FarmErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "product")
 @NoArgsConstructor
 @Getter
-public class Product {
+public class Product extends BaseEntity {
 
   @Id private UUID id;
 
@@ -48,12 +46,6 @@ public class Product {
   @Column(name = "product_status", nullable = false)
   private ProductStatus productStatus;
 
-  @Column(name = "created_at", nullable = false)
-  private LocalDateTime createdAt;
-
-  @Column(name = "updated_at", nullable = false)
-  private LocalDateTime updatedAt;
-
   @Builder
   private Product(
       UUID sellerId,
@@ -71,8 +63,6 @@ public class Product {
     this.price = price;
     this.stockQuantity = stockQuantity;
     this.productStatus = productStatus;
-    this.createdAt = LocalDateTime.now();
-    this.updatedAt = LocalDateTime.now();
   }
 
   public static Product create(
@@ -112,25 +102,7 @@ public class Product {
 
   public void validateOwner(UUID memberId) {
     if (!this.sellerId.equals(memberId)) {
-      throw new CustomException(ErrorCode.FORBIDDEN_NOT_PRODUCT_OWNER);
+      throw new CustomException(FarmErrorCode.FORBIDDEN_NOT_PRODUCT_OWNER);
     }
-  }
-
-  @PrePersist
-  public void onCreate() {
-    if (id == null) {
-      id = UUID.randomUUID();
-    }
-    if (createdAt == null) {
-      createdAt = LocalDateTime.now();
-    }
-    if (updatedAt == null) {
-      updatedAt = createdAt;
-    }
-  }
-
-  @PreUpdate
-  public void onUpdate() {
-    updatedAt = LocalDateTime.now();
   }
 }

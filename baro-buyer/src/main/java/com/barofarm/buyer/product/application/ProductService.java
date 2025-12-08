@@ -1,19 +1,21 @@
 package com.barofarm.buyer.product.application;
 
 import com.barofarm.buyer.common.exception.CustomException;
-import com.barofarm.buyer.common.exception.ErrorCode;
 import com.barofarm.buyer.product.application.dto.ProductCreateCommand;
 import com.barofarm.buyer.product.application.dto.ProductDetailInfo;
 import com.barofarm.buyer.product.application.dto.ProductUpdateCommand;
 import com.barofarm.buyer.product.domain.Product;
 import com.barofarm.buyer.product.domain.ProductRepository;
 import com.barofarm.buyer.product.domain.ProductStatus;
+import com.barofarm.buyer.product.exception.FarmErrorCode;
+import jakarta.transaction.Transactional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ProductService {
 
   private final ProductRepository productRepository;
@@ -22,7 +24,7 @@ public class ProductService {
     Product product =
         productRepository
             .findById(id)
-            .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(FarmErrorCode.PRODUCT_NOT_FOUND));
 
     return ProductDetailInfo.from(product);
   }
@@ -53,7 +55,7 @@ public class ProductService {
     Product product =
         productRepository
             .findById(id)
-            .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(FarmErrorCode.PRODUCT_NOT_FOUND));
 
     //    MemberRole memberRole = MemberRole.from(role);
     //
@@ -78,7 +80,7 @@ public class ProductService {
     Product product =
         productRepository
             .findById(id)
-            .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(FarmErrorCode.PRODUCT_NOT_FOUND));
 
     //    MemberRole memberRole = MemberRole.from(role);
     //
@@ -89,7 +91,5 @@ public class ProductService {
     product.validateOwner(memberId);
 
     productRepository.deleteById(id);
-
-    return;
   }
 }
