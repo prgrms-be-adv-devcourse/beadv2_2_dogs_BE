@@ -61,7 +61,8 @@ subprojects {
             target 'src/*/java/**/*.java'
             importOrder()
             removeUnusedImports()
-            googleJavaFormat('1.25.2')
+            eclipse()  // Eclipse formatter
+            leadingTabsToSpaces(4)  // 탭을 4칸 스페이스로 변환
             trimTrailingWhitespace()
             endWithNewline()
         }
