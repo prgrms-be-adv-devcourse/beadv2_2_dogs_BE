@@ -41,7 +41,7 @@ public class CartItem {
   private Long unitPrice;
 
   @Schema(description = "장바구니 항목의 옵션 정보를 JSON 형태로 저장")
-  @Column(name = "option_info_json", nullable = false)
+  @Column(name = "option_info_json")
   private String optionInfoJson;
 
   @Column(name = "created_at", nullable = false, updatable = false)

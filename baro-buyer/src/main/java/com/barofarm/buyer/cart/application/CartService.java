@@ -2,9 +2,12 @@ package com.barofarm.buyer.cart.application;
 
 import com.barofarm.buyer.cart.application.dto.AddItemCommand;
 import com.barofarm.buyer.cart.application.dto.CartInfo;
+import com.barofarm.buyer.cart.application.dto.CartValidationInfo;
 import com.barofarm.buyer.cart.domain.Cart;
 import com.barofarm.buyer.cart.domain.CartItem;
 import com.barofarm.buyer.cart.domain.CartRepository;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -126,6 +129,48 @@ public class CartService {
     cartRepository.delete(guestCart);
 
     return CartInfo.from(userCart);
+  }
+
+  // TODO product 파트와 연결해야 작동
+  @Transactional
+  public CartValidationInfo validateForCheckout(UUID buyerId, String sessionKey) {
+      // 1. 장바구니 조회
+      Cart cart = findCart(buyerId, sessionKey);
+
+      // ?
+      List<CartValidationInfo.ValidationError> errors = new ArrayList<>();
+
+      // 2. 상품/옵션/재고 검증
+      for (CartItem item : cart.getItems()) {
+          UUID productId = item.getProductId();
+
+          // 재고 체크: Product MSA 호출
+//          int currentStock = productClient.getStock(productId);
+//          if (currentStock < item.getQuantity()) {
+//              errors.add(new CartValidationInfo.ValidationError(
+//                  productId,
+//                  "재고 부족"
+//              ));
+//          }
+//
+//          // 가격 체크: Product MSA 호출
+//          Long currentPrice = productClient.getPrice(productId);
+//          if (!currentPrice.equals(item.getUnitPrice())) {
+//              errors.add(new CartValidationInfo.ValidationError(
+//                  productId,
+//                  "현재 가격이 변경되었습니다."
+//              ));
+//          }
+      }
+
+      // 3. 오류가 있으면 실패 반환
+      if (!errors.isEmpty()) {
+          return CartValidationInfo.error(errors);
+      }
+
+      // 4. 총 금액 계산해서 성공 반환
+      Long finalTotalPrice = cart.calculateTotalPrice();
+      return CartValidationInfo.success(cart.getId(), finalTotalPrice);
   }
 
   /* ====== 내부 헬퍼 메소드 ====== */
