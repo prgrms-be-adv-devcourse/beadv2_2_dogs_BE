@@ -172,3 +172,6 @@ http
 - 오류 코드 enum 추가: AuthErrorCode, VerificationErrorCode, ValidationErrorCode (com.barofarm.auth.exception).
 - GlobalExceptionHandler(공통)만 사용해 BindException/CustomException을 처리.
 - 서비스/보안/테스트 전부 새 CustomException + 오류 코드로 교체.
+
+DI 정리 (2025-12-09)
+- 서비스/컨트롤러/시큐리티 서비스의 생성자 주입을 Lombok @RequiredArgsConstructor로 통일.

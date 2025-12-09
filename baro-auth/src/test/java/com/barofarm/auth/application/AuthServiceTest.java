@@ -134,8 +134,11 @@ class AuthServiceTest {
         when(refreshTokenRepository.findByToken(refresh)).thenReturn(Optional.of(stored));
         when(jwtTokenProvider.validateToken(refresh)).thenReturn(true);
         when(jwtTokenProvider.getEmail(refresh)).thenReturn("user@example.com");
-        when(jwtTokenProvider.generateAccessToken(userId, "user@example.com", "USER")).thenReturn("new-access");
-        when(jwtTokenProvider.generateRefreshToken(userId, "user@example.com", "USER")).thenReturn("new-refresh");
+        User user = User.create("user@example.com", "user", "010", false);
+        ReflectionTestUtils.setField(user, "id", userId);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(jwtTokenProvider.generateAccessToken(userId, "user@example.com", "CUSTOMER")).thenReturn("new-access");
+        when(jwtTokenProvider.generateRefreshToken(userId, "user@example.com", "CUSTOMER")).thenReturn("new-refresh");
         when(jwtTokenProvider.getRefreshTokenValidity()).thenReturn(Duration.ofDays(14));
 
         TokenResult result = authService.refresh(refresh);

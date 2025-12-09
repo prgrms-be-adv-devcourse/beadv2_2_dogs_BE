@@ -6,6 +6,7 @@ import com.barofarm.auth.exception.AuthErrorCode;
 import com.barofarm.auth.infrastructure.jpa.AuthCredentialJpaRepository;
 import java.util.Collection;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,13 +14,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final AuthCredentialJpaRepository credentialRepository;
-
-    public CustomUserDetailsService(AuthCredentialJpaRepository credentialRepository) {
-        this.credentialRepository = credentialRepository;
-    }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws CustomException {

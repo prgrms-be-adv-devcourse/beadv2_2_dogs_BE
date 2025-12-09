@@ -22,12 +22,14 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AuthService {
 
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -39,18 +41,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final Clock clock;
-
-    public AuthService(UserJpaRepository userRepository, AuthCredentialJpaRepository credentialRepository,
-            RefreshTokenJpaRepository refreshTokenRepository, EmailVerificationService emailVerificationService,
-            PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, Clock clock) {
-        this.userRepository = userRepository;
-        this.credentialRepository = credentialRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
-        this.emailVerificationService = emailVerificationService;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.clock = clock;
-    }
 
     public SignUpResult signUp(SignUpCommand request) {
         emailVerificationService.ensureVerified(request.email());

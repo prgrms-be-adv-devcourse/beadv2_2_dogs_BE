@@ -9,12 +9,13 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Random;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class EmailVerificationService {
 
     private static final Duration DEFAULT_TTL = Duration.ofMinutes(5);
@@ -22,14 +23,6 @@ public class EmailVerificationService {
     private final EmailVerificationJpaRepository repository;
     private final EmailCodeSender emailCodeSender;
     private final Clock clock;
-
-    @Autowired
-    public EmailVerificationService(EmailVerificationJpaRepository repository, EmailCodeSender emailCodeSender,
-            Clock clock) {
-        this.repository = repository;
-        this.emailCodeSender = emailCodeSender;
-        this.clock = clock;
-    }
 
     public void sendVerification(String email) {
         String code = generateCode();
