@@ -1,5 +1,6 @@
 package com.barofarm.seller.farm.application;
 
+import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_FORBIDDEN;
 import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_NOT_FOUND;
 import static com.barofarm.seller.seller.exception.SellerErrorCode.SELLER_NOT_FOUND;
 
@@ -47,10 +48,14 @@ public class FarmService {
     }
 
     @Transactional
-    public ResponseDto<FarmUpdateInfo> updateFarm(UUID farmId, FarmUpdateCommand command) {
+    public ResponseDto<FarmUpdateInfo> updateFarm(UUID mockSellerId, UUID farmId, FarmUpdateCommand command) {
 
         Farm farm = farmRepository.findById(farmId)
             .orElseThrow(() -> new CustomException(FARM_NOT_FOUND));
+
+        if (!farm.getSeller().getId().equals(mockSellerId)) {
+            throw new CustomException(FARM_FORBIDDEN);
+        }
 
         farm.update(command.name(), command.description(), command.address(), command.phone());
 
@@ -67,9 +72,13 @@ public class FarmService {
     }
 
     @Transactional
-    public ResponseDto<Void> deleteFarm(UUID farmId) {
+    public ResponseDto<Void> deleteFarm(UUID mockSellerId, UUID farmId) {
         Farm farm = farmRepository.findById(farmId)
             .orElseThrow(() -> new CustomException(FARM_NOT_FOUND));
+
+        if (!farm.getSeller().getId().equals(mockSellerId)) {
+            throw new CustomException(FARM_FORBIDDEN);
+        }
 
         farmRepository.deleteById(farmId);
 

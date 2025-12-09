@@ -55,6 +55,11 @@ public interface FarmSwaggerApi {
             content = @Content(mediaType = "application/json")
         ),
         @ApiResponse(
+            responseCode = "403",
+            description = "농장 수정 권한 없음 (FARM_FORBIDDEN)",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
             responseCode = "404",
             description = "농장을 찾을 수 없음 (FARM_NOT_FOUND)",
             content = @Content(mediaType = "application/json")
@@ -98,6 +103,11 @@ public interface FarmSwaggerApi {
         @ApiResponse(
             responseCode = "200",
             description = "농장 삭제 성공",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "농장 수정 권한 없음 (FARM_FORBIDDEN)",
             content = @Content(mediaType = "application/json")
         ),
         @ApiResponse(

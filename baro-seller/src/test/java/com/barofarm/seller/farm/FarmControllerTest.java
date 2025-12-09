@@ -151,7 +151,7 @@ class FarmControllerTest extends BaseControllerSupport {
                 mockSellerId
             );
 
-            given(farmService.updateFarm(eq(farmId), any()))
+            given(farmService.updateFarm(any(UUID.class), eq(farmId), any()))
                 .willReturn(ResponseDto.ok(response));
 
             // when & then
@@ -337,6 +337,9 @@ class FarmControllerTest extends BaseControllerSupport {
         void success() throws Exception {
             // given
             UUID farmId = UUID.randomUUID();
+
+            given(farmService.deleteFarm(any(UUID.class), eq(farmId)))
+                .willReturn(ResponseDto.ok(null));
 
             // when & then
             mockMvc.perform(delete("/api/v1/farms/{id}", farmId))

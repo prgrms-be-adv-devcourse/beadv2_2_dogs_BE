@@ -1,5 +1,6 @@
 package com.barofarm.seller.farm;
 
+import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_FORBIDDEN;
 import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_NOT_FOUND;
 import static com.barofarm.seller.seller.exception.SellerErrorCode.SELLER_NOT_FOUND;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -96,7 +97,7 @@ class FarmServiceTest extends BaseServiceTest {
             );
 
             // when
-            ResponseDto<FarmUpdateInfo> response = farmService.updateFarm(farm.getId(), command);
+            ResponseDto<FarmUpdateInfo> response = farmService.updateFarm(seller.getId(), farm.getId(), command);
 
             // then
             FarmUpdateInfo data = response.data();
@@ -113,6 +114,7 @@ class FarmServiceTest extends BaseServiceTest {
         @DisplayName("존재하지 않는 농장 ID로 요청하면 FarmException을 발생시킨다")
         void fail_farm_not_found() {
             // given
+            Seller seller = saveSeller();
             UUID notExistFarmId = UUID.randomUUID();
 
             FarmUpdateCommand farmUpdateCommand = new FarmUpdateCommand(
@@ -123,9 +125,30 @@ class FarmServiceTest extends BaseServiceTest {
             );
 
             // when & then
-            assertThatThrownBy(() -> farmService.updateFarm(notExistFarmId, farmUpdateCommand))
+            assertThatThrownBy(() -> farmService.updateFarm(seller.getId(), notExistFarmId, farmUpdateCommand))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(FARM_NOT_FOUND.getMessage());
+        }
+
+        @Test
+        @DisplayName("다른 판매자의 농장을 수정하면 FARM_FORBIDDEN 예외를 발생시킨다")
+        void fail_farm_forbidden() {
+            // given
+            Seller owner = saveSeller();
+            Seller otherSeller = saveSeller();
+            Farm farm = saveFarm(owner);
+
+            FarmUpdateCommand command = new FarmUpdateCommand(
+                "테스트 농장",
+                "테스트 설명",
+                "서울시 송파구 잠실동",
+                "010-1234-5678"
+            );
+
+            // when & then
+            assertThatThrownBy(() -> farmService.updateFarm(otherSeller.getId(), farm.getId(), command))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(FARM_FORBIDDEN.getMessage());
         }
     }
 
@@ -178,7 +201,7 @@ class FarmServiceTest extends BaseServiceTest {
             Seller seller = saveSeller();
             Farm farm = saveFarm(seller);
 
-            ResponseDto<Void> response = farmService.deleteFarm(farm.getId());
+            ResponseDto<Void> response = farmService.deleteFarm(seller.getId(), farm.getId());
 
             // when & then
             assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
@@ -189,12 +212,27 @@ class FarmServiceTest extends BaseServiceTest {
         @DisplayName("존재하지 않는 농장 ID로 요청하면 FarmException을 발생시킨다")
         void fail_farm_not_found() {
             // given
+            Seller seller = saveSeller();
             UUID notExistFarmId = UUID.randomUUID();
 
             // when & then
-            assertThatThrownBy(() -> farmService.findFarm(notExistFarmId))
+            assertThatThrownBy(() -> farmService.deleteFarm(seller.getId(), notExistFarmId))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(FARM_NOT_FOUND.getMessage());
+        }
+
+        @Test
+        @DisplayName("다른 판매자의 농장을 삭제하면 FARM_FORBIDDEN 예외를 발생시킨다")
+        void fail_farm_forbidden() {
+            // given
+            Seller owner = saveSeller();
+            Seller otherSeller = saveSeller(); // 권한 없는 판매자
+            Farm farm = saveFarm(owner);
+
+            // when & then
+            assertThatThrownBy(() -> farmService.deleteFarm(otherSeller.getId(), farm.getId()))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(FARM_FORBIDDEN.getMessage());
         }
     }
 

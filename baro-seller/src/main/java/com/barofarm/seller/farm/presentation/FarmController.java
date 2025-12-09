@@ -31,7 +31,8 @@ public class FarmController implements FarmSwaggerApi{
     @PutMapping("/{id}")
     public ResponseDto<FarmUpdateInfo> updateFarm(@PathVariable("id") UUID id,
                                                      @Valid @RequestBody FarmUpdateRequestDto request) {
-        return farmService.updateFarm(id, request.toCommand());
+        UUID mockSellerId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+        return farmService.updateFarm(mockSellerId, id, request.toCommand());
     }
 
     @GetMapping("/{id}")
@@ -46,7 +47,8 @@ public class FarmController implements FarmSwaggerApi{
 
     @DeleteMapping("/{id}")
     public ResponseDto<Void> deleteFarm(@PathVariable("id") UUID id) {
-        farmService.deleteFarm(id);
+        UUID mockSellerId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+        farmService.deleteFarm(mockSellerId, id);
         return ResponseDto.ok(null);
     }
 }
