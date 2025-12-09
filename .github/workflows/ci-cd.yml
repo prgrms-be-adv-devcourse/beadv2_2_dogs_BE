@@ -184,8 +184,10 @@ jobs:
   deploy:
     name: Deploy Module to AWS EC2
     runs-on: ubuntu-latest
-    needs: build-and-test  # docker-build가 건너뛰어질 수 있으므로 build-and-test에만 의존
-    if: startsWith(github.ref, 'refs/heads/main-') || startsWith(github.ref, 'refs/heads/dev-')
+    needs: [build-and-test, determine-service]  # determine-service에서 모듈명 가져오기
+    if: |
+      (startsWith(github.ref, 'refs/heads/main-') || startsWith(github.ref, 'refs/heads/dev-')) &&
+      needs.determine-service.outputs.service != ''
     
     steps:
       - name: Checkout code
@@ -210,6 +212,9 @@ jobs:
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
           
+          # 모듈명 확인 (디버깅용)
+          echo "Deploying module: ${MODULE_NAME}"
+          
           # EC2에 배포 디렉토리 생성
           ssh -i private_key.pem -o StrictHostKeyChecking=no \
             ${USER}@${HOST} "mkdir -p /home/${USER}/apps/BE"
@@ -221,7 +226,7 @@ jobs:
           scp -i private_key.pem -o StrictHostKeyChecking=no \
             ./docker-compose.*.yml ${USER}@${HOST}:/home/${USER}/apps/BE/
           
-          # 모듈별 배포 스크립트 실행 (GITHUB_TOKEN 전달)
+          # 모듈별 배포 스크립트 실행 (GITHUB_TOKEN 전달, 모듈명을 인자로 전달)
           ssh -i private_key.pem -o StrictHostKeyChecking=no \
             ${USER}@${HOST} "cd /home/${USER}/apps/BE && GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} bash ./deploy-module.sh ${MODULE_NAME}"
           
