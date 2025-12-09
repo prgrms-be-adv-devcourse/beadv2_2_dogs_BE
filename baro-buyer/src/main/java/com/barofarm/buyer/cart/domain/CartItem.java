@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
 
@@ -36,7 +37,7 @@ public class CartItem {
   private Integer quantity;
 
   @Schema(description = "단가")
-  @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
+  @Column(name = "unit_price", nullable = false)
   private Long unitPrice;
 
   @Schema(description = "장바구니 항목의 옵션 정보를 JSON 형태로 저장")
@@ -50,13 +51,6 @@ public class CartItem {
   private LocalDateTime updatedAt;
 
   public CartItem() {}
-
-  public CartItem(UUID id, UUID productId, Integer quantity, Long unitPrice) {
-    this.id = id;
-    this.productId = productId;
-    this.quantity = quantity;
-    this.unitPrice = unitPrice;
-  }
 
   /* ====== 정적 팩토리 메소드 ====== */
 
@@ -107,7 +101,7 @@ public class CartItem {
   /** 상품 UUID + 옵션 JSON이 동일한지 비교 */
   public boolean isSameProductAndOption(CartItem other) {
     return this.productId.equals(other.productId)
-        && this.optionInfoJson.equals(other.optionInfoJson);
+        && Objects.equals(this.optionInfoJson, other.optionInfoJson);
   }
 
   /* ====== Cart와의 연관관계 관리 ====== */

@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface CartJpaRepository extends JpaRepository<Cart, UUID> {
 
   Optional<Cart> findByBuyerId(UUID buyerId);
+
+    Optional<Cart> findBySessionKey(String sessionKey);
 }

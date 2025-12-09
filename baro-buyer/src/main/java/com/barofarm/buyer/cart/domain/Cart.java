@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -23,9 +25,18 @@ public class Cart {
   @Id
   private UUID id;
 
-  @Schema(description = "유저 UUID")
-  @Column(name = "buyer_id", nullable = false)
+  @Schema(description = "유저 UUID (로그인 사용자)")
+  @Column(name = "buyer_id")
   private UUID buyerId;
+
+    @Schema(description = "session key (비로그인 사용자)")
+    @Column(name = "session_key")
+    private String sessionKey;
+
+    @Schema(description = "장바구니 상태 관리")
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CartStatus status; // ACTIVE, MERGED, EXPIRED
 
   @Schema(description = "장바구니 안의 개별 상품")
   @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -39,19 +50,26 @@ public class Cart {
 
   public Cart() {}
 
-  public Cart(UUID id, UUID buyerId, List<CartItem> items) {
-    this.id = id;
-    this.buyerId = buyerId;
-    this.items = items;
-  }
-
   /* ====== 정적 팩토리 메소드 ====== */
 
-  /** 새 장바구니 생성 */
+  /** 로그인 사용자용 장바구니 생성 */
   public static Cart create(UUID buyerId) {
     Cart cart = new Cart();
     cart.id = UUID.randomUUID();
     cart.buyerId = buyerId;
+    cart.status = CartStatus.ACTIVE;
+    cart.items = new ArrayList<>();
+    cart.createdAt = LocalDateTime.now();
+    cart.updatedAt = LocalDateTime.now();
+    return cart;
+  }
+
+  /** 비로그인 사용자용 장바구니 생성 */
+  public static Cart createForGuest(String sessionKey) {
+    Cart cart = new Cart();
+    cart.id = UUID.randomUUID();
+    cart.sessionKey = sessionKey;
+    cart.status = CartStatus.ACTIVE;
     cart.items = new ArrayList<>();
     cart.createdAt = LocalDateTime.now();
     cart.updatedAt = LocalDateTime.now();

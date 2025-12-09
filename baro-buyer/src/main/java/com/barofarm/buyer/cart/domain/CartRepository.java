@@ -7,7 +7,9 @@ public interface CartRepository {
 
   Cart save(Cart cart);
 
-  Optional<Cart> findById(UUID cartId);
-
   Optional<Cart> findByBuyerId(UUID buyerId);
+
+  Optional<Cart> findBySessionKey(String sessionKey);
+
+  void delete(Cart cart);
 }

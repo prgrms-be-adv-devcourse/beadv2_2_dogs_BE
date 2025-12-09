@@ -19,12 +19,17 @@ public class CartRepositoryAdapter implements CartRepository {
   }
 
   @Override
-  public Optional<Cart> findById(UUID cartId) {
-    return jpaRepository.findById(cartId);
+  public Optional<Cart> findByBuyerId(UUID buyerId) {
+    return jpaRepository.findByBuyerId(buyerId);
   }
 
   @Override
-  public Optional<Cart> findByBuyerId(UUID buyerId) {
-    return jpaRepository.findByBuyerId(buyerId);
+  public Optional<Cart> findBySessionKey(String sessionKey) {
+    return jpaRepository.findBySessionKey(sessionKey);
+  }
+
+  @Override
+  public void delete(Cart cart) {
+    jpaRepository.delete(cart);  // JpaRepository 내장 메소드 사용
   }
 }
