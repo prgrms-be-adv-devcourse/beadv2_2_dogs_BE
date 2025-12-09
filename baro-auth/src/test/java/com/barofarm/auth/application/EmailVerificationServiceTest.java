@@ -7,9 +7,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.barofarm.auth.application.port.out.EmailCodeSender;
+import com.barofarm.auth.common.exception.CustomException;
 import com.barofarm.auth.domain.verification.EmailVerification;
+import com.barofarm.auth.exception.VerificationErrorCode;
 import com.barofarm.auth.infrastructure.jpa.EmailVerificationJpaRepository;
-import com.barofarm.auth.presentation.exception.BusinessException;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -22,7 +23,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -87,7 +87,8 @@ class EmailVerificationServiceTest {
                 .thenReturn(Optional.of(verification));
 
         assertThatThrownBy(() -> emailVerificationService.verifyCode("expired@example.com", "999999"))
-                .isInstanceOf(BusinessException.class).extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
+                .isInstanceOf(CustomException.class).extracting("errorCode")
+                .isEqualTo(VerificationErrorCode.CODE_EXPIRED);
     }
 
     @Test
@@ -98,7 +99,8 @@ class EmailVerificationServiceTest {
         when(repository.findTopByEmailOrderByCreatedAtDesc("user@example.com")).thenReturn(Optional.of(latest));
 
         assertThatThrownBy(() -> emailVerificationService.ensureVerified("user@example.com"))
-                .isInstanceOf(BusinessException.class).extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
+                .isInstanceOf(CustomException.class).extracting("errorCode")
+                .isEqualTo(VerificationErrorCode.VERIFICATION_NOT_COMPLETED);
     }
 
     @Test

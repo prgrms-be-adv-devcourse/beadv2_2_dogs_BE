@@ -12,14 +12,15 @@ import static org.mockito.Mockito.when;
 import com.barofarm.auth.application.usecase.LoginCommand;
 import com.barofarm.auth.application.usecase.SignUpCommand;
 import com.barofarm.auth.application.usecase.TokenResult;
+import com.barofarm.auth.common.exception.CustomException;
 import com.barofarm.auth.domain.credential.AuthCredential;
 import com.barofarm.auth.domain.token.RefreshToken;
 import com.barofarm.auth.domain.user.User;
+import com.barofarm.auth.exception.AuthErrorCode;
 import com.barofarm.auth.infrastructure.jpa.AuthCredentialJpaRepository;
 import com.barofarm.auth.infrastructure.jpa.RefreshTokenJpaRepository;
 import com.barofarm.auth.infrastructure.jpa.UserJpaRepository;
 import com.barofarm.auth.infrastructure.security.JwtTokenProvider;
-import com.barofarm.auth.presentation.exception.BusinessException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -35,7 +36,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -105,8 +105,8 @@ class AuthServiceTest {
         SignUpCommand cmd = new SignUpCommand("dup@example.com", "raw", "Jane", "010", true);
         when(credentialRepository.existsByLoginEmail(cmd.email())).thenReturn(true);
 
-        assertThatThrownBy(() -> authService.signUp(cmd)).isInstanceOf(BusinessException.class)
-                .extracting("status").isEqualTo(HttpStatus.CONFLICT);
+        assertThatThrownBy(() -> authService.signUp(cmd)).isInstanceOf(CustomException.class)
+                .extracting("errorCode").isEqualTo(AuthErrorCode.EMAIL_ALREADY_EXISTS);
 
         verify(emailVerificationService).ensureVerified(cmd.email());
         verify(userRepository, never()).save(any());
@@ -121,8 +121,8 @@ class AuthServiceTest {
         when(passwordEncoder.matches(eq(cmd.password() + stored.getSalt()), eq(stored.getPasswordHash())))
                 .thenReturn(false);
 
-        assertThatThrownBy(() -> authService.login(cmd)).isInstanceOf(BusinessException.class)
-                .extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThatThrownBy(() -> authService.login(cmd)).isInstanceOf(CustomException.class)
+                .extracting("errorCode").isEqualTo(AuthErrorCode.INVALID_CREDENTIAL);
     }
 
     @Test
@@ -160,7 +160,7 @@ class AuthServiceTest {
         revoked.revoke();
         when(refreshTokenRepository.findByToken(token)).thenReturn(Optional.of(revoked));
 
-        assertThatThrownBy(() -> authService.refresh(token)).isInstanceOf(BusinessException.class)
-                .extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThatThrownBy(() -> authService.refresh(token)).isInstanceOf(CustomException.class)
+                .extracting("errorCode").isEqualTo(AuthErrorCode.REFRESH_TOKEN_UNUSABLE);
     }
 }

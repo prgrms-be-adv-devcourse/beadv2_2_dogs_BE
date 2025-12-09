@@ -7,21 +7,21 @@ import com.barofarm.auth.application.usecase.PasswordResetCommand;
 import com.barofarm.auth.application.usecase.SignUpCommand;
 import com.barofarm.auth.application.usecase.SignUpResult;
 import com.barofarm.auth.application.usecase.TokenResult;
+import com.barofarm.auth.common.exception.CustomException;
 import com.barofarm.auth.domain.credential.AuthCredential;
 import com.barofarm.auth.domain.token.RefreshToken;
 import com.barofarm.auth.domain.user.User;
+import com.barofarm.auth.exception.AuthErrorCode;
 import com.barofarm.auth.infrastructure.jpa.AuthCredentialJpaRepository;
 import com.barofarm.auth.infrastructure.jpa.RefreshTokenJpaRepository;
 import com.barofarm.auth.infrastructure.jpa.UserJpaRepository;
 import com.barofarm.auth.infrastructure.security.JwtTokenProvider;
-import com.barofarm.auth.presentation.exception.BusinessException;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,7 +56,7 @@ public class AuthService {
         emailVerificationService.ensureVerified(request.email());
 
         if (credentialRepository.existsByLoginEmail(request.email())) {
-            throw new BusinessException(HttpStatus.CONFLICT, "이미 가입된 이메일입니다.");
+            throw new CustomException(AuthErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         User user = User.create(request.email(), request.name(), request.phone(), request.marketingConsent());
@@ -79,10 +79,10 @@ public class AuthService {
 
     public LoginResult login(LoginCommand loginCommand) {
         AuthCredential credential = credentialRepository.findByLoginEmail(loginCommand.email())
-                .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."));
+                .orElseThrow(() -> new CustomException(AuthErrorCode.INVALID_CREDENTIAL));
 
         if (!passwordEncoder.matches(loginCommand.password() + credential.getSalt(), credential.getPasswordHash())) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다.");
+            throw new CustomException(AuthErrorCode.INVALID_CREDENTIAL);
         }
 
         UUID userId = credential.getUserId();
@@ -100,14 +100,14 @@ public class AuthService {
 
     public TokenResult refresh(String refreshToken) {
         RefreshToken stored = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."));
+                .orElseThrow(() -> new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN));
 
         if (stored.isRevoked() || stored.isExpired(LocalDateTime.now(clock))) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "사용할 수 없는 리프레시 토큰입니다.");
+            throw new CustomException(AuthErrorCode.REFRESH_TOKEN_UNUSABLE);
         }
 
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 만료됐거나 위조되었습니다.");
+            throw new CustomException(AuthErrorCode.REFRESH_TOKEN_TAMPERED);
         }
 
         UUID userId = stored.getUserId();
@@ -133,7 +133,7 @@ public class AuthService {
     public void requestPasswordReset(String email) {
         // 존재하는 계정만 대상
         credentialRepository.findByLoginEmail(email)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "가입된 이메일이 없습니다."));
+                .orElseThrow(() -> new CustomException(AuthErrorCode.USER_NOT_FOUND));
         emailVerificationService.sendVerification(email);
     }
 
@@ -143,7 +143,7 @@ public class AuthService {
         emailVerificationService.ensureVerified(command.email());
 
         AuthCredential credential = credentialRepository.findByLoginEmail(command.email())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "가입된 이메일이 없습니다."));
+                .orElseThrow(() -> new CustomException(AuthErrorCode.USER_NOT_FOUND));
 
         String salt = generateSalt();
         String newHash = passwordEncoder.encode(command.newPassword() + salt);
@@ -154,11 +154,11 @@ public class AuthService {
 
     public void changePassword(UUID userId, PasswordChangeCommand command) {
         AuthCredential credential = credentialRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "자격 증명을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(AuthErrorCode.CREDENTIAL_NOT_FOUND));
 
         if (!passwordEncoder.matches(command.currentPassword() + credential.getSalt(),
                 credential.getPasswordHash())) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 올바르지 않습니다.");
+            throw new CustomException(AuthErrorCode.CURRENT_PASSWORD_MISMATCH);
         }
 
         String salt = generateSalt();
@@ -171,9 +171,8 @@ public class AuthService {
     // Seller로 enum 업데이트 하는 것과 관련한 부분
     public void grantSeller(UUID userId) {
 
-        User user = userRepository.findById(userId).orElseThrow(
-            () -> new BusinessException(HttpStatus.NOT_FOUND, "User not found.")
-        );
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(AuthErrorCode.USER_NOT_FOUND));
 
         if (user.getUserType() == User.UserType.SELLER) {
             return;

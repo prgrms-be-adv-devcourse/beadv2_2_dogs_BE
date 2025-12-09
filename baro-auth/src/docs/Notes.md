@@ -163,4 +163,12 @@ http
 
 할거
 1. Seller로 전환 관련 API 만들기
-2. 
+2.
+
+---
+
+예외 처리 리팩터링 (2025-12-09)
+- presentation/exception 패키지 제거, 공통 CustomException + BaseErrorCode 기반으로 통합.
+- 오류 코드 enum 추가: AuthErrorCode, VerificationErrorCode, ValidationErrorCode (com.barofarm.auth.exception).
+- GlobalExceptionHandler(공통)만 사용해 BindException/CustomException을 처리.
+- 서비스/보안/테스트 전부 새 CustomException + 오류 코드로 교체.
