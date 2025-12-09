@@ -165,6 +165,15 @@ deploy_module() {
         exit 1
     fi
     
+    # 네트워크가 없으면 생성 (각 모듈 배포 전에 확인)
+    if ! docker network ls | grep -q "baro-network"; then
+        log_info "Creating baro-network before deploying $module..."
+        docker network create baro-network || {
+            log_error "❌ Failed to create baro-network"
+            exit 1
+        }
+    fi
+    
     # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
     export IMAGE_TAG="${IMAGE_TAG:-latest}"
     log_info "Using image tag: ${IMAGE_TAG}"
@@ -225,6 +234,14 @@ deploy_all() {
 case $MODULE_NAME in
     data)
         log_step "Deploying data infrastructure..."
+        # 네트워크가 없으면 생성
+        if ! docker network ls | grep -q "baro-network"; then
+            log_info "Creating baro-network..."
+            docker network create baro-network || {
+                log_error "❌ Failed to create baro-network"
+                exit 1
+            }
+        fi
         $DOCKER_COMPOSE -f docker-compose.data.yml pull
         $DOCKER_COMPOSE -f docker-compose.data.yml down || true
         $DOCKER_COMPOSE -f docker-compose.data.yml up -d
@@ -233,6 +250,14 @@ case $MODULE_NAME in
     
     cloud)
         log_step "Deploying Spring Cloud infrastructure..."
+        # 네트워크가 없으면 생성
+        if ! docker network ls | grep -q "baro-network"; then
+            log_info "Creating baro-network..."
+            docker network create baro-network || {
+                log_error "❌ Failed to create baro-network"
+                exit 1
+            }
+        fi
         check_data_infra
         # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
         export IMAGE_TAG="${IMAGE_TAG:-latest}"
@@ -245,6 +270,14 @@ case $MODULE_NAME in
     
     infra)
         log_step "Deploying all infrastructure (data + cloud)..."
+        # 네트워크가 없으면 생성
+        if ! docker network ls | grep -q "baro-network"; then
+            log_info "Creating baro-network..."
+            docker network create baro-network || {
+                log_error "❌ Failed to create baro-network"
+                exit 1
+            }
+        fi
         # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
         export IMAGE_TAG="${IMAGE_TAG:-latest}"
         log_info "Using image tag for infrastructure: ${IMAGE_TAG}"
