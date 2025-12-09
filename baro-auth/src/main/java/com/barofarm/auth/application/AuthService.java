@@ -168,6 +168,21 @@ public class AuthService {
         refreshTokenRepository.deleteAllByUserId(credential.getUserId()); // 기존 세션 폐기
     }
 
+    // Seller로 enum 업데이트 하는 것과 관련한 부분
+    public void grantSeller(UUID userId) {
+
+        User user = userRepository.findById(userId).orElseThrow(
+            () -> new BusinessException(HttpStatus.NOT_FOUND, "User not found.")
+        );
+
+        if (user.getUserType() == User.UserType.SELLER) {
+            return;
+        }
+
+        user.changeToSeller();
+
+    }
+
     private String generateSalt() {
         byte[] bytes = new byte[32]; // 32 bytes -> 64 hex chars
         RANDOM.nextBytes(bytes);

@@ -54,6 +54,10 @@ public class User extends BaseEntity{
         return new User(email, name, phone, marketingConsent);
     }
 
+    public void changeToSeller() {
+        this.userType = UserType.SELLER;
+    }
+
     public enum UserType {
         CUSTOMER,
         SELLER,

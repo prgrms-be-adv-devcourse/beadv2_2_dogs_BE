@@ -17,10 +17,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -121,5 +123,12 @@ public class AuthController {
         MeResponse response = new MeResponse(principal.getUserId(), principal.getUsername(), principal.getRole());
 
         return ResponseEntity.ok(response);
+    }
+
+    // ==== Seller와 관련된 부분
+    @PostMapping("/{userId}/grant-seller")
+    public ResponseEntity<Void> grantSeller(@PathVariable UUID userId) {
+        authService.grantSeller(userId);
+        return ResponseEntity.ok().build();
     }
 }
