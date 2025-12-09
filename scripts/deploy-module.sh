@@ -90,8 +90,16 @@ log_info "🚀 Deploying module: ${MODULE_NAME}"
 log_step "📦 Logging in to GitHub Container Registry..."
 if [ -n "${GITHUB_TOKEN}" ]; then
     echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${GITHUB_USERNAME}" --password-stdin
+    if [ $? -eq 0 ]; then
+        log_info "✅ Successfully logged in to GHCR"
+    else
+        log_error "❌ Failed to login to GHCR. Please check your token permissions."
+        log_warn "💡 Tip: Use GHCR_PAT (Personal Access Token) with 'read:packages' permission"
+        exit 1
+    fi
 else
     log_warn "GITHUB_TOKEN not set, skipping registry login"
+    log_warn "⚠️  Private images may fail to pull without authentication"
 fi
 
 # ===================================
