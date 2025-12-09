@@ -1,27 +1,39 @@
 package com.barofarm.support.experience.domain;
 
+import com.barofarm.support.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-/** 체험 프로그램 엔티티 */
+/** 체험 프로그램 엔티티 (FARM_EXPERIENCE) */
 @Entity
-@Table(name = "experiences")
-public class Experience {
+@Table(name = "farm_experience")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+public class Experience extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "experience_id", columnDefinition = "BINARY(16)")
+    private UUID experienceId;
 
-    @Column(nullable = false)
-    private Long farmId;
+    @Column(name = "farm_id", nullable = false, columnDefinition = "BINARY(16)")
+    private UUID farmId;
 
     @Column(nullable = false, length = 200)
     private String title;
@@ -29,128 +41,22 @@ public class Experience {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
-    private Integer price;
+    @Column(name = "price_per_person", nullable = false)
+    private BigInteger pricePerPerson;
 
     @Column(nullable = false)
-    private Integer maxParticipants;
+    private Integer capacity;
 
+    @Column(name = "duration_minutes", nullable = false)
+    private Integer durationMinutes;
+
+    @Column(name = "available_start_date", nullable = false, columnDefinition = "DATETIME")
+    private LocalDateTime availableStartDate;
+
+    @Column(name = "available_end_date", nullable = false, columnDefinition = "DATETIME")
+    private LocalDateTime availableEndDate;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LocalDate startDate;
-
-    @Column(nullable = false)
-    private LocalDate endDate;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    // Constructors
-    public Experience() {
-    }
-
-    public Experience(Long farmId, String title, String description, Integer price, Integer maxParticipants,
-            LocalDate startDate, LocalDate endDate) {
-        this.farmId = farmId;
-        this.title = title;
-        this.description = description;
-        this.price = price;
-        this.maxParticipants = maxParticipants;
-        this.startDate = startDate;
-        this.endDate = endDate;
-    }
-
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getFarmId() {
-        return farmId;
-    }
-
-    public void setFarmId(Long farmId) {
-        this.farmId = farmId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Integer getPrice() {
-        return price;
-    }
-
-    public void setPrice(Integer price) {
-        this.price = price;
-    }
-
-    public Integer getMaxParticipants() {
-        return maxParticipants;
-    }
-
-    public void setMaxParticipants(Integer maxParticipants) {
-        this.maxParticipants = maxParticipants;
-    }
-
-    public LocalDate getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
-
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    private ExperienceStatus status;
 }
