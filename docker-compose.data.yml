@@ -65,8 +65,8 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       # CLUSTER_ID는 기존 볼륨에 저장된 값을 사용 (변경 시 데이터 손실)
       # 새로 초기화하려면 .env에서 다른 값으로 설정
-      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qg}
-      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qg}
+      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID:-}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-}
       
       # Listeners 설정
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
