@@ -103,6 +103,23 @@ else
 fi
 
 # ===================================
+# 1.5. Docker 네트워크 생성 (필요시)
+# ===================================
+log_step "🌐 Checking Docker network..."
+if ! docker network ls | grep -q "baro-network"; then
+    log_info "Creating baro-network..."
+    docker network create baro-network
+    if [ $? -eq 0 ]; then
+        log_info "✅ Successfully created baro-network"
+    else
+        log_error "❌ Failed to create baro-network"
+        exit 1
+    fi
+else
+    log_info "✅ baro-network already exists"
+fi
+
+# ===================================
 # 2. 인프라 서비스 확인
 # ===================================
 check_data_infra() {

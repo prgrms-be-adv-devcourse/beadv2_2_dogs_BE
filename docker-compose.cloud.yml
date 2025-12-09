@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Spring Cloud 인프라 서비스
 # Eureka, Gateway, Config Server
 
