@@ -111,20 +111,22 @@ if docker network ls | grep -q "be_baro-network"; then
     log_info "✅ Found be_baro-network (using existing network)"
     # docker-compose가 프로젝트 이름을 붙이지 않도록 설정
     export COMPOSE_PROJECT_NAME=""
-elif docker network ls | grep -q "^baro-network "; then
+elif docker network ls | grep -qE "(^baro-network | baro-network$)"; then
     log_info "✅ Found baro-network"
 else
     log_info "Creating baro-network..."
-    if docker network create baro-network 2>/dev/null; then
+    # 네트워크 생성 시도 (이미 존재하면 에러 무시)
+    CREATE_OUTPUT=$(docker network create baro-network 2>&1)
+    CREATE_EXIT_CODE=$?
+    
+    if [ $CREATE_EXIT_CODE -eq 0 ]; then
         log_info "✅ Created baro-network"
+    elif echo "$CREATE_OUTPUT" | grep -q "already exists"; then
+        log_info "✅ baro-network already exists"
     else
-        # 네트워크가 이미 존재하거나 생성 실패
-        if docker network ls | grep -q "^baro-network "; then
-            log_info "✅ baro-network already exists"
-        else
-            log_error "❌ Failed to create baro-network"
-            exit 1
-        fi
+        # 실제로 생성 실패한 경우에만 에러
+        log_error "❌ Failed to create baro-network: $CREATE_OUTPUT"
+        exit 1
     fi
 fi
 
