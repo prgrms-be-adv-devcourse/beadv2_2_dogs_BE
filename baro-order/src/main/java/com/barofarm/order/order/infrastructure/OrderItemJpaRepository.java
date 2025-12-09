@@ -1,9 +1,9 @@
 package com.barofarm.order.order.infrastructure;
 
-import com.barofarm.order.order.domain.Order;
+import com.barofarm.order.order.domain.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
 
-public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
+public interface OrderItemJpaRepository extends JpaRepository<OrderItem, UUID> {
 }

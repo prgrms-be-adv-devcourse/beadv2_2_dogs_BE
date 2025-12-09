@@ -1,4 +1,4 @@
 package com.barofarm.order.order.domain;
 
-public interface OrderRepository {
+public interface OrderItemRepository {
 }
