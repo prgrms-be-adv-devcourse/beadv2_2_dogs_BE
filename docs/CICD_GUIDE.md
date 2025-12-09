@@ -224,8 +224,8 @@ newgrp docker
 mkdir -p ~/apps/BE
 cd ~/apps/BE
 
-# Docker 네트워크 생성 (필수)
-docker network create baro-network
+# Docker 네트워크 생성 (필수, 이미 있으면 무시됨)
+docker network create baro-network 2>/dev/null || echo "baro-network already exists"
 
 # 네트워크 확인
 docker network ls | grep baro-network

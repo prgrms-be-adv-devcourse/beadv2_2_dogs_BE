@@ -115,11 +115,17 @@ elif docker network ls | grep -q "^baro-network "; then
     log_info "✅ Found baro-network"
 else
     log_info "Creating baro-network..."
-    docker network create baro-network || {
-        log_error "❌ Failed to create baro-network"
-        exit 1
-    }
-    log_info "✅ Created baro-network"
+    if docker network create baro-network 2>/dev/null; then
+        log_info "✅ Created baro-network"
+    else
+        # 네트워크가 이미 존재하거나 생성 실패
+        if docker network ls | grep -q "^baro-network "; then
+            log_info "✅ baro-network already exists"
+        else
+            log_error "❌ Failed to create baro-network"
+            exit 1
+        fi
+    fi
 fi
 
 # ===================================
