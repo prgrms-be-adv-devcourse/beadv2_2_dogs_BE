@@ -15,6 +15,7 @@ import com.barofarm.auth.infrastructure.security.JwtTokenProvider;
 import com.barofarm.auth.presentation.exception.BusinessException;
 import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.UUID;
@@ -50,30 +51,23 @@ public class AuthService {
     }
 
     public SignUpResult signUp(SignUpCommand request) {
-
-        // 1. 이메일 인증 완료 확인
         emailVerificationService.ensureVerified(request.email());
 
-        // 2. 이메일 중복 체크 -> USER와 AuthCredential 모두에서 email이 unique여야 함 -> Auth
         if (credentialRepository.existsByLoginEmail(request.email())) {
-            throw new BusinessException(HttpStatus.CONFLICT, "해당 이메일이 이미 존재합니다.");
+            throw new BusinessException(HttpStatus.CONFLICT, "이미 가입된 이메일입니다.");
         }
 
-        // 3. User Entity 생성 및 저장
         User user = User.create(request.email(), request.name(), request.phone(), request.marketingConsent());
         userRepository.save(user);
 
-        // 4. AuthCredential 생성 및 저장 (salt 포함)
         String salt = generateSalt();
         String encodedPassword = passwordEncoder.encode(request.password() + salt);
         AuthCredential credential = AuthCredential.create(user.getId(), request.email(), encodedPassword, salt);
         credentialRepository.save(credential);
 
-        // 토큰 발급
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), "USER");
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail(), "USER");
 
-        // 기존 리프레시 토큰 제거 후 새 토큰 저장
         refreshTokenRepository.deleteAllByUserId(user.getId());
         refreshTokenRepository.save(
                 RefreshToken.issue(user.getId(), refreshToken, jwtTokenProvider.getRefreshTokenValidity()));
@@ -82,12 +76,9 @@ public class AuthService {
     }
 
     public LoginResult login(LoginCommand loginCommand) {
-
-        // 1. 이메일 존재 확인
         AuthCredential credential = credentialRepository.findByLoginEmail(loginCommand.email())
                 .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."));
 
-        // 2. 비밀번호 매칭 (salt 활용)
         if (!passwordEncoder.matches(loginCommand.password() + credential.getSalt(), credential.getPasswordHash())) {
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다.");
         }
@@ -95,7 +86,6 @@ public class AuthService {
         UUID userId = credential.getUserId();
         String email = credential.getLoginEmail();
 
-        // 3. 토큰 발급
         String accessToken = jwtTokenProvider.generateAccessToken(userId, email, "USER");
         String refreshToken = jwtTokenProvider.generateRefreshToken(userId, email, "USER");
 
@@ -115,20 +105,18 @@ public class AuthService {
         }
 
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 만료되었거나 위조되었습니다.");
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 만료됐거나 위조되었습니다.");
         }
 
         UUID userId = stored.getUserId();
         String email = jwtTokenProvider.getEmail(refreshToken);
 
-        // 회전: 기존 토큰 폐기 후 새 토큰 저장
-        stored.revoke();
-        refreshTokenRepository.save(stored);
-
         String newAccessToken = jwtTokenProvider.generateAccessToken(userId, email, "USER");
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId, email, "USER");
-        refreshTokenRepository.save(
-                RefreshToken.issue(userId, newRefreshToken, jwtTokenProvider.getRefreshTokenValidity()));
+        Duration refreshValidity = jwtTokenProvider.getRefreshTokenValidity();
+        LocalDateTime newRefreshExpiry = LocalDateTime.now(clock).plus(refreshValidity);
+        stored.rotate(newRefreshToken, newRefreshExpiry);
+        refreshTokenRepository.save(stored);
 
         return new TokenResult(userId, email, newAccessToken, newRefreshToken);
     }

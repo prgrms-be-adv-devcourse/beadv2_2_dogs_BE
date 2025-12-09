@@ -3,8 +3,6 @@ package com.barofarm.auth.domain.token;
 import com.barofarm.auth.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Duration;
@@ -16,11 +14,7 @@ import java.util.UUID;
 public class RefreshToken extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(columnDefinition = "BINARY(16)")
-    private UUID id;
-
-    @Column(nullable = false, columnDefinition = "BINARY(16)")
     private UUID userId;
 
     @Column(nullable = false, unique = true, length = 512)
@@ -60,8 +54,10 @@ public class RefreshToken extends BaseEntity {
         this.revoked = true;
     }
 
-    public UUID getId() {
-        return id;
+    public void rotate(String token, LocalDateTime expiresAt) {
+        this.token = token;
+        this.expiresAt = expiresAt;
+        this.revoked = false;
     }
 
     public UUID getUserId() {
