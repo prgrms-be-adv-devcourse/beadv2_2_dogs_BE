@@ -12,7 +12,7 @@ public record ProductUpdateRequest(
     @NotBlank(message = "상품명은 필수입니다.") String productName,
     String description,
     @NotNull(message = "카테고리는 필수입니다.") ProductCategory productCategory,
-    @NotNull(message = "가격은 필수입니다.") @Min(value = 0, message = "가격은 0 이상이어야 합니다.") Integer price,
+    @NotNull(message = "가격은 필수입니다.") @Min(value = 0, message = "가격은 0 이상이어야 합니다.") Long price,
     @NotNull(message = "재고는 필수입니다.") @Min(value = 0, message = "재고는 0 이상이어야 합니다.")
         Integer stockQuantity,
     @NotNull(message = "상품 상태는 필수입니다.") ProductStatus productStatus) {

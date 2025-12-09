@@ -37,7 +37,7 @@ public class Product extends BaseEntity {
   private ProductCategory productCategory;
 
   @Column(nullable = false)
-  private Integer price;
+  private Long price;
 
   @Column(name = "stock_quantity", nullable = false)
   private Integer stockQuantity;
@@ -52,7 +52,7 @@ public class Product extends BaseEntity {
       String productName,
       String description,
       ProductCategory productCategory,
-      Integer price,
+      Long price,
       Integer stockQuantity,
       ProductStatus productStatus) {
 
@@ -72,7 +72,7 @@ public class Product extends BaseEntity {
       String productName,
       String description,
       ProductCategory productCategory,
-      Integer price,
+      Long price,
       Integer stockQuantity,
       ProductStatus productStatus) {
 
@@ -91,7 +91,7 @@ public class Product extends BaseEntity {
       String productName,
       String description,
       ProductCategory productCategory,
-      Integer price,
+      Long price,
       Integer stockQuantity,
       ProductStatus productStatus) {
 
@@ -112,7 +112,7 @@ public class Product extends BaseEntity {
   }
 
   private void validateConstructorParams(
-      UUID sellerId, String productName, ProductCategory category, Integer price, Integer stock) {
+      UUID sellerId, String productName, ProductCategory category, Long price, Integer stock) {
     if (sellerId == null) {
       throw new CustomException(ProductErrorCode.SELLER_NULL);
     }
@@ -122,7 +122,7 @@ public class Product extends BaseEntity {
   private void validateUpdateParams(
       String productName,
       ProductCategory category,
-      Integer price,
+      Long price,
       Integer stock,
       ProductStatus status) {
     validateCommonFields(productName, category, price, stock);
@@ -132,7 +132,7 @@ public class Product extends BaseEntity {
   }
 
   private void validateCommonFields(
-      String productName, ProductCategory category, Integer price, Integer stock) {
+      String productName, ProductCategory category, Long price, Integer stock) {
     if (productName == null) {
       throw new CustomException(ProductErrorCode.PRODUCT_NAME_NULL);
     }

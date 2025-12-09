@@ -10,6 +10,6 @@ public record ProductUpdateCommand(
     String productName,
     String description,
     ProductCategory productCategory,
-    Integer price,
+    Long price,
     Integer stockQuantity,
     ProductStatus productStatus) {}

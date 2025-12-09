@@ -12,7 +12,7 @@ public record ProductDetailInfo(
     String productName,
     String description,
     ProductCategory productCategory,
-    Integer price,
+    Long price,
     Integer stockQuantity,
     ProductStatus productStatus,
     LocalDateTime createdAt,

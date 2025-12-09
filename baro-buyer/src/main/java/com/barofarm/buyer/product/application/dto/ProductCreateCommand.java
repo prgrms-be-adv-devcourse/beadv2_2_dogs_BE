@@ -9,5 +9,5 @@ public record ProductCreateCommand(
     String productName,
     String description,
     ProductCategory productCategory,
-    Integer price,
+    Long price,
     Integer stockQuantity) {}
