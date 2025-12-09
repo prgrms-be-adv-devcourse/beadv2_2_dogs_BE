@@ -103,20 +103,23 @@ else
 fi
 
 # ===================================
-# 1.5. Docker 네트워크 생성 (필요시)
+# 1.5. Docker 네트워크 확인 및 생성
 # ===================================
 log_step "🌐 Checking Docker network..."
-if ! docker network ls | grep -q "baro-network"; then
+# be_baro-network 또는 baro-network 둘 다 확인
+if docker network ls | grep -q "be_baro-network"; then
+    log_info "✅ Found be_baro-network (using existing network)"
+    # docker-compose가 프로젝트 이름을 붙이지 않도록 설정
+    export COMPOSE_PROJECT_NAME=""
+elif docker network ls | grep -q "^baro-network "; then
+    log_info "✅ Found baro-network"
+else
     log_info "Creating baro-network..."
-    docker network create baro-network
-    if [ $? -eq 0 ]; then
-        log_info "✅ Successfully created baro-network"
-    else
+    docker network create baro-network || {
         log_error "❌ Failed to create baro-network"
         exit 1
-    fi
-else
-    log_info "✅ baro-network already exists"
+    }
+    log_info "✅ Created baro-network"
 fi
 
 # ===================================
@@ -165,13 +168,11 @@ deploy_module() {
         exit 1
     fi
     
-    # 네트워크가 없으면 생성 (각 모듈 배포 전에 확인)
-    if ! docker network ls | grep -q "baro-network"; then
-        log_info "Creating baro-network before deploying $module..."
-        docker network create baro-network || {
-            log_error "❌ Failed to create baro-network"
-            exit 1
-        }
+    # 네트워크 확인 (be_baro-network 또는 baro-network)
+    if ! docker network ls | grep -qE "(be_baro-network|^baro-network )"; then
+        log_error "❌ baro-network not found!"
+        log_error "Please create the network first: docker network create baro-network"
+        exit 1
     fi
     
     # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
@@ -234,14 +235,6 @@ deploy_all() {
 case $MODULE_NAME in
     data)
         log_step "Deploying data infrastructure..."
-        # 네트워크가 없으면 생성
-        if ! docker network ls | grep -q "baro-network"; then
-            log_info "Creating baro-network..."
-            docker network create baro-network || {
-                log_error "❌ Failed to create baro-network"
-                exit 1
-            }
-        fi
         $DOCKER_COMPOSE -f docker-compose.data.yml pull
         $DOCKER_COMPOSE -f docker-compose.data.yml down || true
         $DOCKER_COMPOSE -f docker-compose.data.yml up -d
@@ -250,14 +243,6 @@ case $MODULE_NAME in
     
     cloud)
         log_step "Deploying Spring Cloud infrastructure..."
-        # 네트워크가 없으면 생성
-        if ! docker network ls | grep -q "baro-network"; then
-            log_info "Creating baro-network..."
-            docker network create baro-network || {
-                log_error "❌ Failed to create baro-network"
-                exit 1
-            }
-        fi
         check_data_infra
         # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
         export IMAGE_TAG="${IMAGE_TAG:-latest}"
@@ -270,14 +255,6 @@ case $MODULE_NAME in
     
     infra)
         log_step "Deploying all infrastructure (data + cloud)..."
-        # 네트워크가 없으면 생성
-        if ! docker network ls | grep -q "baro-network"; then
-            log_info "Creating baro-network..."
-            docker network create baro-network || {
-                log_error "❌ Failed to create baro-network"
-                exit 1
-            }
-        fi
         # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
         export IMAGE_TAG="${IMAGE_TAG:-latest}"
         log_info "Using image tag for infrastructure: ${IMAGE_TAG}"

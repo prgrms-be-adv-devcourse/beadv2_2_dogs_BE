@@ -224,6 +224,12 @@ newgrp docker
 mkdir -p ~/apps/BE
 cd ~/apps/BE
 
+# Docker 네트워크 생성 (필수)
+docker network create baro-network
+
+# 네트워크 확인
+docker network ls | grep baro-network
+
 # 환경 변수 파일 생성 (선택사항)
 cat > .env << EOF
 DOCKER_REGISTRY=ghcr.io/do-develop-space

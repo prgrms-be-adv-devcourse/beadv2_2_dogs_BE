@@ -103,5 +103,6 @@ volumes:
 
 networks:
   baro-network:
+    name: baro-network  # 네트워크 이름 명시적으로 지정 (프로젝트 이름 무시)
     driver: bridge
 
