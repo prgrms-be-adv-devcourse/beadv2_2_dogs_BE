@@ -269,21 +269,23 @@ jobs:
           # 모듈명 확인 (디버깅용)
           echo "Deploying module: ${MODULE_NAME} with image tag: ${IMAGE_TAG}"
           
+          # SSH 연결 옵션 (안정성 개선)
+          SSH_OPTS="-i private_key.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o ConnectTimeout=30"
+          
           # EC2에 배포 디렉토리 생성
-          ssh -i private_key.pem -o StrictHostKeyChecking=no \
-            ${USER}@${HOST} "mkdir -p /home/${USER}/apps/BE"
+          ssh $SSH_OPTS ${USER}@${HOST} "mkdir -p /home/${USER}/apps/BE"
           
           # EC2에 배포 스크립트 및 해당 모듈의 docker-compose 파일만 복사
-          scp -i private_key.pem -o StrictHostKeyChecking=no \
+          scp $SSH_OPTS \
             ./scripts/deploy-module.sh ${USER}@${HOST}:/home/${USER}/apps/BE/
           
-          scp -i private_key.pem -o StrictHostKeyChecking=no \
+          scp $SSH_OPTS \
             ./docker-compose.${MODULE_NAME}.yml ${USER}@${HOST}:/home/${USER}/apps/BE/
           
           # 인프라 docker-compose 파일도 복사 (필요시)
-          scp -i private_key.pem -o StrictHostKeyChecking=no \
+          scp $SSH_OPTS \
             ./docker-compose.data.yml ${USER}@${HOST}:/home/${USER}/apps/BE/ 2>/dev/null || true
-          scp -i private_key.pem -o StrictHostKeyChecking=no \
+          scp $SSH_OPTS \
             ./docker-compose.cloud.yml ${USER}@${HOST}:/home/${USER}/apps/BE/ 2>/dev/null || true
           
           # GHCR_PAT 또는 GITHUB_TOKEN 사용 (GHCR_PAT 우선)
@@ -295,18 +297,29 @@ jobs:
           fi
           
           # 모듈별 배포 스크립트 실행 (GITHUB_TOKEN, IMAGE_TAG 전달)
-          ssh -i private_key.pem -o StrictHostKeyChecking=no \
-            ${USER}@${HOST} "cd /home/${USER}/apps/BE && GITHUB_TOKEN=${GHCR_TOKEN} IMAGE_TAG=${IMAGE_TAG} bash ./deploy-module.sh ${MODULE_NAME}"
+          # SSH 연결 안정성을 위해 ServerAliveInterval 옵션 사용
+          ssh $SSH_OPTS ${USER}@${HOST} \
+            "cd /home/${USER}/apps/BE && GITHUB_TOKEN=${GHCR_TOKEN} IMAGE_TAG=${IMAGE_TAG} bash ./deploy-module.sh ${MODULE_NAME}" || {
+            echo "⚠️ SSH connection might have closed, but deployment might still be running"
+            echo "💡 Check deployment status: ssh ${USER}@${HOST} 'docker ps | grep baro-${MODULE_NAME}'"
+            exit 1
+          }
           
           rm -f private_key.pem
       
       - name: Notify deployment status
         if: always()
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USERNAME }}
+          MODULE_NAME: ${{ steps.module.outputs.name }}
         run: |
-          if [ ${{ job.status }} == 'success' ]; then
+          if [ "${{ job.status }}" == "success" ]; then
             echo "✅ Deployment successful for module: ${{ steps.module.outputs.name }}"
           else
             echo "❌ Deployment failed for module: ${{ steps.module.outputs.name }}"
+            echo "💡 Check deployment status manually on EC2"
+            echo "   ssh ${USER}@${HOST} 'docker ps | grep baro-${MODULE_NAME}'"
           fi
 
   # ==================================================
