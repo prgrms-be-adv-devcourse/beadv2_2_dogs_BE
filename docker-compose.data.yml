@@ -7,22 +7,22 @@ services:
   # ===================================
   # Cache & Session Store
   # ===================================
-  redis:
-    image: redis:7.2-alpine
-    container_name: baro-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
-    restart: unless-stopped
-    networks:
-      - baro-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
+  # redis:
+  #   image: redis:7.2-alpine
+  #   container_name: baro-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+  #   restart: unless-stopped
+  #   networks:
+  #     - baro-network
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 5
 
   # ===================================
   # Database
@@ -50,58 +50,55 @@ services:
       retries: 5
 
   # ===================================
-  # Message Queue
+  # Message Queue (Kafka KRaft Mode)
   # ===================================
-  zookeeper:
-    image: bitnami/zookeeper:latest
-    container_name: baro-zookeeper
-    ports:
-      - "2181:2181"
-    environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
-    volumes:
-      - zookeeper-data:/bitnami/zookeeper
-    restart: unless-stopped
-    networks:
-      - baro-network
-    healthcheck:
-      test: ["CMD", "zkServer.sh", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   kafka:
-    image: bitnami/kafka:3.6
+    image: confluentinc/cp-kafka:7.6.0
     container_name: baro-kafka
     ports:
-      - "9092:9092"
+      - "9092:9092"  # Broker listener
+      - "9093:9093"  # Controller listener
     environment:
-      - KAFKA_BROKER_ID=1
-      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
-      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      # KRaft 모드 설정
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      # CLUSTER_ID는 기존 볼륨에 저장된 값을 사용 (변경 시 데이터 손실)
+      # 새로 초기화하려면 .env에서 다른 값으로 설정
+      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qg}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qg}
+      
+      # Listeners 설정
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      
+      # 토픽 설정
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      
+      # 로그 설정
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
     volumes:
-      - kafka-data:/bitnami/kafka
-    depends_on:
-      zookeeper:
-        condition: service_healthy
+      - kafka-data:/var/lib/kafka/data
     restart: unless-stopped
     networks:
       - baro-network
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092"]
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 40s
 
 volumes:
-  redis-data:
-    driver: local
+  # redis-data:
+  #   driver: local
   mysql-data:
-    driver: local
-  zookeeper-data:
     driver: local
   kafka-data:
     driver: local

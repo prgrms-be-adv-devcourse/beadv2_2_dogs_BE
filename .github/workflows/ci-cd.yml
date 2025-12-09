@@ -131,6 +131,12 @@ jobs:
         with:
           name: build-artifacts
       
+      - name: Set service name
+        id: service
+        run: |
+          echo "service=${{ needs.determine-service.outputs.service }}" >> $GITHUB_OUTPUT
+          echo "Building service: ${{ needs.determine-service.outputs.service }}"
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -258,18 +264,6 @@ jobs:
           package-type: 'container'
           min-versions-to-keep: 5
           delete-only-untagged-versions: 'false'
-    
-    strategy:
-      matrix:
-        service:
-          - baro-auth
-          - baro-buyer
-          - baro-seller
-          - baro-order
-          - baro-support
-          - eureka
-          - gateway
-          - config
 
   # ==================================================
   # Notification (선택사항)

@@ -12,8 +12,8 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
-      - SPRING_DATA_REDIS_HOST=redis
-      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
+      # - SPRING_DATA_REDIS_HOST=redis
+      # - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     restart: unless-stopped
     networks:

@@ -67,7 +67,8 @@ subprojects {
             target 'src/*/java/**/*.java'
             importOrder()
             removeUnusedImports()
-            googleJavaFormat('1.25.2')
+            // eclipse() 제거: 메서드 체이닝과 파라미터 포맷팅이 자동으로 변경되지 않도록
+            leadingTabsToSpaces(4)  // 탭을 4칸 스페이스로 변환
             trimTrailingWhitespace()
             endWithNewline()
         }
