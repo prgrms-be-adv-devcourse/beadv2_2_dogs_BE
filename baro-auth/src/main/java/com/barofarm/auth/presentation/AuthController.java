@@ -5,11 +5,14 @@ import com.barofarm.auth.application.usecase.LoginResult;
 import com.barofarm.auth.application.usecase.SignUpResult;
 import com.barofarm.auth.application.usecase.TokenResult;
 import com.barofarm.auth.infrastructure.security.AuthUserPrincipal;
-import com.barofarm.auth.presentation.dto.LoginRequest;
-import com.barofarm.auth.presentation.dto.LogoutRequest;
-import com.barofarm.auth.presentation.dto.MeResponse;
-import com.barofarm.auth.presentation.dto.RefreshTokenRequest;
-import com.barofarm.auth.presentation.dto.SignupRequest;
+import com.barofarm.auth.presentation.dto.login.LoginRequest;
+import com.barofarm.auth.presentation.dto.password.PasswordChangeRequest;
+import com.barofarm.auth.presentation.dto.password.PasswordResetConfirmRequest;
+import com.barofarm.auth.presentation.dto.password.PasswordResetRequest;
+import com.barofarm.auth.presentation.dto.signup.SignupRequest;
+import com.barofarm.auth.presentation.dto.token.LogoutRequest;
+import com.barofarm.auth.presentation.dto.token.RefreshTokenRequest;
+import com.barofarm.auth.presentation.dto.user.MeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -44,6 +47,13 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/register/seller")
+    @Operation(summary = "판매자 등록", description = "사업자 등록 / 회사정보 입력을 통해 판매자 생성")
+    public ResponseEntity<SignUpResult> registerForSeller(@RequestBody SignupRequest request) {
+        var response = authService.signUp(request.toServiceRequest()); // TODO: 판매자 전용 로직 추가 시 분리
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "이메일/비밀번호로 로그인하고 토큰 발급")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "로그인 성공"),
@@ -51,6 +61,37 @@ public class AuthController {
     public ResponseEntity<LoginResult> login(@RequestBody LoginRequest request) {
         var response = authService.login(request.toServiceRequest());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/password/reset/request")
+    @Operation(summary = "비밀번호 재설정 코드 발송", description = "이메일로 비밀번호 재설정 코드 전송")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "코드 발송 성공"),
+            @ApiResponse(responseCode = "404", description = "이메일 없음")})
+    public ResponseEntity<Void> requestPasswordReset(@RequestBody PasswordResetRequest request) {
+        authService.requestPasswordReset(request.email());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/password/reset/confirm")
+    @Operation(summary = "비밀번호 재설정 완료", description = "코드 검증 후 새 비밀번호로 변경")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "재설정 성공"),
+            @ApiResponse(responseCode = "400", description = "코드 오류/만료"),
+            @ApiResponse(responseCode = "404", description = "이메일 없음")})
+    public ResponseEntity<Void> resetPassword(@RequestBody PasswordResetConfirmRequest request) {
+        authService.resetPassword(request.toServiceRequest());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/password/change")
+    @Operation(summary = "비밀번호 변경", description = "로그인된 사용자가 현재/새 비밀번호로 변경")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "변경 성공"),
+            @ApiResponse(responseCode = "401", description = "현재 비밀번호 불일치"),
+            @ApiResponse(responseCode = "404", description = "자격 증명 없음")})
+    @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal AuthUserPrincipal principal,
+            @RequestBody PasswordChangeRequest request) {
+        authService.changePassword(principal.getUserId(), request.toServiceRequest());
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/refresh")

@@ -15,9 +15,9 @@ import com.barofarm.auth.infrastructure.jpa.EmailVerificationJpaRepository;
 import com.barofarm.auth.infrastructure.jpa.RefreshTokenJpaRepository;
 import com.barofarm.auth.infrastructure.jpa.UserJpaRepository;
 import com.barofarm.auth.infrastructure.security.JwtTokenProvider;
-import com.barofarm.auth.presentation.dto.LoginRequest;
-import com.barofarm.auth.presentation.dto.SignupRequest;
-import com.barofarm.auth.presentation.dto.VerifyCodeRequest;
+import com.barofarm.auth.presentation.dto.login.LoginRequest;
+import com.barofarm.auth.presentation.dto.signup.SignupRequest;
+import com.barofarm.auth.presentation.dto.verification.VerifyCodeRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -186,9 +186,8 @@ class AuthControllerIntegrationTest {
     class RefreshAndLogout {
 
         @Test
-        @DisplayName("정상 리프레시 토큰으로 재발급 시 기존 토큰은 폐기되고 새 토큰이 저장된다")
-        void refresh_rotates_tokens_and_revokes_old() throws Exception {
-            // given: 로그인으로 리프레시 토큰 발급
+        @DisplayName("정상 리프레시 토큰으로 재발급 시 기존 토큰을 교체한다")
+        void refresh_rotates_tokens_and_replaces_old() throws Exception {
             String email = "rotate@example.com";
             String rawPassword = "Rotate1!";
             User user = userRepository.save(User.create(email, "Rotate User", "010-3333-3333", false));
@@ -201,19 +200,22 @@ class AuthControllerIntegrationTest {
             String oldRefreshToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
                     .get("refreshToken").asText();
 
-            // when: 리프레시 토큰 재발급 요청
             String refreshRequest = """
                     {"refreshToken": "%s"}
                     """.formatted(oldRefreshToken);
 
-            mockMvc.perform(post("/auth/refresh").contentType(MediaType.APPLICATION_JSON).content(refreshRequest))
+            MvcResult refreshResult = mockMvc
+                    .perform(post("/auth/refresh").contentType(MediaType.APPLICATION_JSON).content(refreshRequest))
                     .andExpect(status().isOk()).andExpect(jsonPath("$.accessToken").isNotEmpty())
-                    .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+                    .andExpect(jsonPath("$.refreshToken").isNotEmpty()).andReturn();
 
-            // then: 기존 토큰은 revoked, 새 토큰 추가 저장
-            assertThat(refreshTokenRepository.count()).isEqualTo(2);
-            RefreshToken old = refreshTokenRepository.findByToken(oldRefreshToken).orElseThrow();
-            assertThat(old.isRevoked()).isTrue();
+            String newRefreshToken = objectMapper.readTree(refreshResult.getResponse().getContentAsString())
+                    .get("refreshToken").asText();
+
+            assertThat(refreshTokenRepository.count()).isEqualTo(1);
+            assertThat(refreshTokenRepository.findByToken(oldRefreshToken)).isEmpty();
+            RefreshToken current = refreshTokenRepository.findByToken(newRefreshToken).orElseThrow();
+            assertThat(current.isRevoked()).isFalse();
         }
 
         @Test

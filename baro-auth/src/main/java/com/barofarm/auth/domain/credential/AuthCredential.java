@@ -45,4 +45,9 @@ public class AuthCredential extends BaseEntity {
     public static AuthCredential create(UUID userId, String loginEmail, String passwordHash, String salt) {
         return new AuthCredential(userId, loginEmail, passwordHash, salt);
     }
+
+    public void changePassword(String passwordHash, String salt) {
+        this.passwordHash = passwordHash;
+        this.salt = salt;
+    }
 }

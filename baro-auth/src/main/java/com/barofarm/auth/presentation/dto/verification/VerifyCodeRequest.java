@@ -1,4 +1,4 @@
-package com.barofarm.auth.presentation.dto;
+package com.barofarm.auth.presentation.dto.verification;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

@@ -144,10 +144,11 @@ class AuthServiceTest {
         assertThat(result.refreshToken()).isEqualTo("new-refresh");
 
         ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
-        verify(refreshTokenRepository, times(2)).save(captor.capture());
-        // 첫 번째 save는 기존 토큰 revoke, 두 번째 save는 새 토큰 저장
-        assertThat(captor.getAllValues().get(0).isRevoked()).isTrue();
-        assertThat(captor.getAllValues().get(1).getToken()).isEqualTo("new-refresh");
+        verify(refreshTokenRepository, times(1)).save(captor.capture());
+        RefreshToken rotated = captor.getValue();
+        assertThat(rotated.getToken()).isEqualTo("new-refresh");
+        assertThat(rotated.isRevoked()).isFalse();
+        assertThat(rotated.getExpiresAt()).isEqualTo(LocalDateTime.now(clock).plusDays(14));
     }
 
     @Test

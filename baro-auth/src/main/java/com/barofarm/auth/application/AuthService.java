@@ -2,6 +2,8 @@ package com.barofarm.auth.application;
 
 import com.barofarm.auth.application.usecase.LoginCommand;
 import com.barofarm.auth.application.usecase.LoginResult;
+import com.barofarm.auth.application.usecase.PasswordChangeCommand;
+import com.barofarm.auth.application.usecase.PasswordResetCommand;
 import com.barofarm.auth.application.usecase.SignUpCommand;
 import com.barofarm.auth.application.usecase.SignUpResult;
 import com.barofarm.auth.application.usecase.TokenResult;
@@ -126,6 +128,44 @@ public class AuthService {
             token.revoke();
             refreshTokenRepository.save(token);
         });
+    }
+
+    public void requestPasswordReset(String email) {
+        // 존재하는 계정만 대상
+        credentialRepository.findByLoginEmail(email)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "가입된 이메일이 없습니다."));
+        emailVerificationService.sendVerification(email);
+    }
+
+    public void resetPassword(PasswordResetCommand command) {
+        // 코드 검증 및 기록 정리
+        emailVerificationService.verifyCode(command.email(), command.code());
+        emailVerificationService.ensureVerified(command.email());
+
+        AuthCredential credential = credentialRepository.findByLoginEmail(command.email())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "가입된 이메일이 없습니다."));
+
+        String salt = generateSalt();
+        String newHash = passwordEncoder.encode(command.newPassword() + salt);
+        credential.changePassword(newHash, salt);
+        credentialRepository.save(credential);
+        refreshTokenRepository.deleteAllByUserId(credential.getUserId()); // 기존 세션 폐기
+    }
+
+    public void changePassword(UUID userId, PasswordChangeCommand command) {
+        AuthCredential credential = credentialRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "자격 증명을 찾을 수 없습니다."));
+
+        if (!passwordEncoder.matches(command.currentPassword() + credential.getSalt(),
+                credential.getPasswordHash())) {
+            throw new BusinessException(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 올바르지 않습니다.");
+        }
+
+        String salt = generateSalt();
+        String newHash = passwordEncoder.encode(command.newPassword() + salt);
+        credential.changePassword(newHash, salt);
+        credentialRepository.save(credential);
+        refreshTokenRepository.deleteAllByUserId(credential.getUserId()); // 기존 세션 폐기
     }
 
     private String generateSalt() {

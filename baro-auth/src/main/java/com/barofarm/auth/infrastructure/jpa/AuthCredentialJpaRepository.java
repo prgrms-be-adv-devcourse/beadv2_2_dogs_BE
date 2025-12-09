@@ -10,4 +10,6 @@ public interface AuthCredentialJpaRepository extends JpaRepository<AuthCredentia
     boolean existsByLoginEmail(String loginEmail);
 
     Optional<AuthCredential> findByLoginEmail(String loginEmail);
+
+    Optional<AuthCredential> findByUserId(UUID userId);
 }

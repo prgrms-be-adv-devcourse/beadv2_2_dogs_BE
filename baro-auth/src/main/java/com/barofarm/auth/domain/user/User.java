@@ -3,6 +3,8 @@ package com.barofarm.auth.domain.user;
 import com.barofarm.auth.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,7 +31,11 @@ public class User extends BaseEntity{
     private String phone;
 
     @Column(name = "marketing_consent", nullable = false)
-    private boolean marketingConsent;
+    private boolean marketingConsent = false; // false로 초기화
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_type", nullable = false, length = 20)
+    private UserType userType;
 
     // 생성자 보호
     protected User() {
@@ -40,6 +46,7 @@ public class User extends BaseEntity{
         this.name = name;
         this.phone = phone;
         this.marketingConsent = marketingConsent;
+        this.userType = UserType.CUSTOMER;
     }
 
     // 팩토리 패턴?
@@ -47,4 +54,9 @@ public class User extends BaseEntity{
         return new User(email, name, phone, marketingConsent);
     }
 
+    public enum UserType {
+        CUSTOMER,
+        SELLER,
+        ADMIN
+    }
 }
