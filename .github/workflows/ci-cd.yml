@@ -157,7 +157,7 @@ jobs:
         with:
           registry: ghcr.io
           username: do-develop-space
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_PAT }}
       
       - name: Extract metadata
         id: meta
