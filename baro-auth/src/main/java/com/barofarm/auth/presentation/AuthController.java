@@ -49,13 +49,6 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/register/seller")
-    @Operation(summary = "판매자 등록", description = "사업자 등록 / 회사정보 입력을 통해 판매자 생성")
-    public ResponseEntity<SignUpResult> registerForSeller(@RequestBody SignupRequest request) {
-        var response = authService.signUp(request.toServiceRequest()); // TODO: 판매자 전용 로직 추가 시 분리
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "이메일/비밀번호로 로그인하고 토큰 발급")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "로그인 성공"),
@@ -127,6 +120,7 @@ public class AuthController {
 
     // ==== Seller와 관련된 부분
     @PostMapping("/{userId}/grant-seller")
+    @Operation(summary = "판매자 등록", description = "Sellr 서버에서 feign으로 요청이 오면 판매자로 등록")
     public ResponseEntity<Void> grantSeller(@PathVariable UUID userId) {
         authService.grantSeller(userId);
         return ResponseEntity.ok().build();

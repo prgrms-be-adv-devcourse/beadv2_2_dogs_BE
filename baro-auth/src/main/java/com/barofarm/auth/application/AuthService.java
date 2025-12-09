@@ -67,8 +67,9 @@ public class AuthService {
         AuthCredential credential = AuthCredential.create(user.getId(), request.email(), encodedPassword, salt);
         credentialRepository.save(credential);
 
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), "USER");
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail(), "USER");
+        String role = resolveRole(user.getUserType());
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail(), role);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail(), role);
 
         refreshTokenRepository.deleteAllByUserId(user.getId());
         refreshTokenRepository.save(
@@ -88,8 +89,14 @@ public class AuthService {
         UUID userId = credential.getUserId();
         String email = credential.getLoginEmail();
 
-        String accessToken = jwtTokenProvider.generateAccessToken(userId, email, "USER");
-        String refreshToken = jwtTokenProvider.generateRefreshToken(userId, email, "USER");
+        User user = userRepository.findById(userId).orElseThrow(
+            () -> new CustomException(AuthErrorCode.USER_NOT_FOUND)
+        );
+
+        String role = resolveRole(user.getUserType());
+
+        String accessToken = jwtTokenProvider.generateAccessToken(userId, email, role);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userId, email, role);
 
         refreshTokenRepository.deleteAllByUserId(userId);
         refreshTokenRepository.save(
@@ -113,8 +120,13 @@ public class AuthService {
         UUID userId = stored.getUserId();
         String email = jwtTokenProvider.getEmail(refreshToken);
 
-        String newAccessToken = jwtTokenProvider.generateAccessToken(userId, email, "USER");
-        String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId, email, "USER");
+        User user = userRepository.findById(userId).orElseThrow(
+            () -> new CustomException(AuthErrorCode.USER_NOT_FOUND)
+        );
+        String role = resolveRole(user.getUserType());
+
+        String newAccessToken = jwtTokenProvider.generateAccessToken(userId, email, role);
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(userId, email, role);
         Duration refreshValidity = jwtTokenProvider.getRefreshTokenValidity();
         LocalDateTime newRefreshExpiry = LocalDateTime.now(clock).plus(refreshValidity);
         stored.rotate(newRefreshToken, newRefreshExpiry);
@@ -186,5 +198,13 @@ public class AuthService {
         byte[] bytes = new byte[32]; // 32 bytes -> 64 hex chars
         RANDOM.nextBytes(bytes);
         return HexFormat.of().formatHex(bytes);
+    }
+
+    private String resolveRole(User.UserType userType) {
+        return switch (userType) {
+            case CUSTOMER -> "CUSTOMER";
+            case SELLER -> "SELLER";
+            case ADMIN -> "ADMIN";
+        };
     }
 }
