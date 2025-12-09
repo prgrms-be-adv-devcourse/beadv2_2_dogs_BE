@@ -97,6 +97,9 @@ jobs:
           fi
           
           # 모듈명을 서비스명으로 변환 (support -> baro-support, auth -> baro-auth 등)
+          # data: 이미지 빌드 없이 배포만
+          # cloud: 이미지 빌드 필요 (eureka, gateway, config)
+          # infra: data + cloud 모두 배포
           case "$MODULE" in
             auth) SERVICE="baro-auth" ;;
             buyer) SERVICE="baro-buyer" ;;
@@ -106,6 +109,9 @@ jobs:
             eureka) SERVICE="eureka" ;;
             gateway) SERVICE="gateway" ;;
             config) SERVICE="config" ;;
+            cloud) SERVICE="cloud" ;;  # cloud는 빌드 필요
+            data) SERVICE="data" ;;  # data는 빌드 없이 배포만
+            infra) SERVICE="infra" ;;  # infra는 deploy에서 처리
             *) SERVICE="" ;;
           esac
           
@@ -119,13 +125,24 @@ jobs:
     needs: [build-and-test, determine-service]
     timeout-minutes: 30  # Docker 빌드 타임아웃 설정
     # 브랜치에서 추출한 서비스가 있을 때만 실행
+    # data는 이미지 빌드 없이 배포만 하므로 제외
+    # infra는 여러 서비스를 포함하므로 제외
     if: |
       github.event_name == 'push' && 
       (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/main-') || 
       startsWith(github.ref, 'refs/heads/dev-')) &&
       !contains(github.ref, 'main-data') && 
       !contains(github.ref, 'main-infra') &&
-      needs.determine-service.outputs.service != ''
+      !contains(github.ref, 'dev-infra') &&
+      needs.determine-service.outputs.service != '' &&
+      needs.determine-service.outputs.service != 'infra' &&
+      needs.determine-service.outputs.service != 'data'
+    
+    # cloud 모듈일 때는 eureka, gateway, config를 각각 빌드
+    strategy:
+      matrix:
+        service: ${{ needs.determine-service.outputs.service == 'cloud' && fromJSON('["eureka", "gateway", "config"]') || fromJSON(format('["{0}"]', needs.determine-service.outputs.service)) }}
+      fail-fast: false
     
     steps:
       - name: Checkout code
@@ -139,8 +156,8 @@ jobs:
       - name: Set service name
         id: service
         run: |
-          echo "service=${{ needs.determine-service.outputs.service }}" >> $GITHUB_OUTPUT
-          echo "Building service: ${{ needs.determine-service.outputs.service }}"
+          echo "service=${{ matrix.service }}" >> $GITHUB_OUTPUT
+          echo "Building service: ${{ matrix.service }}"
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -163,7 +180,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ steps.service.outputs.service }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
           tags: |
             # main-* 브랜치: latest 태그
             # dev-* 브랜치: dev-latest 태그
@@ -182,12 +199,12 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/${{ steps.service.outputs.service }}/Dockerfile
+          file: ./docker/${{ matrix.service }}/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ steps.service.outputs.service }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ steps.service.outputs.service }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:buildcache,mode=max
 
   # ==================================================
   # CD: Deploy to AWS EC2 (모듈별)
@@ -198,7 +215,7 @@ jobs:
     needs: [build-and-test, determine-service]  # determine-service에서 모듈명 가져오기
     if: |
       (startsWith(github.ref, 'refs/heads/main-') || startsWith(github.ref, 'refs/heads/dev-')) &&
-      needs.determine-service.outputs.service != ''
+      needs.determine-service.outputs.module != ''
     
     steps:
       - name: Checkout code
@@ -219,27 +236,43 @@ jobs:
           HOST: ${{ secrets.EC2_HOST }}
           USER: ${{ secrets.EC2_USERNAME }}
           MODULE_NAME: ${{ steps.module.outputs.name }}
+          BRANCH_NAME: ${{ steps.module.outputs.branch }}
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
           
+          # 브랜치 이름에서 이미지 태그 결정 (dev-support -> dev-support, main-support -> latest)
+          if [[ "$BRANCH_NAME" == dev-* ]]; then
+            IMAGE_TAG="$BRANCH_NAME"
+          elif [[ "$BRANCH_NAME" == main-* ]]; then
+            IMAGE_TAG="latest"
+          else
+            IMAGE_TAG="latest"
+          fi
+          
           # 모듈명 확인 (디버깅용)
-          echo "Deploying module: ${MODULE_NAME}"
+          echo "Deploying module: ${MODULE_NAME} with image tag: ${IMAGE_TAG}"
           
           # EC2에 배포 디렉토리 생성
           ssh -i private_key.pem -o StrictHostKeyChecking=no \
             ${USER}@${HOST} "mkdir -p /home/${USER}/apps/BE"
           
-          # EC2에 배포 스크립트 및 docker-compose 파일들 복사
+          # EC2에 배포 스크립트 및 해당 모듈의 docker-compose 파일만 복사
           scp -i private_key.pem -o StrictHostKeyChecking=no \
             ./scripts/deploy-module.sh ${USER}@${HOST}:/home/${USER}/apps/BE/
           
           scp -i private_key.pem -o StrictHostKeyChecking=no \
-            ./docker-compose.*.yml ${USER}@${HOST}:/home/${USER}/apps/BE/
+            ./docker-compose.${MODULE_NAME}.yml ${USER}@${HOST}:/home/${USER}/apps/BE/
           
-          # 모듈별 배포 스크립트 실행 (GITHUB_TOKEN 전달, 모듈명을 인자로 전달)
+          # 인프라 docker-compose 파일도 복사 (필요시)
+          scp -i private_key.pem -o StrictHostKeyChecking=no \
+            ./docker-compose.data.yml ${USER}@${HOST}:/home/${USER}/apps/BE/ 2>/dev/null || true
+          scp -i private_key.pem -o StrictHostKeyChecking=no \
+            ./docker-compose.cloud.yml ${USER}@${HOST}:/home/${USER}/apps/BE/ 2>/dev/null || true
+          
+          # 모듈별 배포 스크립트 실행 (GITHUB_TOKEN, IMAGE_TAG 전달)
           ssh -i private_key.pem -o StrictHostKeyChecking=no \
-            ${USER}@${HOST} "cd /home/${USER}/apps/BE && GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} bash ./deploy-module.sh ${MODULE_NAME}"
+            ${USER}@${HOST} "cd /home/${USER}/apps/BE && GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} IMAGE_TAG=${IMAGE_TAG} bash ./deploy-module.sh ${MODULE_NAME}"
           
           rm -f private_key.pem
       

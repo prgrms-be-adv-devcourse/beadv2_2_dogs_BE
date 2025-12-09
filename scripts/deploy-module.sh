@@ -114,6 +114,11 @@ check_cloud_infra() {
     log_step "🔍 Checking Spring Cloud infrastructure..."
     if ! docker ps | grep -q baro-eureka; then
         log_warn "Spring Cloud infrastructure not running. Starting cloud infrastructure first..."
+        # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
+        # 브랜치별 배포 시 동일한 태그 사용 (dev-support -> dev-support, main-support -> latest)
+        local cloud_image_tag="${IMAGE_TAG:-latest}"
+        log_info "Using image tag for cloud infrastructure: ${cloud_image_tag}"
+        export IMAGE_TAG="${cloud_image_tag}"
         $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
         $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
         log_info "Waiting for Spring Cloud to be ready (30 seconds)..."
@@ -135,10 +140,14 @@ deploy_module() {
         exit 1
     fi
     
+    # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
+    export IMAGE_TAG="${IMAGE_TAG:-latest}"
+    log_info "Using image tag: ${IMAGE_TAG}"
+    
     # 현재 버전 기록 (롤백용)
     CURRENT_IMAGE=$(docker inspect "baro-${module}" --format='{{.Config.Image}}' 2>/dev/null || echo "none")
     
-    log_step "📥 Pulling latest image for $module..."
+    log_step "📥 Pulling image for $module (tag: ${IMAGE_TAG})..."
     $DOCKER_COMPOSE -f "$compose_file" pull
     
     # Pull한 이미지 정보
@@ -200,25 +209,50 @@ case $MODULE_NAME in
     cloud)
         log_step "Deploying Spring Cloud infrastructure..."
         check_data_infra
+        # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
+        export IMAGE_TAG="${IMAGE_TAG:-latest}"
+        log_info "Using image tag for cloud infrastructure: ${IMAGE_TAG}"
         $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
         $DOCKER_COMPOSE -f docker-compose.cloud.yml down || true
         $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
         log_info "✅ Spring Cloud infrastructure deployed successfully!"
         ;;
     
-    # infra)
-    #     log_step "Deploying all infrastructure (data + cloud)..."
-    #     $DOCKER_COMPOSE -f docker-compose.data.yml pull
-    #     $DOCKER_COMPOSE -f docker-compose.data.yml up -d
-    #     sleep 20
-    #     $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
-    #     $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
-    #     log_info "✅ All infrastructure deployed successfully!"
-    #     ;;
+    infra)
+        log_step "Deploying all infrastructure (data + cloud)..."
+        # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
+        export IMAGE_TAG="${IMAGE_TAG:-latest}"
+        log_info "Using image tag for infrastructure: ${IMAGE_TAG}"
+        
+        # 1. 데이터 인프라 배포
+        log_info "Step 1/2: Deploying data infrastructure..."
+        $DOCKER_COMPOSE -f docker-compose.data.yml pull
+        $DOCKER_COMPOSE -f docker-compose.data.yml down || true
+        $DOCKER_COMPOSE -f docker-compose.data.yml up -d
+        sleep 20
+        
+        # 2. Cloud 인프라 배포
+        log_info "Step 2/2: Deploying Spring Cloud infrastructure..."
+        $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
+        $DOCKER_COMPOSE -f docker-compose.cloud.yml down || true
+        $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
+        sleep 30
+        
+        log_info "✅ All infrastructure deployed successfully!"
+        ;;
     
     auth|buyer|seller|order|support)
+        # 데이터 인프라는 필수 (Redis, MySQL, Kafka)
         check_data_infra
-        check_cloud_infra
+        # Cloud 인프라는 선택적 (이미 실행 중이면 체크만, 없으면 경고만)
+        if ! docker ps | grep -q baro-eureka; then
+            log_warn "⚠️  Cloud infrastructure (Eureka, Gateway, Config) is not running."
+            log_warn "⚠️  The module may not work properly without cloud infrastructure."
+            log_warn "⚠️  If needed, deploy cloud infrastructure separately: bash deploy-module.sh cloud"
+        else
+            log_info "✅ Cloud infrastructure is already running."
+        fi
+        # 모듈만 단독 배포
         deploy_module "$MODULE_NAME"
         ;;
     
