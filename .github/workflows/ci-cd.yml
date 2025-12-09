@@ -79,7 +79,8 @@ jobs:
     # data, infra 브랜치는 Docker 빌드 건너뛰기 (인프라만 배포)
     if: |
       github.event_name == 'push' && 
-      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/main-')) &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/main-') || 
+      startsWith(github.ref, 'refs/heads/dev-')) &&
       !contains(github.ref, 'main-data') && 
       !contains(github.ref, 'main-infra')
     
