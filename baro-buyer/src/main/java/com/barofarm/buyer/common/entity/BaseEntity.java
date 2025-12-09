@@ -22,9 +22,7 @@ public abstract class BaseEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    /**
-     * 자식 클래스에서 수동으로 수정 시간을 갱신할 때 사용
-     */
+    // 자식 클래스에서 수동으로 수정 시간을 갱신할 때 사용 (Cart 패키지에서 사용)
     protected void updateTimestamp() {
         this.updatedAt = LocalDateTime.now();
     }

@@ -1,5 +1,8 @@
 package com.barofarm.buyer.cart.domain;
 
+import com.barofarm.buyer.cart.exception.CartErrorCode;
+import com.barofarm.buyer.common.entity.BaseEntity;
+import com.barofarm.buyer.common.exception.CustomException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
@@ -17,7 +19,7 @@ import lombok.Getter;
 @Getter
 @Entity
 @Table(name = "cart_item")
-public class CartItem {
+public class CartItem extends BaseEntity {
 
   @Schema(description = "장바구니 항목 UUID")
   @Id
@@ -44,12 +46,6 @@ public class CartItem {
   @Column(name = "option_info_json")
   private String optionInfoJson;
 
-  @Column(name = "created_at", nullable = false, updatable = false)
-  private LocalDateTime createdAt;
-
-  @Column(name = "updated_at")
-  private LocalDateTime updatedAt;
-
   public CartItem() {}
 
   /* ====== 정적 팩토리 메소드 ====== */
@@ -62,8 +58,6 @@ public class CartItem {
     item.quantity = quantity;
     item.unitPrice = unitPrice;
     item.optionInfoJson = optionInfoJson;
-    item.createdAt = LocalDateTime.now();
-    item.updatedAt = LocalDateTime.now();
     return item;
   }
 
@@ -72,7 +66,7 @@ public class CartItem {
   /** 수량 증가 */
   public void increaseQuantity(int qty) {
     if (qty <= 0) {
-      throw new IllegalArgumentException("Quantity must be positive");
+      throw new CustomException(CartErrorCode.QUANTITY_MUST_BE_POSITIVE);
     }
     this.quantity += qty;
     touch();
@@ -81,7 +75,7 @@ public class CartItem {
   /** 수량 변경 */
   public void changeQuantity(int qty) {
     if (qty <= 0) {
-      throw new IllegalArgumentException("Quantity must be positive");
+      throw new CustomException(CartErrorCode.QUANTITY_MUST_BE_POSITIVE);
     }
     this.quantity = qty;
     touch();
@@ -111,6 +105,6 @@ public class CartItem {
   }
 
   private void touch() {
-    this.updatedAt = LocalDateTime.now();
+    updateTimestamp();
   }
 }

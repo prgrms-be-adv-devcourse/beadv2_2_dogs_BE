@@ -6,6 +6,8 @@ import com.barofarm.buyer.cart.application.dto.CartValidationInfo;
 import com.barofarm.buyer.cart.domain.Cart;
 import com.barofarm.buyer.cart.domain.CartItem;
 import com.barofarm.buyer.cart.domain.CartRepository;
+import com.barofarm.buyer.cart.exception.CartErrorCode;
+import com.barofarm.buyer.common.exception.CustomException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -179,12 +181,12 @@ public class CartService {
   private Cart findCart(UUID buyerId, String sessionKey) {
     if (buyerId != null) {
       return cartRepository.findByBuyerId(buyerId)
-          .orElseThrow(() -> new IllegalArgumentException("Cart not found"));
+          .orElseThrow(() -> new CustomException(CartErrorCode.CART_NOT_FOUND));
     } else if (sessionKey != null) {
       return cartRepository.findBySessionKey(sessionKey)
-          .orElseThrow(() -> new IllegalArgumentException("Cart not found"));
+          .orElseThrow(() -> new CustomException(CartErrorCode.CART_NOT_FOUND));
     }
-    throw new IllegalArgumentException("buyerId or sessionKey required");
+    throw new CustomException(CartErrorCode.BUYER_ID_OR_SESSION_KEY_REQUIRED);
   }
 
   // 장바구니 조회 또는 신규 생성
@@ -196,6 +198,6 @@ public class CartService {
       return cartRepository.findBySessionKey(sessionKey)
           .orElseGet(() -> Cart.createForGuest(sessionKey));
     }
-    throw new IllegalArgumentException("buyerId or sessionKey required");
+    throw new CustomException(CartErrorCode.BUYER_ID_OR_SESSION_KEY_REQUIRED);
   }
 }

@@ -1,5 +1,8 @@
 package com.barofarm.buyer.cart.domain;
 
+import com.barofarm.buyer.cart.exception.CartErrorCode;
+import com.barofarm.buyer.common.entity.BaseEntity;
+import com.barofarm.buyer.common.exception.CustomException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -9,7 +12,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +21,7 @@ import lombok.Getter;
 @Getter
 @Entity
 @Table(name = "cart")
-public class Cart {
+public class Cart extends BaseEntity {
 
   @Schema(description = "장바구니 UUID")
   @Id
@@ -42,12 +44,6 @@ public class Cart {
   @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<CartItem> items = new ArrayList<>();
 
-  @Column(name = "created_at", nullable = false, updatable = false)
-  private LocalDateTime createdAt;
-
-  @Column(name = "updated_at")
-  private LocalDateTime updatedAt;
-
   public Cart() {}
 
   /* ====== 정적 팩토리 메소드 ====== */
@@ -59,8 +55,6 @@ public class Cart {
     cart.buyerId = buyerId;
     cart.status = CartStatus.ACTIVE;
     cart.items = new ArrayList<>();
-    cart.createdAt = LocalDateTime.now();
-    cart.updatedAt = LocalDateTime.now();
     return cart;
   }
 
@@ -71,8 +65,6 @@ public class Cart {
     cart.sessionKey = sessionKey;
     cart.status = CartStatus.ACTIVE;
     cart.items = new ArrayList<>();
-    cart.createdAt = LocalDateTime.now();
-    cart.updatedAt = LocalDateTime.now();
     return cart;
   }
 
@@ -133,7 +125,7 @@ public class Cart {
     return items.stream()
         .filter(i -> i.getId().equals(itemId))
         .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("CartItem not found"));
+        .orElseThrow(() -> new CustomException(CartErrorCode.CART_ITEM_NOT_FOUND));
   }
 
   private CartItem findSameItem(CartItem newItem) {
@@ -156,6 +148,6 @@ public class Cart {
   }
 
   private void touch() {
-    updatedAt = LocalDateTime.now();
+    updateTimestamp();
   }
 }
