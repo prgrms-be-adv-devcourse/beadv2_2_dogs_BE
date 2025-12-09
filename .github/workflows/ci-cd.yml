@@ -12,6 +12,11 @@ on:
       - main-*
       # - dev-*
 
+# GITHUB_TOKEN에 패키지 쓰기 권한 부여
+permissions:
+  contents: read
+  packages: write
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: do-develop-space  # 개인 GitHub 계정
@@ -151,7 +156,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: do-develop-space  # 개인 계정
+          username: do-develop-space
           password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Extract metadata
