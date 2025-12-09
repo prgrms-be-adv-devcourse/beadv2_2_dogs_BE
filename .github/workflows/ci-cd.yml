@@ -253,6 +253,7 @@ jobs:
           USER: ${{ secrets.EC2_USERNAME }}
           MODULE_NAME: ${{ steps.module.outputs.name }}
           BRANCH_NAME: ${{ steps.module.outputs.branch }}
+        timeout-minutes: 10  # 배포 타임아웃 설정
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
@@ -270,7 +271,36 @@ jobs:
           echo "Deploying module: ${MODULE_NAME} with image tag: ${IMAGE_TAG}"
           
           # SSH 연결 옵션 (안정성 개선)
-          SSH_OPTS="-i private_key.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o ConnectTimeout=30"
+          SSH_OPTS="-i private_key.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o ConnectTimeout=10 -o TCPKeepAlive=yes"
+          
+          # SSH 연결 테스트 (재시도 로직)
+          echo "Testing SSH connection to ${USER}@${HOST}..."
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          SSH_CONNECTED=false
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if ssh $SSH_OPTS -o ConnectTimeout=10 ${USER}@${HOST} "echo 'SSH connection successful'" 2>/dev/null; then
+              SSH_CONNECTED=true
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "⚠️ SSH connection attempt $RETRY_COUNT failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
+          
+          if [ "$SSH_CONNECTED" = false ]; then
+            echo "❌ Failed to connect to EC2 after $MAX_RETRIES attempts"
+            echo "💡 Please check:"
+            echo "   1. EC2 instance is running"
+            echo "   2. Security Group allows SSH (port 22) from GitHub Actions IP"
+            echo "   3. EC2 instance is accessible"
+            rm -f private_key.pem
+            exit 1
+          fi
+          
+          echo "✅ SSH connection established"
           
           # EC2에 배포 디렉토리 생성
           ssh $SSH_OPTS ${USER}@${HOST} "mkdir -p /home/${USER}/apps/BE"
@@ -297,15 +327,71 @@ jobs:
           fi
           
           # 모듈별 배포 스크립트 실행 (GITHUB_TOKEN, IMAGE_TAG 전달)
-          # SSH 연결 안정성을 위해 ServerAliveInterval 옵션 사용
-          ssh $SSH_OPTS ${USER}@${HOST} \
-            "cd /home/${USER}/apps/BE && GITHUB_TOKEN=${GHCR_TOKEN} IMAGE_TAG=${IMAGE_TAG} bash ./deploy-module.sh ${MODULE_NAME}" || {
-            echo "⚠️ SSH connection might have closed, but deployment might still be running"
-            echo "💡 Check deployment status: ssh ${USER}@${HOST} 'docker ps | grep baro-${MODULE_NAME}'"
-            exit 1
-          }
+          # 백그라운드로 실행하여 SSH 연결이 끊어져도 계속 진행되도록
+          echo "🚀 Starting deployment in background..."
+          DEPLOY_LOG="/home/${USER}/apps/BE/deploy-${MODULE_NAME}-$(date +%Y%m%d-%H%M%S).log"
           
-          rm -f private_key.pem
+          # 배포 스크립트를 백그라운드로 실행하고 로그 파일에 저장
+          ssh $SSH_OPTS ${USER}@${HOST} \
+            "cd /home/${USER}/apps/BE && \
+             nohup bash -c 'GITHUB_TOKEN=${GHCR_TOKEN} IMAGE_TAG=${IMAGE_TAG} bash ./deploy-module.sh ${MODULE_NAME}' > ${DEPLOY_LOG} 2>&1 & \
+             echo \$! > /tmp/deploy-${MODULE_NAME}.pid"
+          
+          echo "⏳ Deployment started in background. PID saved to /tmp/deploy-${MODULE_NAME}.pid"
+          echo "📝 Log file: ${DEPLOY_LOG}"
+          echo "⏳ Waiting 10 seconds for initial deployment steps..."
+          sleep 10
+          
+          # 배포 진행 상황 확인 (최대 5분 대기)
+          echo "📊 Monitoring deployment progress..."
+          MAX_WAIT=300  # 5분
+          ELAPSED=0
+          INTERVAL=10   # 10초마다 확인
+          
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            # 배포 프로세스가 실행 중인지 확인
+            if ssh $SSH_OPTS ${USER}@${HOST} "test -f /tmp/deploy-${MODULE_NAME}.pid && ps -p \$(cat /tmp/deploy-${MODULE_NAME}.pid) > /dev/null 2>&1"; then
+              # 로그의 마지막 몇 줄 확인
+              LAST_LOG=$(ssh $SSH_OPTS ${USER}@${HOST} "tail -n 3 ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not ready yet'")
+              echo "[${ELAPSED}s] Deployment in progress... Last log: ${LAST_LOG}"
+              sleep $INTERVAL
+              ELAPSED=$((ELAPSED + INTERVAL))
+            else
+              # 프로세스가 종료됨 - 성공 또는 실패 확인
+              echo "✅ Deployment process completed. Checking final status..."
+              FINAL_STATUS=$(ssh $SSH_OPTS ${USER}@${HOST} "tail -n 20 ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'")
+              echo "$FINAL_STATUS"
+              
+              # 컨테이너가 실행 중인지 확인
+              if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q baro-${MODULE_NAME}"; then
+                echo "✅ Container is running. Deployment appears successful!"
+                rm -f private_key.pem
+                exit 0
+              else
+                echo "⚠️ Container is not running. Deployment may have failed."
+                echo "📝 Full log: ${DEPLOY_LOG}"
+                rm -f private_key.pem
+                exit 1
+              fi
+            fi
+          done
+          
+          # 타임아웃 발생
+          echo "⏱️ Deployment timeout after ${MAX_WAIT} seconds"
+          echo "📝 Checking current status..."
+          ssh $SSH_OPTS ${USER}@${HOST} "tail -n 30 ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'"
+          
+          # 컨테이너 상태 확인
+          if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q baro-${MODULE_NAME}"; then
+            echo "✅ Container is running despite timeout. Deployment may have succeeded."
+            rm -f private_key.pem
+            exit 0
+          else
+            echo "❌ Container is not running. Deployment may have failed."
+            echo "💡 Check full log manually: ssh ${USER}@${HOST} 'cat ${DEPLOY_LOG}'"
+            rm -f private_key.pem
+            exit 1
+          fi
       
       - name: Notify deployment status
         if: always()
@@ -318,8 +404,16 @@ jobs:
             echo "✅ Deployment successful for module: ${{ steps.module.outputs.name }}"
           else
             echo "❌ Deployment failed for module: ${{ steps.module.outputs.name }}"
-            echo "💡 Check deployment status manually on EC2"
-            echo "   ssh ${USER}@${HOST} 'docker ps | grep baro-${MODULE_NAME}'"
+            echo ""
+            echo "💡 Troubleshooting steps:"
+            echo "   1. Check EC2 instance status: AWS Console → EC2 → Instances"
+            echo "   2. Verify Security Group allows SSH (port 22) from GitHub Actions IP ranges"
+            echo "   3. Check if instance is running: aws ec2 describe-instances --instance-ids <instance-id>"
+            echo "   4. Test SSH manually: ssh ${USER}@${HOST} 'echo test'"
+            echo "   5. Check deployment status: ssh ${USER}@${HOST} 'docker ps | grep baro-${MODULE_NAME}'"
+            echo ""
+            echo "📝 Note: If SSH connection timed out, the deployment script might not have run."
+            echo "   The container might still be running with the previous version."
           fi
 
   # ==================================================
