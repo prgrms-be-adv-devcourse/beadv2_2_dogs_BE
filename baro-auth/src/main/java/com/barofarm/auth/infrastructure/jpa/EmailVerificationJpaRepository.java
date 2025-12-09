@@ -11,4 +11,6 @@ public interface EmailVerificationJpaRepository extends JpaRepository<EmailVerif
     Optional<EmailVerification> findTopByEmailOrderByCreatedAtDesc(String email);
 
     void deleteByEmail(String email);
+
+    void deleteAllByEmail(String email);
 }

@@ -58,27 +58,4 @@ public class EmailVerification {
         this.verified = true;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public LocalDateTime getExpiresAt() {
-        return expiresAt;
-    }
-
-    public boolean isVerified() {
-        return verified;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
 }

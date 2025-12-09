@@ -150,4 +150,17 @@ http
 
 ---
 
+251209
+0. 이메일 인증 (V)
+1. AuthService + 테스트 완성 (V)
+2.  AuthController에 /auth/signup 연결 (V)
+3. 이후:
+    - JWT 발급/검증(V)
+    - /auth/login, /auth/me 구현 (v)
+    - 다른 서비스 (buyer-service, seller-service에서) JWT 기반 인증 연동하기
+4. 토큰 생성 및 관리 (V)
+5. AOP, Gateway관련
 
+할거
+1. Seller로 전환 관련 API 만들기
+2. 
