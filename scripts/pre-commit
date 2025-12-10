@@ -9,35 +9,21 @@ echo "🔍 Pre-commit hook 실행 중..."
 # 프로젝트 루트 디렉토리로 이동
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
-# 1. Spotless 포맷 검사
+# 코드 품질 검사 (Spotless + Checkstyle)
 echo ""
-echo "📝 [1/2] Spotless 포맷 검사..."
-./gradlew spotlessCheck --no-daemon -q
+echo "📝 코드 품질 검사 중..."
+./gradlew lint --no-daemon -q
 
 if [ $? -ne 0 ]; then
     echo ""
-    echo "❌ 코드 포맷이 맞지 않습니다!"
-    echo "👉 다음 명령어로 자동 수정하세요: ./gradlew spotlessApply"
+    echo "❌ 코드 품질 검사 실패!"
+    echo "👉 포맷 자동 수정: ./gradlew format"
+    echo "👉 상세 내용 확인: build/reports/checkstyle/"
     echo ""
     exit 1
 fi
-echo "✅ Spotless 검사 통과"
 
-# 2. Checkstyle 검사
-echo ""
-echo "🔎 [2/2] Checkstyle 검사..."
-./gradlew checkstyleMain --no-daemon -q
-
-if [ $? -ne 0 ]; then
-    echo ""
-    echo "❌ Checkstyle 검사 실패!"
-    echo "👉 build/reports/checkstyle/ 에서 상세 내용을 확인하세요."
-    echo ""
-    exit 1
-fi
-echo "✅ Checkstyle 검사 통과"
-
+echo "✅ 코드 품질 검사 통과"
 echo ""
 echo "🎉 모든 검사 통과! 커밋을 진행합니다."
 exit 0
-

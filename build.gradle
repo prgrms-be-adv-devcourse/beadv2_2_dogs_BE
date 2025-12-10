@@ -30,7 +30,7 @@ subprojects {
     }
 
     ext {
-        set('springCloudVersion', "2025.0.0")
+        set('springCloudVersion', "2025.1.0")
     }
 
     dependencyManagement {
@@ -44,9 +44,23 @@ subprojects {
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
 
-        // Test
+        // Test(추후 불필요한 의존성 제거해야 함)
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+        testRuntimeOnly 'com.h2database:h2'
+        testImplementation 'io.rest-assured:rest-assured:5.3.1'
+        testImplementation "org.springframework.boot:spring-boot-testcontainers"
+        testImplementation "org.testcontainers:junit-jupiter"
+        testImplementation "org.testcontainers:testcontainers"
+        testImplementation 'org.mockito:mockito-junit-jupiter'
+        testImplementation 'org.assertj:assertj-core'
+        testImplementation 'io.rest-assured:rest-assured:5.5.5'
+        testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test:4.0.0")
+        implementation("org.springframework.boot:spring-boot-data-jpa-test:4.0.0-RC1")
+        testImplementation platform("org.testcontainers:testcontainers-bom:1.19.7")
+
+        // swagger
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0'
     }
 
     tasks.named('test') {
@@ -61,7 +75,7 @@ subprojects {
             target 'src/*/java/**/*.java'
             importOrder()
             removeUnusedImports()
-            googleJavaFormat('1.25.2')
+            leadingTabsToSpaces(4)
             trimTrailingWhitespace()
             endWithNewline()
         }
@@ -101,18 +115,8 @@ tasks.register('format') {
     dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'spotlessApply' } }
 }
 
-// 서비스 모듈은 jar만 생성 (라이브러리로 사용)
-[
-    ':baro-auth:auth-service',
-    ':baro-buyer:buyer-service', ':baro-buyer:cart-service', ':baro-buyer:product-service',
-    ':baro-seller:seller-service', ':baro-seller:farm-service',
-    ':baro-order:order-service', ':baro-order:payment-service',
-    ':baro-support:settlement-service', ':baro-support:delivery-service', ':baro-support:notification-service',
-    ':baro-support:experience-service', ':baro-support:search-service', ':baro-support:review-service',
-    ':baro-cloud:gateway-service', ':baro-cloud:config-server', ':baro-cloud:eureka-server'
-].each { servicePath ->
-    project(servicePath) {
-        bootJar.enabled = false
-        jar.enabled = true
-    }
+// baro-cloud 부모 모듈은 빌드 제외
+project(':baro-cloud') {
+    bootJar.enabled = false
+    jar.enabled = false
 }

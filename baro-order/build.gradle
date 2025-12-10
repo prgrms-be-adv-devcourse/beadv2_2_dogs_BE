@@ -1,12 +1,18 @@
-// baro-order 모듈 - order, payment 서비스 포함
 dependencies {
-    implementation project(':baro-order:order-service')
-    implementation project(':baro-order:payment-service')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    // Database
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'com.h2database:h2'
 }
 
 bootJar {
     enabled = true
-    mainClass = 'com.barofarm.order.OrderServiceApplication'
+    mainClass = 'com.barofarm.order.OrderApplication'
 }
 
 jar {
