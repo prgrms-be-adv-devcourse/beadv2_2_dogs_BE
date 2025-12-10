@@ -77,6 +77,9 @@ fi
 GITHUB_USERNAME="${GITHUB_USERNAME:-do-develop-space}"
 PROJECT_DIR="${HOME}/apps/BE"
 
+# Docker Compose 프로젝트 이름 설정 (네트워크 이름 접두사 방지)
+export COMPOSE_PROJECT_NAME=""
+
 # 디렉토리 생성 (없으면)
 mkdir -p ${PROJECT_DIR}
 
@@ -106,13 +109,11 @@ fi
 # 1.5. Docker 네트워크 확인 및 생성
 # ===================================
 log_step "🌐 Checking Docker network..."
-# be_baro-network 또는 baro-network 둘 다 확인
-# docker network ls 출력 형식: NETWORK ID     NAME          DRIVER    SCOPE
-if docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
-    log_info "✅ Found be_baro-network (using existing network)"
-    # docker-compose가 프로젝트 이름을 붙이지 않도록 설정
-    export COMPOSE_PROJECT_NAME=""
-elif docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
+# Docker Compose 프로젝트 이름을 빈 문자열로 설정하여 네트워크 이름 접두사 방지
+export COMPOSE_PROJECT_NAME=""
+
+# baro-network 확인 및 생성
+if docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
     log_info "✅ Found baro-network"
 else
     log_info "Creating baro-network..."
@@ -177,8 +178,8 @@ deploy_module() {
         exit 1
     fi
     
-    # 네트워크 확인 (be_baro-network 또는 baro-network)
-    if ! docker network ls --format '{{.Name}}' | grep -qE "^(be_baro-network|baro-network)$"; then
+    # 네트워크 확인
+    if ! docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
         log_error "❌ baro-network not found!"
         log_error "Please create the network first: docker network create baro-network"
         exit 1
@@ -288,6 +289,12 @@ case $MODULE_NAME in
     
     cloud)
         log_step "Deploying Spring Cloud infrastructure..."
+        # 네트워크 확인
+        if ! docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
+            log_error "❌ baro-network not found!"
+            log_error "Please create the network first: docker network create baro-network"
+            exit 1
+        fi
         check_data_infra
         # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
         export IMAGE_TAG="${IMAGE_TAG:-latest}"
@@ -300,23 +307,37 @@ case $MODULE_NAME in
     
     infra)
         log_step "Deploying all infrastructure (data + cloud)..."
+        # 네트워크 확인
+        if ! docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
+            log_error "❌ baro-network not found!"
+            log_error "Please create the network first: docker network create baro-network"
+            exit 1
+        fi
         # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
         export IMAGE_TAG="${IMAGE_TAG:-latest}"
         log_info "Using image tag for infrastructure: ${IMAGE_TAG}"
         
-        # 1. 데이터 인프라 배포
-        log_info "Step 1/2: Deploying data infrastructure..."
-        $DOCKER_COMPOSE -f docker-compose.data.yml pull
-        $DOCKER_COMPOSE -f docker-compose.data.yml down || true
-        $DOCKER_COMPOSE -f docker-compose.data.yml up -d
-        sleep 20
+        # 1. 데이터 인프라 배포 (이미 실행 중이면 건너뛰기)
+        if docker ps | grep -q baro-mysql; then
+            log_info "✅ Data infrastructure is already running. Skipping data deployment."
+        else
+            log_info "Step 1/2: Deploying data infrastructure..."
+            $DOCKER_COMPOSE -f docker-compose.data.yml pull
+            $DOCKER_COMPOSE -f docker-compose.data.yml down || true
+            $DOCKER_COMPOSE -f docker-compose.data.yml up -d
+            sleep 20
+        fi
         
-        # 2. Cloud 인프라 배포
-        log_info "Step 2/2: Deploying Spring Cloud infrastructure..."
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml down || true
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
-        sleep 30
+        # 2. Cloud 인프라 배포 (이미 실행 중이면 건너뛰기)
+        # if docker ps | grep -q baro-eureka; then
+        #     log_info "✅ Cloud infrastructure is already running. Skipping cloud deployment."
+        # else
+        #     log_info "Step 2/2: Deploying Spring Cloud infrastructure..."
+        #     $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
+        #     $DOCKER_COMPOSE -f docker-compose.cloud.yml down || true
+        #     $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
+        #     sleep 30
+        # fi
         
         log_info "✅ All infrastructure deployed successfully!"
         ;;
