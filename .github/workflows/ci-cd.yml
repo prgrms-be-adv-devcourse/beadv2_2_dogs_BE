@@ -392,12 +392,19 @@ jobs:
               
               # 컨테이너 상태 확인
               echo "🔍 Checking container status..."
-              CONTAINER_STATUS=$(ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep baro-${MODULE_NAME} || echo 'No container found'" 2>/dev/null || echo "Could not check container status")
+              # data 모듈인 경우 MySQL만 체크, 다른 모듈은 해당 모듈 컨테이너 체크
+              if [ "${MODULE_NAME}" = "data" ]; then
+                CHECK_CONTAINER="baro-mysql"
+              else
+                CHECK_CONTAINER="baro-${MODULE_NAME}"
+              fi
+              
+              CONTAINER_STATUS=$(ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${CHECK_CONTAINER} || echo 'No container found'" 2>/dev/null || echo "Could not check container status")
               echo "$CONTAINER_STATUS"
               echo ""
               
               # 컨테이너가 실행 중인지 확인
-              if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q baro-${MODULE_NAME}" 2>/dev/null; then
+              if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${CHECK_CONTAINER}" 2>/dev/null; then
                 echo "✅ Container is running. Deployment appears successful!"
                 rm -f private_key.pem
                 exit 0
@@ -405,9 +412,9 @@ jobs:
                 echo "⚠️ Container is not running. Deployment may have failed."
                 
                 # 컨테이너 로그 확인 (존재하는 경우)
-                if echo "$CONTAINER_STATUS" | grep -q "baro-${MODULE_NAME}"; then
+                if echo "$CONTAINER_STATUS" | grep -q "${CHECK_CONTAINER}"; then
                   echo "🔍 Checking container logs..."
-                  ssh $SSH_OPTS ${USER}@${HOST} "docker logs baro-${MODULE_NAME} --tail 50 2>&1 || echo 'Could not fetch container logs'" || echo "Could not fetch container logs"
+                  ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 50 2>&1 || echo 'Could not fetch container logs'" || echo "Could not fetch container logs"
                 fi
                 
                 echo ""
@@ -425,13 +432,20 @@ jobs:
           ssh $SSH_OPTS ${USER}@${HOST} "tail -n 50 ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'" || echo "Could not fetch log"
           echo ""
           echo "🔍 Checking container status..."
-          ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep baro-${MODULE_NAME} || echo 'No container found'" || echo "Could not check container status"
+          # data 모듈인 경우 MySQL만 체크, 다른 모듈은 해당 모듈 컨테이너 체크
+          if [ "${MODULE_NAME}" = "data" ]; then
+            CHECK_CONTAINER="baro-mysql"
+          else
+            CHECK_CONTAINER="baro-${MODULE_NAME}"
+          fi
+          
+          ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${CHECK_CONTAINER} || echo 'No container found'" || echo "Could not check container status"
           echo ""
           echo "🔍 Checking recent container logs (if exists)..."
-          ssh $SSH_OPTS ${USER}@${HOST} "docker logs baro-${MODULE_NAME} --tail 30 2>&1 || echo 'Container logs not available'" || echo "Could not fetch container logs"
+          ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 30 2>&1 || echo 'Container logs not available'" || echo "Could not fetch container logs"
           
           # 컨테이너 상태 확인
-          if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q baro-${MODULE_NAME}"; then
+          if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${CHECK_CONTAINER}"; then
             echo "✅ Container is running despite timeout. Deployment may have succeeded."
             rm -f private_key.pem
             exit 0
@@ -459,7 +473,12 @@ jobs:
             echo "   2. Verify Security Group allows SSH (port 22) from GitHub Actions IP ranges"
             echo "   3. Check if instance is running: aws ec2 describe-instances --instance-ids <instance-id>"
             echo "   4. Test SSH manually: ssh ${USER}@${HOST} 'echo test'"
-            echo "   5. Check deployment status: ssh ${USER}@${HOST} 'docker ps | grep baro-${MODULE_NAME}'"
+            # data 모듈인 경우 MySQL만 체크, 다른 모듈은 해당 모듈 컨테이너 체크
+            if [ "${MODULE_NAME}" = "data" ]; then
+              echo "   5. Check deployment status: ssh ${USER}@${HOST} 'docker ps | grep baro-mysql'"
+            else
+              echo "   5. Check deployment status: ssh ${USER}@${HOST} 'docker ps | grep baro-${MODULE_NAME}'"
+            fi
             echo ""
             echo "📝 Note: If SSH connection timed out, the deployment script might not have run."
             echo "   The container might still be running with the previous version."
