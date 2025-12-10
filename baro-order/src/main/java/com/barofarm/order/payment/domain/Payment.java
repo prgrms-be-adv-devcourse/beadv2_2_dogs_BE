@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -14,55 +15,55 @@ import java.util.UUID;
 public class Payment extends BaseEntity {
 
     @Id
-    @Column(name = "id", columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", columnDefinition = "BINARY(16)", nullable = false)
-    private Order order;
+    @Column(name = "payment_key", nullable = false, unique = true, length = 200)
+    private String paymentKey;
 
-    @Column(name = "amount", nullable = false)
+    @Column(name = "order_id", nullable = false, length = 100)
+    private String orderId;
+
+    @Column(name = "total_amount", nullable = false)
     private Long amount;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "method", nullable = false, length = 30)
-    private PaymentMethod method;
+    @Column(name = "method", length = 50)
+    private String method;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private PaymentStatus status;
 
-    @Column(name = "transaction_id", length = 100)
-    private String transactionId;
+    @Column(name = "requested_at")
+    private LocalDateTime requestedAt;
 
-    @Column(name = "paid_at")
-    private LocalDateTime paidAt;
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
 
-    private Payment(Order order, Long amount, PaymentMethod method) {
+    @Column(name = "fail_reason")
+    private String failReason;
+
+    private Payment(String paymentKey, String orderId, Long amount) {
         this.id = UUID.randomUUID();
-        this.order = order;
+        this.paymentKey = paymentKey;
+        this.orderId = orderId;
         this.amount = amount;
+        this.status = PaymentStatus.READY;
+    }
+
+    public static Payment of(String paymentKey, String orderId, Long amount) {
+        return new Payment(paymentKey, orderId, amount);
+    }
+
+    public void markConfirmed(String method, LocalDateTime approvedAt, LocalDateTime requestedAt) {
+        this.status = PaymentStatus.CONFIRMED;
         this.method = method;
-        this.status = PaymentStatus.PENDING;
+        this.approvedAt = approvedAt;
+        this.requestedAt = requestedAt;
+        this.failReason = null;
     }
 
-    public static Payment of(Order order, Long amount, PaymentMethod method) {
-        return new Payment(order, amount, method);
-    }
-
-    public void success(String transactionId, LocalDateTime paidAt) {
-        this.status = PaymentStatus.SUCCESS;
-        this.transactionId = transactionId;
-        this.paidAt = paidAt;
-    }
-
-    public void fail(String transactionId) {
+    public void markFailed(String failReason) {
         this.status = PaymentStatus.FAILED;
-        this.transactionId = transactionId;
-    }
-
-    public void cancel(String transactionId) {
-        this.status = PaymentStatus.CANCELED;
-        this.transactionId = transactionId;
+        this.failReason = failReason;
     }
 }

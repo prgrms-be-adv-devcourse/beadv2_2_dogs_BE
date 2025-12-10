@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Toss Payment Demo</title>
+    <!-- ✅ v1/payment 사용 -->
+    <script src="https://js.tosspayments.com/v1/payment"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+        }
+        label {
+            display: block;
+            margin-top: 0.5rem;
+        }
+        input {
+            margin-left: 0.5rem;
+        }
+        button {
+            margin-top: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #3182f6;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<h1>바로팜 상품 주문 & 결제</h1>
+
+<label>
+    상품 ID:
+    <input type="text" id="product-id" placeholder="상품 UUID"
+           value="550e8400-e29b-41d4-a716-446655440001">
+</label>
+
+<label>
+    수량:
+    <input type="number" id="quantity" value="1" min="1">
+</label>
+
+<label>
+    단가(원):
+    <input type="number" id="unit-price" value="10000" min="0">
+</label>
+
+<label>
+    배송지 주소:
+    <input type="text" id="address" value="서울시 강남구 어디…">
+</label>
+
+<button id="pay-button">주문하기</button>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        try {
+            if (typeof window.TossPayments !== 'function') {
+                throw new Error('TossPayments is not defined. 스크립트가 로드되었는지 확인하세요.');
+            }
+
+            const clientKey = 'test_ck_ma60RZblrqReBBKpoZ7E8wzYWBn1'; // 네 테스트 키로 교체
+            const tossPayments = window.TossPayments(clientKey);
+
+            document.getElementById('pay-button').addEventListener('click', async function () {
+                const orderData = await createOrder();
+                if (!orderData) {
+                    return;
+                }
+
+                const { orderId, totalAmount } = orderData;
+
+                await tossPayments.requestPayment('카드', {
+                    amount: totalAmount,
+                    orderId: orderId,
+                    orderName: '바로팜 상품 주문',
+                    successUrl: window.location.origin + '/api/v1/payments/success',
+                    failUrl: window.location.origin + '/api/v1/payments/fail',
+                    customerName: '테스트 사용자',
+                    customerEmail: 'test@example.com',
+                    customerMobilePhone: '01012345678'
+                });
+            });
+
+            async function createOrder() {
+                const productId = document.getElementById('product-id').value;
+                const quantity = Number(document.getElementById('quantity').value);
+                const unitPrice = Number(document.getElementById('unit-price').value);
+                const address = document.getElementById('address').value;
+
+                if (!productId || !address) {
+                    alert('상품 ID와 배송지 주소를 입력하세요.');
+                    return null;
+                }
+
+                const body = {
+                    productId,
+                    quantity,
+                    unitPrice,
+                    address
+                };
+
+                const response = await fetch('/api/v1/orders/direct', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) {
+                    console.error('주문 생성 실패:', response.status);
+                    alert('주문 생성 실패');
+                    return null;
+                }
+
+                // { orderId, totalAmount } 형태라고 가정
+                return await response.json();
+            }
+        } catch (error) {
+            console.error('Toss 위젯 초기화 실패:', error);
+            alert('Toss 위젯을 불러오지 못했습니다. 콘솔을 확인하세요.');
+        }
+    });
+</script>
+</body>
+</html>
