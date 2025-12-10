@@ -1,14 +1,40 @@
 package com.barofarm.support.review.domain;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public enum ReviewStatus {
-    PUBLIC,      //공개
-    PRIVATE,     //비공개
-    HIDDEN,      //관리자 숨김
-    DELETED;     //삭제
+    PUBLIC(true),      //공개
+    PRIVATE(true),     //비공개
+    HIDDEN(false),     //관리자 숨김
+    DELETED(false);    //삭제
 
     public static final ReviewStatus DEFAULT = PUBLIC;
+    private static final EnumSet<ReviewStatus> VISIBLE_TO_OWNER = EnumSet.of(PUBLIC, PRIVATE);
+    private static final EnumSet<ReviewStatus> VISIBLE_TO_PUBLIC = EnumSet.of(PUBLIC);
 
-    public static ReviewStatus defaultStatus() {
-        return DEFAULT;
+    private final boolean userEditable;
+
+    public boolean isNotUserEditable() {
+        return !userEditable;
+    }
+
+    public boolean isVisibleToOwner() {
+        return VISIBLE_TO_OWNER.contains(this);
+    }
+
+    public boolean isVisibleToPublic() {
+        return VISIBLE_TO_PUBLIC.contains(this);
+    }
+
+    public static Set<ReviewStatus> getVisibleToOwnerSet() {
+        return Collections.unmodifiableSet(VISIBLE_TO_OWNER);
+    }
+
+    public static Set<ReviewStatus> getVisibleToPublicSet() {
+        return Collections.unmodifiableSet(VISIBLE_TO_PUBLIC);
     }
 }

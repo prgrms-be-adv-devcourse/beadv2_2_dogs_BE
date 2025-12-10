@@ -88,7 +88,7 @@ public class Review extends BaseEntity {
             .buyerId(buyerId)
             .productId(productId)
             .rating(rating)
-            .status(status != null ? status : ReviewStatus.defaultStatus())
+            .status(status != null ? status : ReviewStatus.DEFAULT)
             .content(content)
             .build();
     }
@@ -114,5 +114,42 @@ public class Review extends BaseEntity {
         if (rating < 1 || rating > 5) {
             throw new CustomException(ReviewErrorCode.INVALID_RATING_VALUE);
         }
+    }
+
+    public void validateReviewOwner(UUID requesterId) {
+        if (!this.buyerId.equals(requesterId)) {
+            throw new CustomException(ReviewErrorCode.REVIEW_FORBIDDEN);
+        }
+    }
+
+    public void validateUserUpdatable() {
+        if (this.status.isNotUserEditable()) {
+            throw new CustomException(ReviewErrorCode.REVIEW_NOT_UPDATABLE);
+        }
+    }
+
+    public void validateReadableBy(UUID requesterId) {
+        boolean isOwner = this.isOwner(requesterId);
+
+        // 소유자인 경우
+        if (isOwner && !this.status.isVisibleToOwner()) {
+            throw new CustomException(ReviewErrorCode.REVIEW_NOT_READABLE);
+        }
+
+        // 소유자가 아닌 경우
+        if (!isOwner && !this.status.isVisibleToPublic()) {
+            throw new CustomException(ReviewErrorCode.REVIEW_FORBIDDEN);
+        }
+    }
+
+    public boolean isOwner(UUID requesterId) {
+        return buyerId.equals(requesterId);
+    }
+
+    public void delete() {
+        if (this.status == ReviewStatus.DELETED) {
+            throw new CustomException(ReviewErrorCode.REVIEW_ALREADY_DELETED);
+        }
+        this.status = ReviewStatus.DELETED;
     }
 }

@@ -14,5 +14,4 @@ public interface OrderClient {
 
     @GetMapping("/internal/order-items/{id}")
     OrderItemResponse getOrderItem(@PathVariable("id") UUID orderItemId);
-
 }

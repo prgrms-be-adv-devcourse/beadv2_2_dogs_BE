@@ -7,6 +7,5 @@ public record OrderItemResponse(
     UUID productId,
     UUID sellerId,
     UUID buyerId,
-    String status,
-    String orderStatus
+    String status
 ) {}

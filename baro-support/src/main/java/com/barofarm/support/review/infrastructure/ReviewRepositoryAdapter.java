@@ -2,7 +2,9 @@ package com.barofarm.support.review.infrastructure;
 
 import com.barofarm.support.review.domain.Review;
 import com.barofarm.support.review.domain.ReviewRepository;
+import com.barofarm.support.review.domain.ReviewStatus;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,12 +33,21 @@ public class ReviewRepositoryAdapter implements ReviewRepository {
     }
 
     @Override
-    public Page<Review> findByProductId(UUID productId, Pageable pageable) {
-        return reviewRepository.findByProductId(productId, pageable);
+    public Page<Review> findByProductIdAndStatusIn(UUID productId,
+                                        Set<ReviewStatus> statuses,
+                                        Pageable pageable) {
+        return reviewRepository.findByProductIdAndStatusIn(productId, statuses, pageable);
     }
 
     @Override
-    public Page<Review> findByBuyerId(UUID buyerId, Pageable pageable) {
-        return reviewRepository.findByBuyerId(buyerId, pageable);
+    public Page<Review> findByBuyerIdAndStatusIn(UUID buyerId,
+                                      Set<ReviewStatus> statuses,
+                                      Pageable pageable) {
+        return reviewRepository.findByBuyerIdAndStatusIn(buyerId, statuses, pageable);
+    }
+
+    @Override
+    public boolean existsByOrderItemId(UUID orderItemId) {
+        return reviewRepository.existsByOrderItemId(orderItemId);
     }
 }
