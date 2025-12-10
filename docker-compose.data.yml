@@ -1,0 +1,145 @@
+# 데이터 인프라 서비스
+# Redis, MySQL, Kafka, Elasticsearch 등 데이터 저장소
+
+services:
+  # ===================================
+  # Cache & Session Store
+  # ===================================
+  # redis:
+  #   image: redis:7.2-alpine
+  #   container_name: baro-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+  #   restart: unless-stopped
+  #   networks:
+  #     - baro-network
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 5
+
+  # ===================================
+  # Database
+  # ===================================
+  mysql:
+    image: mysql:8.0
+    container_name: baro-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-barofarm}
+      - MYSQL_USER=${MYSQL_USER:-barouser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./scripts/init-db:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${MYSQL_USER:-barouser}", "-p${MYSQL_PASSWORD:-baropassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===================================
+  # Message Queue (Kafka KRaft Mode)
+  # ===================================
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: baro-kafka
+    ports:
+      - "9092:9092"  # Broker listener
+      - "9093:9093"  # Controller listener
+    environment:
+      # KRaft 모드 설정
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      # CLUSTER_ID는 기존 볼륨에 저장된 값을 사용 (변경 시 데이터 손실)
+      # 새로 초기화하려면 .env에서 다른 값으로 설정
+      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID:-}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-}
+      
+      # Listeners 설정
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      
+      # 토픽 설정
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      
+      # 로그 설정
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  # ===================================
+  # Search Engine (Elasticsearch)
+  # ===================================
+  elasticsearch:
+    # 커스텀 이미지 사용 (Nori 분석기 포함)
+    build:
+      context: ./docker/baro-es
+      dockerfile: Dockerfile
+    # 공식 이미지 직접 사용 (Nori 분석기 불필요한 경우)
+    # image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    container_name: baro-elasticsearch
+    environment:
+      - node.name=es01
+      - cluster.name=docker-cluster
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sSf http://localhost:9200 >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  # redis-data:
+  #   driver: local
+  mysql-data:
+    driver: local
+  kafka-data:
+    driver: local
+  elasticsearch-data:
+    driver: local
+
+networks:
+  baro-network:
+    # Docker Compose가 프로젝트 이름을 접두사로 붙이므로 be_baro-network 사용
+    name: be_baro-network  # 네트워크 이름 명시적으로 지정
+    external: true
+
