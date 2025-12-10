@@ -61,6 +61,7 @@ jobs:
         with:
           name: test-results
           path: '**/build/test-results/test/'
+          if-no-files-found: ignore  # 파일이 없어도 에러 발생하지 않음
       
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -482,6 +483,8 @@ jobs:
           min-versions-to-keep: 5
           delete-only-untagged-versions: 'false'
         continue-on-error: true  # 패키지가 없어도 실패하지 않도록
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_PAT }}  # 명시적으로 토큰 전달
 
   # ==================================================
   # Notification (선택사항)
