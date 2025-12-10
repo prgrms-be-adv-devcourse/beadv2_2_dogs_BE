@@ -66,7 +66,7 @@ class FarmRepositoryTest extends BaseRepositoryTest {
 
         @Test
         @DisplayName("존재하지 않는 ID 조회 시 빈 Optional을 반환한다.")
-        void fail_not_found() {
+        void failNotFound() {
             // given
             UUID randomId = UUID.randomUUID();
 
