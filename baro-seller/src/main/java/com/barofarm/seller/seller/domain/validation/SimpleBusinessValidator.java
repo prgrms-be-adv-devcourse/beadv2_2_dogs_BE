@@ -21,7 +21,7 @@ public class SimpleBusinessValidator implements BusinessValidator {
     public void validate(String businessRegNo, String businessOwnerName) {
 
         // 1. 빈 값 체크
-        if (!StringUtils.isEmpty(businessRegNo) || !StringUtils.isEmpty(businessOwnerName)) {
+        if (!StringUtils.hasText(businessRegNo) || !StringUtils.hasText(businessOwnerName)) {
             throw new CustomException(REQUIRED_FIELD_MISSING);
         }
 
