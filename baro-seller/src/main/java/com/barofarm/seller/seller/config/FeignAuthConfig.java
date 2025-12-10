@@ -1,6 +1,7 @@
 package com.barofarm.seller.seller.config;
 
 import feign.RequestInterceptor;
+import feign.codec.ErrorDecoder;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +10,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Configuration
 public class FeignAuthConfig {
+
+    @Bean
+    public ErrorDecoder feignAuthErrorDecoder() {
+        return new FeignErrorDecoder();
+    }
 
     @Bean
     public RequestInterceptor authForwardingInterceptor() {

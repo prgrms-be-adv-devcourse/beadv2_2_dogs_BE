@@ -1,13 +1,10 @@
 package com.barofarm.seller.seller.application;
 
-import com.barofarm.seller.common.exception.CustomException;
 import com.barofarm.seller.seller.domain.Seller;
 import com.barofarm.seller.seller.domain.validation.BusinessValidator;
-import com.barofarm.seller.seller.exception.FeignErrorCode;
 import com.barofarm.seller.seller.infrastructure.SellerJpaRepository;
 import com.barofarm.seller.seller.infrastructure.feign.AuthClient;
 import com.barofarm.seller.seller.presentation.dto.SellerApplyRequestDto;
-import feign.FeignException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,20 +41,8 @@ public class SellerService {
         sellerJpaRepository.save(profile);
 
         // 3. auth-service에 SELLER 권한 부여 요청(Feign)
-        log.info("[SELLER] grantSeller Feign 호출 시작, userId={}", userId);
-        try {
-            authClient.grantSeller(userId);
-            log.info("[SELLER] grantSeller Feign 호출 성공");
-
-        } catch (FeignException e) {
-            log.error("[SELLER] grantSeller Feign 호출 중 예외 발생", e);
-            // 타임아웃/5xx 계열 구분 가능하지만, 공통적으로 게이트웨이 오류로 맵핑
-            throw new CustomException(FeignErrorCode.AUTH_SERVICE_ERROR);
-        }
-
-
+        log.info("[SELLER] grantSeller Feign 호출시작, userId={}", userId);
+        authClient.grantSeller(userId);
+        log.info("[SELLER] grantSeller Feign 호출성공");
     }
-
-
-
 }
