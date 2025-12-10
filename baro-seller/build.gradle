@@ -1,12 +1,18 @@
-// baro-seller 모듈 - seller, farm 서비스 포함
 dependencies {
-    implementation project(':baro-seller:seller-service')
-    implementation project(':baro-seller:farm-service')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    // Database
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'com.h2database:h2'
 }
 
 bootJar {
     enabled = true
-    mainClass = 'com.barofarm.seller.SellerServiceApplication'
+    mainClass = 'com.barofarm.seller.SellerApplication'
 }
 
 jar {

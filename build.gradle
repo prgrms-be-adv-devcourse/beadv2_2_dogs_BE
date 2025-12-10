@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.0' apply false
+    id 'org.springframework.boot' version '3.3.5' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
     id 'com.diffplug.spotless' version '7.0.2' apply false
     id 'checkstyle'
@@ -30,7 +30,7 @@ subprojects {
     }
 
     ext {
-        set('springCloudVersion', "2025.0.0")
+        set('springCloudVersion', "2023.0.3")
     }
 
     dependencyManagement {
@@ -61,7 +61,8 @@ subprojects {
             target 'src/*/java/**/*.java'
             importOrder()
             removeUnusedImports()
-            googleJavaFormat('1.25.2')
+            // eclipse() 제거: 메서드 체이닝과 파라미터 포맷팅이 자동으로 변경되지 않도록
+            leadingTabsToSpaces(4)  // 탭을 4칸 스페이스로 변환
             trimTrailingWhitespace()
             endWithNewline()
         }
@@ -97,22 +98,19 @@ tasks.register('lint') {
 
 tasks.register('format') {
     group = 'verification'
-    description = '코드 자동 포맷팅'
+    description = '코드 자동 포맷용'
     dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'spotlessApply' } }
 }
 
 // 서비스 모듈은 jar만 생성 (라이브러리로 사용)
+// baro-cloud 빌드 제외 여부 나중에
 [
-    ':baro-auth:auth-service',
-    ':baro-buyer:buyer-service', ':baro-buyer:cart-service', ':baro-buyer:product-service',
-    ':baro-seller:seller-service', ':baro-seller:farm-service',
-    ':baro-order:order-service', ':baro-order:payment-service',
-    ':baro-support:settlement-service', ':baro-support:delivery-service', ':baro-support:notification-service',
-    ':baro-support:experience-service', ':baro-support:search-service', ':baro-support:review-service',
-    ':baro-cloud:gateway-service', ':baro-cloud:config-server', ':baro-cloud:eureka-server'
+    ':baro-cloud:gateway',
+    ':baro-cloud:config',
+    ':baro-cloud:eureka'
 ].each { servicePath ->
     project(servicePath) {
-        bootJar.enabled = false
+        bootJar.enabled = true
         jar.enabled = true
     }
 }

@@ -1,15 +1,3 @@
-// baro-cloud 모듈 - Spring Cloud 서비스들 포함
-dependencies {
-    implementation project(':baro-cloud:gateway-service')
-    implementation project(':baro-cloud:config-server')
-    implementation project(':baro-cloud:eureka-server')
-}
-
-bootJar {
-    enabled = true
-    mainClass = 'com.barofarm.eureka.EurekaServerApplication'
-}
-
-jar {
-    enabled = false
-}
+// baro-cloud 부모 모듈 (빌드 제외)
+bootJar.enabled = false
+jar.enabled = false
