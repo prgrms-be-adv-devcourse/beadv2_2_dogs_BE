@@ -7,7 +7,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients
+@EnableFeignClients(basePackages = "com.barofarm.seller") // 프로젝트 하위 패키지 전체에서 Feign 인터페이스 검색
 public class SellerApplication {
 
   public static void main(String[] args) {

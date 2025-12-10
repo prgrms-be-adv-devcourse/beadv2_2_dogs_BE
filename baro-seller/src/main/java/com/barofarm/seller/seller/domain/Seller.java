@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 public class Seller extends BaseEntity {
 
     @Id
-    @Column(name = "id", columnDefinition = "BINARY(16)")
+    @Column(name = "user_id", columnDefinition = "BINARY(16)")
     private UUID id;
 
     @Column(name = "store_name", nullable = false, length = 50)
@@ -62,6 +62,26 @@ public class Seller extends BaseEntity {
         this.status = status;
     }
 
+    public static Seller createApproved(
+        UUID userId,
+        String storeName,
+        String businessRegNo,
+        String businessOwnerName,
+        String settlementBank,
+        String settlementAccount
+    ) {
+        return new Seller(
+            userId,
+            storeName,
+            businessRegNo,
+            businessOwnerName,
+            settlementBank,
+            settlementAccount,
+            Status.APPROVED
+        );
+    }
+
+    // Farmer test용
     public static Seller of(
         String storeName,
         String businessRegNo,
