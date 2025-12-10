@@ -84,6 +84,7 @@ jobs:
     outputs:
       service: ${{ steps.module.outputs.service }}
       module: ${{ steps.module.outputs.module }}
+      image_tag: ${{ steps.module.outputs.image_tag }}
     steps:
       - name: Extract service name from branch
         id: module
@@ -115,9 +116,20 @@ jobs:
             *) SERVICE="" ;;
           esac
           
+          # 이미지 태그 결정 (배포 시 사용)
+          if [[ "$GITHUB_REF" == refs/heads/main-* ]]; then
+            IMAGE_TAG="latest"
+          elif [[ "$GITHUB_REF" == refs/heads/dev-* ]]; then
+            # dev 브랜치는 브랜치 이름을 태그로 사용 (dev-support -> dev-support)
+            IMAGE_TAG="${GITHUB_REF#refs/heads/}"
+          else
+            IMAGE_TAG="latest"
+          fi
+          
           echo "module=$MODULE" >> $GITHUB_OUTPUT
           echo "service=$SERVICE" >> $GITHUB_OUTPUT
-          echo "Extracted module: $MODULE -> service: $SERVICE"
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "Extracted module: $MODULE -> service: $SERVICE with tag: $IMAGE_TAG"
 
   docker-build:
     name: Build Docker Images
@@ -182,14 +194,14 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
           tags: |
-            # main-* 브랜치: latest 태그
-            # dev-* 브랜치: dev-latest 태그
-            type=raw,value=${{ startsWith(github.ref, 'refs/heads/main-') && 'latest' || (startsWith(github.ref, 'refs/heads/dev-') && 'dev-latest' || '') }}
-            # 브랜치 이름 기반 태그 (main-auth, dev-support 등)
+            # main-* 브랜치: latest 태그 (항상 최신 프로덕션 버전)
+            type=raw,value=${{ startsWith(github.ref, 'refs/heads/main-') && 'latest' || '' }}
+            # dev-* 브랜치: 브랜치 이름을 태그로 사용 (dev-support, dev-auth 등)
+            # 각 dev 브랜치가 독립적인 이미지를 가지도록 함
             type=ref,event=branch
-            # 커밋 SHA 기반 태그
+            # 커밋 SHA 기반 태그 (롤백용)
             type=sha,prefix={{branch}}-,format=short
-            # 타임스탬프 기반 태그
+            # 타임스탬프 기반 태그 (배포 이력 추적용)
             type=raw,value={{branch}}-{{date 'YYYYMMDD-HHmmss'}}
           flavor: |
             # main-* 브랜치만 latest=true로 설정
@@ -258,17 +270,12 @@ jobs:
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
           
-          # 브랜치 이름에서 이미지 태그 결정 (dev-support -> dev-support, main-support -> latest)
-          if [[ "$BRANCH_NAME" == dev-* ]]; then
-            IMAGE_TAG="$BRANCH_NAME"
-          elif [[ "$BRANCH_NAME" == main-* ]]; then
-            IMAGE_TAG="latest"
-          else
-            IMAGE_TAG="latest"
-          fi
+          # determine-service에서 이미 결정된 이미지 태그 사용
+          IMAGE_TAG="${{ needs.determine-service.outputs.image_tag }}"
           
           # 모듈명 확인 (디버깅용)
           echo "Deploying module: ${MODULE_NAME} with image tag: ${IMAGE_TAG}"
+          echo "Branch: ${BRANCH_NAME}"
           
           # SSH 연결 옵션 (안정성 개선)
           SSH_OPTS="-i private_key.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o ConnectTimeout=10 -o TCPKeepAlive=yes"
@@ -360,10 +367,19 @@ jobs:
               # 프로세스가 종료됨 - 성공 또는 실패 확인
               echo "✅ Deployment process completed. Checking final status..."
               
+              # 배포 스크립트의 exit code 확인
+              EXIT_CODE=$(ssh $SSH_OPTS ${USER}@${HOST} "if [ -f /tmp/deploy-${MODULE_NAME}.pid ]; then wait \$(cat /tmp/deploy-${MODULE_NAME}.pid) 2>/dev/null; echo \$?; else echo '1'; fi" 2>/dev/null || echo "1")
+              
               # 전체 로그 가져오기
               echo "📝 Fetching deployment log..."
-              ssh $SSH_OPTS ${USER}@${HOST} "cat ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'" || echo "Could not fetch log"
+              DEPLOY_LOG_CONTENT=$(ssh $SSH_OPTS ${USER}@${HOST} "cat ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'" 2>/dev/null || echo "Could not fetch log")
+              echo "$DEPLOY_LOG_CONTENT"
               echo ""
+              
+              # 배포 스크립트 exit code 확인
+              if [ "$EXIT_CODE" != "0" ] && [ "$EXIT_CODE" != "" ]; then
+                echo "⚠️ Deployment script exited with code: $EXIT_CODE"
+              fi
               
               # 컨테이너 상태 확인
               echo "🔍 Checking container status..."

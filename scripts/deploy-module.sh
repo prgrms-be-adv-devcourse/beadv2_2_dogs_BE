@@ -107,11 +107,12 @@ fi
 # ===================================
 log_step "🌐 Checking Docker network..."
 # be_baro-network 또는 baro-network 둘 다 확인
-if docker network ls | grep -q "be_baro-network"; then
+# docker network ls 출력 형식: NETWORK ID     NAME          DRIVER    SCOPE
+if docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
     log_info "✅ Found be_baro-network (using existing network)"
     # docker-compose가 프로젝트 이름을 붙이지 않도록 설정
     export COMPOSE_PROJECT_NAME=""
-elif docker network ls | grep -qE "(^baro-network | baro-network$)"; then
+elif docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
     log_info "✅ Found baro-network"
 else
     log_info "Creating baro-network..."
@@ -177,7 +178,7 @@ deploy_module() {
     fi
     
     # 네트워크 확인 (be_baro-network 또는 baro-network)
-    if ! docker network ls | grep -qE "(be_baro-network|^baro-network )"; then
+    if ! docker network ls --format '{{.Name}}' | grep -qE "^(be_baro-network|baro-network)$"; then
         log_error "❌ baro-network not found!"
         log_error "Please create the network first: docker network create baro-network"
         exit 1
@@ -191,16 +192,38 @@ deploy_module() {
     CURRENT_IMAGE=$(docker inspect "baro-${module}" --format='{{.Config.Image}}' 2>/dev/null || echo "none")
     
     log_step "📥 Pulling image for $module (tag: ${IMAGE_TAG})..."
-    $DOCKER_COMPOSE -f "$compose_file" pull
+    if ! $DOCKER_COMPOSE -f "$compose_file" pull; then
+        log_error "❌ Failed to pull image for $module"
+        exit 1
+    fi
     
     # Pull한 이미지 정보
     NEW_IMAGE=$($DOCKER_COMPOSE -f "$compose_file" config | grep "image:" | head -1 | awk '{print $2}')
+    log_info "Image to deploy: $NEW_IMAGE"
     
     log_step "🛑 Stopping existing container for $module..."
     $DOCKER_COMPOSE -f "$compose_file" down || true
     
     log_step "🏃 Starting $module..."
-    $DOCKER_COMPOSE -f "$compose_file" up -d
+    if ! $DOCKER_COMPOSE -f "$compose_file" up -d; then
+        log_error "❌ Failed to start container for $module"
+        log_error "Checking container logs..."
+        docker logs baro-${module} --tail 50 2>&1 || echo "Container logs not available"
+        exit 1
+    fi
+    
+    # 컨테이너가 정상적으로 시작되었는지 확인
+    sleep 3
+    if ! docker ps | grep -q "baro-${module}"; then
+        log_error "❌ Container baro-${module} is not running after start"
+        log_error "Checking container status..."
+        docker ps -a | grep "baro-${module}" || echo "Container not found"
+        log_error "Checking container logs..."
+        docker logs baro-${module} --tail 50 2>&1 || echo "Container logs not available"
+        exit 1
+    fi
+    
+    log_info "✅ Container baro-${module} is running"
     
     # 배포 이력 저장
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deploy: $module | Previous: $CURRENT_IMAGE | New: $NEW_IMAGE" >> ${PROJECT_DIR}/deployment-history.log
