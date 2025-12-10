@@ -6,6 +6,7 @@ import com.barofarm.support.search.product.domain.ProductDocument;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class ProductIndexingController {
   @Operation(summary = "상품 삭제", description = "ES에서 상품 문서를 삭제합니다. Kafka 연결 후 삭제 예정.")
   @DeleteMapping("/{productId}")
   public ResponseEntity<Void> deleteProduct(
-      @Parameter(description = "상품 ID", example = "1") @PathVariable String productId) {
+      @Parameter(description = "상품 ID", example = "1") @PathVariable UUID productId) {
     productSearchService.deleteProduct(productId);
     return ResponseEntity.noContent().build();
   }
