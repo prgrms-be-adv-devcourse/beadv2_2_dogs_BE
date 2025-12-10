@@ -466,7 +466,12 @@ jobs:
     if: |
       success() &&
       needs.determine-service.outputs.service != '' &&
-      needs.determine-service.outputs.service != 'data'
+      needs.determine-service.outputs.service != 'data' &&
+      needs.determine-service.outputs.service != 'cloud' &&
+      needs.determine-service.outputs.service != 'infra'
+    permissions:
+      contents: read
+      packages: write  # 패키지 삭제 권한 필요
 
     steps:
       - name: Delete old container images
