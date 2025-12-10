@@ -1,6 +1,6 @@
 package com.barofarm.seller.farm.application.dto.request;
 
-public record FarmUpdateCommand (
+public record FarmUpdateCommand(
     String name,
     String description,
     String address,
