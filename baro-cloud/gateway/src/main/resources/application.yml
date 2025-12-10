@@ -35,7 +35,7 @@ spring:
           predicates:
             - Path=/sellers/**
           filters:
-            - RewritePath=/api/(?<segment>.*), /${segment}
+            - RewritePath=/sellers/(?<segment>.*), /${segment}
             - AuthenticationFilter
 
         # Order Service
@@ -63,7 +63,7 @@ eureka:
     prefer-ip-address: true
 
 jwt:
-  secret: barofarm-secret-key-for-jwt-authentication-must-be-256-bits-long
+  secret: "너무_짧지_않은_랜덤_시크릿_문자열_최소32바이트_나중에_env로_옮길예정"
 
 management:
   endpoints:
