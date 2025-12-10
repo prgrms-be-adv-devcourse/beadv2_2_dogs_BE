@@ -19,6 +19,6 @@ services:
 
 networks:
   baro-network:
-    name: baro-network  # 네트워크 이름 명시적으로 지정
+    name: be_baro-network  # 네트워크 이름 명시적으로 지정
     external: true
 

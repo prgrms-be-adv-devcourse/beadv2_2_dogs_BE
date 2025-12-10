@@ -77,8 +77,10 @@ fi
 GITHUB_USERNAME="${GITHUB_USERNAME:-do-develop-space}"
 PROJECT_DIR="${HOME}/apps/BE"
 
-# Docker Compose 프로젝트 이름 설정 (네트워크 이름 접두사 방지)
-export COMPOSE_PROJECT_NAME=""
+# Docker Compose 프로젝트 이름 설정
+# Docker Compose는 디렉토리 이름을 기본 프로젝트 이름으로 사용하므로
+# be_baro-network를 사용하도록 설정
+export COMPOSE_PROJECT_NAME="be"
 
 # 디렉토리 생성 (없으면)
 mkdir -p ${PROJECT_DIR}
@@ -109,25 +111,25 @@ fi
 # 1.5. Docker 네트워크 확인 및 생성
 # ===================================
 log_step "🌐 Checking Docker network..."
-# Docker Compose 프로젝트 이름을 빈 문자열로 설정하여 네트워크 이름 접두사 방지
-export COMPOSE_PROJECT_NAME=""
+# Docker Compose 프로젝트 이름 설정 (이미 위에서 설정했지만 명시적으로 다시 설정)
+export COMPOSE_PROJECT_NAME="be"
 
-# baro-network 확인 및 생성
-if docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
-    log_info "✅ Found baro-network"
+# be_baro-network 확인 및 생성 (Docker Compose가 프로젝트 이름을 접두사로 붙임)
+if docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
+    log_info "✅ Found be_baro-network"
 else
-    log_info "Creating baro-network..."
+    log_info "Creating be_baro-network..."
     # 네트워크 생성 시도 (이미 존재하면 에러 무시)
-    CREATE_OUTPUT=$(docker network create baro-network 2>&1)
+    CREATE_OUTPUT=$(docker network create be_baro-network 2>&1)
     CREATE_EXIT_CODE=$?
     
     if [ $CREATE_EXIT_CODE -eq 0 ]; then
-        log_info "✅ Created baro-network"
+        log_info "✅ Created be_baro-network"
     elif echo "$CREATE_OUTPUT" | grep -q "already exists"; then
-        log_info "✅ baro-network already exists"
+        log_info "✅ be_baro-network already exists"
     else
         # 실제로 생성 실패한 경우에만 에러
-        log_error "❌ Failed to create baro-network: $CREATE_OUTPUT"
+        log_error "❌ Failed to create be_baro-network: $CREATE_OUTPUT"
         exit 1
     fi
 fi
@@ -179,9 +181,9 @@ deploy_module() {
     fi
     
     # 네트워크 확인
-    if ! docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
-        log_error "❌ baro-network not found!"
-        log_error "Please create the network first: docker network create baro-network"
+    if ! docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
+        log_error "❌ be_baro-network not found!"
+        log_error "Please create the network first: docker network create be_baro-network"
         exit 1
     fi
     
@@ -268,16 +270,16 @@ case $MODULE_NAME in
     data)
         log_step "Deploying data infrastructure..."
         # 네트워크가 없으면 생성 (data 인프라가 네트워크를 생성함)
-        if ! docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
-            log_info "Creating baro-network..."
-            CREATE_OUTPUT=$(docker network create baro-network 2>&1)
+        if ! docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
+            log_info "Creating be_baro-network..."
+            CREATE_OUTPUT=$(docker network create be_baro-network 2>&1)
             CREATE_EXIT_CODE=$?
             if [ $CREATE_EXIT_CODE -eq 0 ]; then
-                log_info "✅ Created baro-network"
+                log_info "✅ Created be_baro-network"
             elif echo "$CREATE_OUTPUT" | grep -q "already exists"; then
-                log_info "✅ baro-network already exists"
+                log_info "✅ be_baro-network already exists"
             else
-                log_error "❌ Failed to create baro-network: $CREATE_OUTPUT"
+                log_error "❌ Failed to create be_baro-network: $CREATE_OUTPUT"
                 exit 1
             fi
         fi
@@ -290,9 +292,9 @@ case $MODULE_NAME in
     cloud)
         log_step "Deploying Spring Cloud infrastructure..."
         # 네트워크 확인
-        if ! docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
-            log_error "❌ baro-network not found!"
-            log_error "Please create the network first: docker network create baro-network"
+        if ! docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
+            log_error "❌ be_baro-network not found!"
+            log_error "Please create the network first: docker network create be_baro-network"
             exit 1
         fi
         check_data_infra
@@ -308,9 +310,9 @@ case $MODULE_NAME in
     infra)
         log_step "Deploying all infrastructure (data + cloud)..."
         # 네트워크 확인
-        if ! docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
-            log_error "❌ baro-network not found!"
-            log_error "Please create the network first: docker network create baro-network"
+        if ! docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
+            log_error "❌ be_baro-network not found!"
+            log_error "Please create the network first: docker network create be_baro-network"
             exit 1
         fi
         # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest

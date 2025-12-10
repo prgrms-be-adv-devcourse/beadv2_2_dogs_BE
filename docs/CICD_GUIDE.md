@@ -225,10 +225,10 @@ mkdir -p ~/apps/BE
 cd ~/apps/BE
 
 # Docker 네트워크 생성 (필수, 이미 있으면 무시됨)
-docker network create baro-network 2>/dev/null || echo "baro-network already exists"
+# docker network create baro-network 2>/dev/null || echo "baro-network already exists"
 
 # 네트워크 확인
-docker network ls | grep baro-network
+# docker network ls | grep baro-network
 
 # 환경 변수 파일 생성 (선택사항)
 cat > .env << EOF

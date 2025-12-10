@@ -103,6 +103,7 @@ volumes:
 
 networks:
   baro-network:
-    name: baro-network  # 네트워크 이름 명시적으로 지정
+    # Docker Compose가 프로젝트 이름을 접두사로 붙이므로 be_baro-network 사용
+    name: be_baro-network  # 네트워크 이름 명시적으로 지정
     external: true  # 외부에서 생성된 네트워크 사용 (스크립트에서 생성)
 
