@@ -359,17 +359,35 @@ jobs:
             else
               # 프로세스가 종료됨 - 성공 또는 실패 확인
               echo "✅ Deployment process completed. Checking final status..."
-              FINAL_STATUS=$(ssh $SSH_OPTS ${USER}@${HOST} "tail -n 20 ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'")
-              echo "$FINAL_STATUS"
+              
+              # 전체 로그 가져오기
+              echo "📝 Fetching deployment log..."
+              ssh $SSH_OPTS ${USER}@${HOST} "cat ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'" || echo "Could not fetch log"
+              echo ""
+              
+              # 컨테이너 상태 확인
+              echo "🔍 Checking container status..."
+              CONTAINER_STATUS=$(ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep baro-${MODULE_NAME} || echo 'No container found'" 2>/dev/null || echo "Could not check container status")
+              echo "$CONTAINER_STATUS"
+              echo ""
               
               # 컨테이너가 실행 중인지 확인
-              if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q baro-${MODULE_NAME}"; then
+              if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q baro-${MODULE_NAME}" 2>/dev/null; then
                 echo "✅ Container is running. Deployment appears successful!"
                 rm -f private_key.pem
                 exit 0
               else
                 echo "⚠️ Container is not running. Deployment may have failed."
-                echo "📝 Full log: ${DEPLOY_LOG}"
+                
+                # 컨테이너 로그 확인 (존재하는 경우)
+                if echo "$CONTAINER_STATUS" | grep -q "baro-${MODULE_NAME}"; then
+                  echo "🔍 Checking container logs..."
+                  ssh $SSH_OPTS ${USER}@${HOST} "docker logs baro-${MODULE_NAME} --tail 50 2>&1 || echo 'Could not fetch container logs'" || echo "Could not fetch container logs"
+                fi
+                
+                echo ""
+                echo "📝 Full log location: ${DEPLOY_LOG}"
+                echo "💡 To check manually: ssh ${USER}@${HOST} 'cat ${DEPLOY_LOG}'"
                 rm -f private_key.pem
                 exit 1
               fi
@@ -378,8 +396,14 @@ jobs:
           
           # 타임아웃 발생
           echo "⏱️ Deployment timeout after ${MAX_WAIT} seconds"
-          echo "📝 Checking current status..."
-          ssh $SSH_OPTS ${USER}@${HOST} "tail -n 30 ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'"
+          echo "📝 Fetching recent log entries..."
+          ssh $SSH_OPTS ${USER}@${HOST} "tail -n 50 ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'" || echo "Could not fetch log"
+          echo ""
+          echo "🔍 Checking container status..."
+          ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep baro-${MODULE_NAME} || echo 'No container found'" || echo "Could not check container status"
+          echo ""
+          echo "🔍 Checking recent container logs (if exists)..."
+          ssh $SSH_OPTS ${USER}@${HOST} "docker logs baro-${MODULE_NAME} --tail 30 2>&1 || echo 'Container logs not available'" || echo "Could not fetch container logs"
           
           # 컨테이너 상태 확인
           if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q baro-${MODULE_NAME}"; then
