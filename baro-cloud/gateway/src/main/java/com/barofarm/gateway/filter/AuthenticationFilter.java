@@ -50,9 +50,9 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 String userType = claims.get("ut", String.class);
 
                 ServerHttpRequest modifiedRequest = request.mutate()
-                    .header("X-User-Email", email)
-                    .header("X-User-Id", userId)
-                    .header("X-User-Type", userType)
+                    .header("userEmail", email)
+                    .header("userId", userId)
+                    .header("userType", userType)
                     .build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
