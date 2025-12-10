@@ -103,6 +103,6 @@ volumes:
 
 networks:
   baro-network:
-    name: baro-network  # 네트워크 이름 명시적으로 지정 (프로젝트 이름 무시)
-    driver: bridge
+    name: baro-network  # 네트워크 이름 명시적으로 지정
+    external: true  # 외부에서 생성된 네트워크 사용 (스크립트에서 생성)
 

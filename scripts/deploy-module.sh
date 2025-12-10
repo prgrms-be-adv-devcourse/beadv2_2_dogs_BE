@@ -266,6 +266,20 @@ deploy_all() {
 case $MODULE_NAME in
     data)
         log_step "Deploying data infrastructure..."
+        # 네트워크가 없으면 생성 (data 인프라가 네트워크를 생성함)
+        if ! docker network ls --format '{{.Name}}' | grep -q "^baro-network$"; then
+            log_info "Creating baro-network..."
+            CREATE_OUTPUT=$(docker network create baro-network 2>&1)
+            CREATE_EXIT_CODE=$?
+            if [ $CREATE_EXIT_CODE -eq 0 ]; then
+                log_info "✅ Created baro-network"
+            elif echo "$CREATE_OUTPUT" | grep -q "already exists"; then
+                log_info "✅ baro-network already exists"
+            else
+                log_error "❌ Failed to create baro-network: $CREATE_OUTPUT"
+                exit 1
+            fi
+        fi
         $DOCKER_COMPOSE -f docker-compose.data.yml pull
         $DOCKER_COMPOSE -f docker-compose.data.yml down || true
         $DOCKER_COMPOSE -f docker-compose.data.yml up -d
