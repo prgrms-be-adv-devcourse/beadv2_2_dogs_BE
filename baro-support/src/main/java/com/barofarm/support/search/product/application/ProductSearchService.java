@@ -10,6 +10,7 @@ import com.barofarm.support.search.product.infrastructure.elasticsearch.ProductS
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -18,15 +19,10 @@ import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class ProductSearchService {
     private final ElasticsearchOperations operations;
     private final ProductSearchRepository repository;
-
-    public ProductSearchService(
-        ElasticsearchOperations operations, ProductSearchRepository repository) {
-        this.operations = operations;
-        this.repository = repository;
-    }
 
     // 상품 문서를 ES에 저장 (인덱싱), updatedAt은 현재 시각으로 자동 설정
     // 추후 Kafka Consumer에서 호출 예정
