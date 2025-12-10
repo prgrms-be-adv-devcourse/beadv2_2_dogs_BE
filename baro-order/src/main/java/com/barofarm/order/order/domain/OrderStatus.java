@@ -1,6 +1,6 @@
 package com.barofarm.order.order.domain;
 
-public enum Status {
+public enum OrderStatus {
     CREATED,
     PAID,
     CANCELED,

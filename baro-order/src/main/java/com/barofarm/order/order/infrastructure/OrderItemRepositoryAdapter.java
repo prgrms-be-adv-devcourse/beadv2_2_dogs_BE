@@ -10,5 +10,4 @@ public class OrderItemRepositoryAdapter implements OrderItemRepository {
 
     private final OrderJpaRepository orderJpaRepository;
 
-
 }

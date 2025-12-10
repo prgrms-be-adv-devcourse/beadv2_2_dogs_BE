@@ -1,13 +1,14 @@
 package com.barofarm.order.order.presentation;
 
+import com.barofarm.order.common.response.CustomPage;
+import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.order.application.OrderService;
-import com.barofarm.order.order.application.dto.request.DirectOrderCreateRequest;
+import com.barofarm.order.order.application.dto.response.OrderCreateInfo;
+import com.barofarm.order.order.application.dto.response.OrderDetailInfo;
+import com.barofarm.order.order.presentation.dto.OrderCreateRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
@@ -19,8 +20,14 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseDto<> createDirectOrder(@RequestBody DirectOrderCreateRequest request){
+    public ResponseDto<OrderCreateInfo> createOrder(@RequestBody OrderCreateRequest request) {
         UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        orderService.createDirectOrder(mockUserId, request);
+        return orderService.createOrder(mockUserId, request.toCommand());
+    }
+
+    @GetMapping
+    public ResponseDto<CustomPage<OrderDetailInfo>> findOrderList(Pageable pageable) {
+        UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+        return orderService.findOrderList(mockUserId, pageable);
     }
 }
