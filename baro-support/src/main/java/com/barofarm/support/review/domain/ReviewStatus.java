@@ -1,5 +1,6 @@
 package com.barofarm.support.review.domain;
 
+import com.barofarm.support.review.presentation.dto.ReviewVisibility;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
@@ -36,5 +37,12 @@ public enum ReviewStatus {
 
     public static Set<ReviewStatus> getVisibleToPublicSet() {
         return Collections.unmodifiableSet(VISIBLE_TO_PUBLIC);
+    }
+
+    public static ReviewStatus fromVisibility(ReviewVisibility visibility) {
+        return switch (visibility) {
+            case PUBLIC -> PUBLIC;
+            case PRIVATE -> PRIVATE;
+        };
     }
 }

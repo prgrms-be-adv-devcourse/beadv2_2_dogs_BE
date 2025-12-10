@@ -15,39 +15,39 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class ReviewRepositoryAdapter implements ReviewRepository {
 
-    private final ReviewRepository reviewRepository;
+    private final ReviewJpaRepository reviewJpaRepository;
 
     @Override
     public Review save(Review review) {
-        return reviewRepository.save(review);
+        return reviewJpaRepository.save(review);
     }
 
     @Override
     public Optional<Review> findById(UUID uuid) {
-        return reviewRepository.findById(uuid);
+        return reviewJpaRepository.findById(uuid);
     }
 
     @Override
     public void deleteById(UUID id) {
-        reviewRepository.deleteById(id);
+        reviewJpaRepository.deleteById(id);
     }
 
     @Override
     public Page<Review> findByProductIdAndStatusIn(UUID productId,
                                         Set<ReviewStatus> statuses,
                                         Pageable pageable) {
-        return reviewRepository.findByProductIdAndStatusIn(productId, statuses, pageable);
+        return reviewJpaRepository.findByProductIdAndStatusIn(productId, statuses, pageable);
     }
 
     @Override
     public Page<Review> findByBuyerIdAndStatusIn(UUID buyerId,
                                       Set<ReviewStatus> statuses,
                                       Pageable pageable) {
-        return reviewRepository.findByBuyerIdAndStatusIn(buyerId, statuses, pageable);
+        return reviewJpaRepository.findByBuyerIdAndStatusIn(buyerId, statuses, pageable);
     }
 
     @Override
     public boolean existsByOrderItemId(UUID orderItemId) {
-        return reviewRepository.existsByOrderItemId(orderItemId);
+        return reviewJpaRepository.existsByOrderItemId(orderItemId);
     }
 }

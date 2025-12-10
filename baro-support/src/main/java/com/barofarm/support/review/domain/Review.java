@@ -102,7 +102,6 @@ public class Review extends BaseEntity {
         if (status == null) {
             throw new CustomException(ReviewErrorCode.STATUS_NULL);
         }
-
         validateRating(rating);
 
         this.rating = rating;

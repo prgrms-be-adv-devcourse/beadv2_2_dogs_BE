@@ -35,8 +35,8 @@ public class ReviewService {
         // 1. 주문 정보 조회
         OrderItemResponse item = getOrderItem(command.orderItemId());
 
-        // 2. 구매자 검증
-        validateOrderOwner(item.buyerId(), command.buyerId());
+        // 2. 구매자 검증(로그인한 유저 == item 구매한 사람)
+        validateOrderOwner(item.buyerId(), command.userId());
 
         // 3. 주문 상태 검증(order의 주문 상태가 review 가능한 상태인지 확인)
         validateOrderStatus(item.status());
@@ -53,10 +53,10 @@ public class ReviewService {
         // 7. 리뷰 엔티티 생성
         Review review = Review.create(
             command.orderItemId(),
-            command.buyerId(),
+            command.userId(),
             command.productId(),
             command.rating(),
-            command.reviewStatus(),
+            command.toReviewStatus(),
             command.content()
         );
 
@@ -66,7 +66,7 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public ReviewDetailInfo getReviewDetail(UUID reviewId, UUID userId) {
+    public ReviewDetailInfo getReviewDetail(UUID userId, UUID reviewId) {
         Review review = reviewRepository.findById(reviewId)
             .orElseThrow(() -> new CustomException(ReviewErrorCode.REVIEW_NOT_FOUND));
 
@@ -90,11 +90,11 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public CustomPage<ReviewDetailInfo> getReviewByBuyerId(UUID loginUserId,
+    public CustomPage<ReviewDetailInfo> getReviewByBuyerId(UUID userId,
                                                            Pageable pageable) {
         Page<ReviewDetailInfo> reviews =
             reviewRepository.findByBuyerIdAndStatusIn(
-                loginUserId,
+                userId,
                 ReviewStatus.getVisibleToOwnerSet(),
                 pageable
                 )
@@ -109,14 +109,14 @@ public class ReviewService {
             .orElseThrow(() -> new CustomException(ReviewErrorCode.REVIEW_NOT_FOUND));
 
         // 리뷰 작성자 검증
-        review.validateReviewOwner(command.buyerId());
+        review.validateReviewOwner(command.userId());
 
         // 리뷰 상태 검증
         review.validateUserUpdatable();
 
         review.update(
             command.rating(),
-            command.reviewStatus(),
+            command.toReviewStatus(),
             command.content()
         );
 
@@ -124,17 +124,16 @@ public class ReviewService {
     }
 
     @Transactional
-    public void deleteReview(UUID reviewId, UUID buyerId) {
+    public void deleteReview(UUID userId, UUID reviewId) {
         Review review = reviewRepository.findById(reviewId)
             .orElseThrow(() -> new CustomException(ReviewErrorCode.REVIEW_NOT_FOUND));
 
         // 리뷰 작성자 검증
-        review.validateReviewOwner(buyerId);
+        review.validateReviewOwner(userId);
 
         // 소프트 삭제(delete)
         review.delete();
     }
-
 
     private OrderItemResponse getOrderItem(UUID orderItemId) {
         return orderClient.getOrderItem(orderItemId);
