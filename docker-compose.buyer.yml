@@ -1,0 +1,27 @@
+# Buyer 모듈
+# 구매자, 장바구니, 상품 관리
+
+services:
+  baro-buyer:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/baro-buyer:${IMAGE_TAG:-latest}
+    container_name: baro-buyer
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      # - SPRING_DATA_REDIS_HOST=redis
+      # - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - MYSQL_DATABASE=${MYSQL_DATABASE_BUYER:-barofarm}
+      - MYSQL_USER=${MYSQL_USER:-barouser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+    restart: unless-stopped
+    networks:
+      - baro-network
+
+networks:
+  baro-network:
+    name: be_baro-network  # 네트워크 이름 명시적으로 지정
+    external: true
+
