@@ -43,9 +43,10 @@ services:
       # MYSQL_DATABASE_SUPPORT=barosupport
     volumes:
       - mysql-data:/var/lib/mysql
-      # 초기화 스크립트: scripts/init-db/01-create-databases.sql
-      # - baroauth, baroseller, barobuyer, baroorder, barosupport 데이터베이스 자동 생성
-      # - barouser에게 모든 데이터베이스에 대한 모든 권한 부여
+      # 초기화 스크립트 디렉토리 마운트
+      # - 01-create-databases.sql: 최초 배포 시 자동 실행 (데이터 디렉토리가 비어있을 때만)
+      # - always-create-databases.sh: 수동 실행용 (일부 데이터베이스만 있는 경우 사용)
+      # 자세한 사용법: scripts/init-db/README.md 참조
       - ./scripts/init-db:/docker-entrypoint-initdb.d
     restart: unless-stopped
     networks:
