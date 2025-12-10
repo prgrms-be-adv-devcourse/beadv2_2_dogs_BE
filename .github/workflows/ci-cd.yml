@@ -463,8 +463,11 @@ jobs:
     name: Cleanup Old Images
     runs-on: ubuntu-latest
     needs: [deploy, determine-service]
-    if: success()
-    
+    if: |
+      success() &&
+      needs.determine-service.outputs.service != '' &&
+      needs.determine-service.outputs.service != 'data'
+
     steps:
       - name: Delete old container images
         uses: actions/delete-package-versions@v4
@@ -473,6 +476,7 @@ jobs:
           package-type: 'container'
           min-versions-to-keep: 5
           delete-only-untagged-versions: 'false'
+        continue-on-error: true  # 패키지가 없어도 실패하지 않도록
 
   # ==================================================
   # Notification (선택사항)
