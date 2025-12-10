@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 @FeignClient(
     name = "auth-service",
-    path = "/auth"
+    path = "/auth",
+    configuration = com.barofarm.seller.seller.config.FeignAuthConfig.class
 )
 public interface AuthClient {
 
