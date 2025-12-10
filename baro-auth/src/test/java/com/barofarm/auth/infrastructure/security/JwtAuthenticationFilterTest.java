@@ -44,7 +44,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     @DisplayName("공개 URL은 필터링 없이 통과한다")
-    void public_url_bypasses_filter() throws ServletException, IOException {
+    void publicUrlBypassesFilter() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/auth/login");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -56,7 +56,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     @DisplayName("Authorization 헤더 없으면 인증을 시도하지 않는다")
-    void no_authorization_header() throws ServletException, IOException {
+    void noAuthorizationHeader() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/auth/me");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -69,7 +69,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     @DisplayName("유효하지 않은 토큰이면 인증 컨텍스트를 설정하지 않는다")
-    void invalid_token_does_not_authenticate() throws ServletException, IOException {
+    void invalidTokenDoesNotAuthenticate() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/auth/me");
         request.addHeader("Authorization", "Bearer invalid");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -84,7 +84,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     @DisplayName("유효한 토큰이면 SecurityContext에 Authentication을 채운다")
-    void valid_token_sets_authentication() throws ServletException, IOException {
+    void validTokenSetsAuthentication() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/auth/me");
         request.addHeader("Authorization", "Bearer goodtoken");
         MockHttpServletResponse response = new MockHttpServletResponse();

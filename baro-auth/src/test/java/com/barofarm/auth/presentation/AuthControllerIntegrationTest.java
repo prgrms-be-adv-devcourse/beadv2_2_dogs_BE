@@ -82,7 +82,7 @@ class AuthControllerIntegrationTest {
 
         @Test
         @DisplayName("이메일 인증을 마친 사용자는 회원가입에 성공하고 User/AuthCredential/RefreshToken이 생성된다")
-        void signup_with_verified_email_creates_user_tokens_and_stores_refresh() throws Exception {
+        void signupWithVerifiedEmailCreatesUserTokensAndStoresRefresh() throws Exception {
             // given: 이메일 인증 완료 상태 준비
             String email = "user@example.com";
             String password = "P@ssw0rd!";
@@ -116,7 +116,7 @@ class AuthControllerIntegrationTest {
 
         @Test
         @DisplayName("이메일 인증 없이 회원가입하면 404를 반환한다")
-        void signup_without_verification_fails() throws Exception {
+        void signupWithoutVerificationFails() throws Exception {
             SignupRequest payload = new SignupRequest("novalid@example.com", "Passw0rd!", "No Verify", "010-0000-0000",
                     false);
 
@@ -126,7 +126,7 @@ class AuthControllerIntegrationTest {
 
         @Test
         @DisplayName("올바른 자격 증명으로 로그인 시 Access/Refresh 토큰 발급 및 저장")
-        void login_with_valid_credentials_returns_tokens_and_stores_refresh() throws Exception {
+        void loginWithValidCredentialsReturnsTokensAndStoresRefresh() throws Exception {
             // given: 사용자/자격증명 미리 생성
             String email = "login@example.com";
             String rawPassword = "Secr3t!";
@@ -147,7 +147,7 @@ class AuthControllerIntegrationTest {
 
         @Test
         @DisplayName("비밀번호 불일치 시 401을 반환한다")
-        void login_with_wrong_password_returns_unauthorized() throws Exception {
+        void loginWithWrongPasswordReturnsUnauthorized() throws Exception {
             // given
             String email = "login-fail@example.com";
             User user = userRepository.save(User.create(email, "Login Fail", "010-9999-9999", false));
@@ -167,7 +167,7 @@ class AuthControllerIntegrationTest {
 
         @Test
         @DisplayName("유효한 Access 토큰으로 /auth/me 호출 시 현재 사용자 정보 반환")
-        void me_returns_current_authenticated_user() throws Exception {
+        void meReturnsCurrentAuthenticatedUser() throws Exception {
             // given
             String email = "me@example.com";
             User user = userRepository.save(User.create(email, "Me User", "010-7777-7777", false));
@@ -187,7 +187,7 @@ class AuthControllerIntegrationTest {
 
         @Test
         @DisplayName("정상 리프레시 토큰으로 재발급 시 기존 토큰을 교체한다")
-        void refresh_rotates_tokens_and_replaces_old() throws Exception {
+        void refreshRotatesTokensAndReplacesOld() throws Exception {
             String email = "rotate@example.com";
             String rawPassword = "Rotate1!";
             User user = userRepository.save(User.create(email, "Rotate User", "010-3333-3333", false));
@@ -220,7 +220,7 @@ class AuthControllerIntegrationTest {
 
         @Test
         @DisplayName("폐기되었거나 만료된 리프레시 토큰이면 401을 반환한다")
-        void refresh_with_revoked_or_expired_token_fails() throws Exception {
+        void refreshWithRevokedOrExpiredTokenFails() throws Exception {
             String email = "expired@example.com";
             User user = userRepository.save(User.create(email, "Expired User", "010-4444-4444", false));
             String expiredToken = jwtTokenProvider.generateRefreshToken(user.getId(), email, "USER");
@@ -239,7 +239,7 @@ class AuthControllerIntegrationTest {
 
         @Test
         @DisplayName("로그아웃 호출 시 리프레시 토큰이 폐기된다")
-        void logout_revokes_refresh_token() throws Exception {
+        void logoutRevokesRefreshToken() throws Exception {
             String email = "logout@example.com";
             User user = userRepository.save(User.create(email, "Logout User", "010-5555-5555", false));
             String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), email, "USER");
@@ -264,7 +264,7 @@ class AuthControllerIntegrationTest {
 
         @Test
         @DisplayName("잘못된 코드로 검증하면 400을 반환한다")
-        void verify_wrong_code_returns_bad_request() throws Exception {
+        void verifyWrongCodeReturnsBadRequest() throws Exception {
             emailVerificationJpaRepository.save(EmailVerification.createNew("wrong@example.com", "123456",
                     Duration.ofMinutes(5)));
 
@@ -276,7 +276,7 @@ class AuthControllerIntegrationTest {
 
         @Test
         @DisplayName("만료된 코드로 검증하면 400을 반환한다")
-        void verify_expired_code_returns_bad_request() throws Exception {
+        void verifyExpiredCodeReturnsBadRequest() throws Exception {
             EmailVerification expired = EmailVerification.createNew("expired@example.com", "111111",
                     Duration.ofMinutes(-1));
             emailVerificationJpaRepository.save(expired);

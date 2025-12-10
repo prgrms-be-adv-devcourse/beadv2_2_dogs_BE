@@ -74,7 +74,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("회원가입: 인증 완료 + 중복 아님이면 User/Credential/RefreshToken 생성")
-    void signUp_success_creates_user_and_refresh() {
+    void signUpSuccessCreatesUserAndRefresh() {
         SignUpCommand cmd = new SignUpCommand("user@example.com", "raw", "Jane", "010", true);
 
         when(credentialRepository.existsByLoginEmail(cmd.email())).thenReturn(false);
@@ -101,7 +101,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("회원가입: 이메일 중복이면 CONFLICT 예외")
-    void signUp_duplicate_email_throws() {
+    void signUpDuplicateEmailThrows() {
         SignUpCommand cmd = new SignUpCommand("dup@example.com", "raw", "Jane", "010", true);
         when(credentialRepository.existsByLoginEmail(cmd.email())).thenReturn(true);
 
@@ -114,7 +114,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("로그인: 비밀번호 불일치 시 UNAUTHORIZED 예외")
-    void login_password_mismatch_throws() {
+    void loginPasswordMismatchThrows() {
         LoginCommand cmd = new LoginCommand("user@example.com", "wrong");
         AuthCredential stored = AuthCredential.create(UUID.randomUUID(), cmd.email(), "hash", "salt");
         when(credentialRepository.findByLoginEmail(cmd.email())).thenReturn(Optional.of(stored));
@@ -127,7 +127,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("리프레시: 정상 토큰이면 회전 후 새 액세스/리프레시 토큰 반환")
-    void refresh_rotates_tokens() {
+    void refreshRotatesTokens() {
         String refresh = "old-refresh";
         UUID userId = UUID.randomUUID();
         RefreshToken stored = RefreshToken.issue(userId, refresh, Duration.ofDays(14));
@@ -156,7 +156,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("리프레시: 만료/폐기/검증 실패 시 UNAUTHORIZED 예외")
-    void refresh_invalid_or_expired_token_throws() {
+    void refreshInvalidOrExpiredTokenThrows() {
         String token = "bad-refresh";
         RefreshToken revoked = RefreshToken.issueWithExpiry(UUID.randomUUID(), token,
                 LocalDateTime.now(clock).minusMinutes(1)); // 만료
