@@ -21,3 +21,5 @@ eureka:
   instance:
     prefer-ip-address: true
 
+api:
+  v1: /api/v1
