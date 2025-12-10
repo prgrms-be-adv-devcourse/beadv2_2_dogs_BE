@@ -63,6 +63,19 @@ baro-farm/
   - Spring Cloud Gateway
   - Spring Cloud Config
   - OpenFeign (서비스 간 통신)
+- **Database**
+  - Spring Data JPA
+  - MySQL 8.0
+- **Cache**
+  - Redis 7.2
+  - Spring Data Redis
+- **Message Queue**
+  - Confluent Kafka 7.6.0 (Apache Kafka 호환)
+  - KRaft 모드 (Zookeeper 불필요)
+  - Spring for Apache Kafka
+- **Code Quality**
+  - Spotless 7.0.2 (Google Java Format 1.25.2)
+  - Checkstyle 10.21.4
 
 ## 🛠️ 개발 환경 설정
 
@@ -113,7 +126,54 @@ Git hooks가 설치되어 있으면 커밋할 때 자동으로 검사합니다.
 
 ## 🏃 서비스 실행 방법
 
-### Gradle로 실행
+### 1️⃣ 인프라 서비스 실행 (선행 요구사항)
+
+**Docker Compose로 한 번에 실행 (권장):**
+
+```bash
+# 모든 인프라 서비스 실행 (Redis + Kafka KRaft 모드)
+docker-compose -f docker-compose.data.yml up -d
+
+# 특정 서비스만 실행
+docker-compose -f docker-compose.data.yml up -d redis   # Redis만
+docker-compose -f docker-compose.data.yml up -d kafka   # Kafka만
+
+# 중지
+docker-compose -f docker-compose.data.yml down
+```
+
+**개별 실행:**
+
+```bash
+# Redis (6379)
+docker run -d --name baro-redis -p 6379:6379 redis:7.2
+
+# Kafka (9092) - KRaft 모드 (Zookeeper 불필요)
+docker run -d --name baro-kafka \
+  -p 9092:9092 \
+  -p 9093:9093 \
+  -e KAFKA_PROCESS_ROLES=broker,controller \
+  -e KAFKA_NODE_ID=1 \
+  -e KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093 \
+  -e KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093 \
+  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
+  -e KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+  -e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT \
+  -e KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT \
+  -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+  -e KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 \
+  -e KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 \
+  -e KAFKA_AUTO_CREATE_TOPICS_ENABLE=true \
+  confluentinc/cp-kafka:7.6.0
+```
+
+**📚 상세 가이드:**
+- [Redis 설정 가이드](docs/REDIS_SETUP.md) - 설치, 연동, 사용 예시
+- [Kafka 설정 가이드](docs/KAFKA_SETUP.md) - 설치, 연동, 토픽 관리
+
+### 2️⃣ Spring Boot 서비스 실행
+
+#### Gradle로 실행
 
 ```bash
 # 1. Eureka Server (서비스 디스커버리)
@@ -133,7 +193,7 @@ Git hooks가 설치되어 있으면 커밋할 때 자동으로 검사합니다.
 ./gradlew :baro-support:bootRun   # 지원 모듈 (6개 도메인)
 ```
 
-### JAR로 실행
+#### JAR로 실행
 
 ```bash
 # 빌드
@@ -152,16 +212,18 @@ java -jar baro-support/build/libs/baro-support-0.0.1-SNAPSHOT.jar
 
 ## 🌐 서비스 포트 정보
 
-| 모듈 | 포트 | 포함 도메인 |
-|------|------|------------|
-| eureka | 8761 | Service Registry |
-| config | 8888 | Config Server |
-| gateway | 8080 | API Gateway |
-| baro-auth | 8081 | auth |
-| baro-buyer | 8082 | buyer, cart, product |
-| baro-seller | 8085 | seller, farm |
-| baro-order | 8087 | order, payment |
-| baro-support | 8089 | settlement, delivery, notification, experience, search, review |
+| 구분 | 모듈 | 포트 | 포함 도메인 |
+|------|------|------|------------|
+| **인프라** | redis | 6379 | Cache Server |
+| | kafka | 9092, 9093 | Message Broker (KRaft 모드) |
+| **Spring Cloud** | eureka | 8761 | Service Registry |
+| | config | 8888 | Config Server |
+| | gateway | 8080 | API Gateway |
+| **비즈니스** | baro-auth | 8081 | auth |
+| | baro-buyer | 8082 | buyer, cart, product |
+| | baro-seller | 8085 | seller, farm |
+| | baro-order | 8087 | order, payment |
+| | baro-support | 8089 | settlement, delivery, notification, experience, search, review |
 
 ## 🔗 주요 URL
 
@@ -221,31 +283,34 @@ main                          # 최종 배포 (Production)
 
 ### 브랜치 네이밍 규칙
 
+> **💡 브랜치명은 영문으로, 커밋 메시지는 한글로 작성합니다.**  
 | 브랜치 | 용도 | 예시 |
 |--------|------|------|
 | `main` | 최종 배포 버전 | - |
 | `main-{모듈}` | 모듈별 안정 버전 | `main-buyer` |
 | `dev-{모듈}` | 모듈별 개발 통합 | `dev-buyer` |
-| `feature/{서비스}-{기능}` | 기능 개발 | `feature/cart-add-item` |
-| `fix/{서비스}-{버그}` | 버그 수정 | `fix/product-search-error` |
-<!-- | `hotfix/{긴급수정}` | 긴급 버그 수정 | `hotfix/payment-failure` | -->
+| `feature/issue-{이슈번호}-{기능설명-영문}` | 기능 개발 | `feature/issue-123-add-cart-item` |
+| `fix/issue-{이슈번호}-{버그설명-영문}` | 버그 수정 | `fix/issue-456-product-search-error` |
+| `hotfix/issue-{이슈번호}-{긴급수정-영문}` | 긴급 버그 수정 | `hotfix/issue-789-payment-failure` |
 
 ### 작업 흐름
 
 ```bash
-# 1. dev 브랜치에서 feature 브랜치 생성
-git checkout dev-buyer
-git checkout -b feature/cart-add-item
+# 1. GitHub에서 이슈 생성 (예: #123 장바구니 담기 기능)
 
-# 2. 작업 후 커밋
+# 2. dev 브랜치에서 feature 브랜치 생성
+git checkout dev-buyer
+git checkout -b feature/issue-123-add-cart-item
+
+# 3. 작업 후 커밋 (커밋 메시지는 한글 사용)
 git add .
-git commit -m "[feat] 장바구니 담기 기능 추가"
+git commit -m "[Feat] #123 - 장바구니 담기 기능 추가"
 
-# 3. dev 브랜치로 머지
+# 4. dev 브랜치로 머지
 git checkout dev-buyer
-git merge feature/cart-add-item
+git merge feature/issue-123-add-cart-item
 
-# 4. 테스트 후 main 브랜치로 머지
+# 5. 테스트 후 main 브랜치로 머지
 git checkout main-buyer
 git merge dev-buyer
 ```
@@ -253,13 +318,13 @@ git merge dev-buyer
 ### 커밋 메시지 규칙
 
 ```
-[타입] 설명
+[타입] #이슈번호 - 설명
 
 예시:
-[Feat] 회원가입 기능 추가
-[Fix] 수량 변경 버그 수정
-[Refactor] 상품 조회 로직 개선
-[Docs] README 브랜치 전략 추가
+[Feat] #123 - 회원가입 기능 추가
+[Fix] #456 - 수량 변경 버그 수정
+[Refactor] #789 - 상품 조회 로직 개선
+[Docs] #321 - README 브랜치 전략 추가
 ```
 
 | 타입 | 설명 |
@@ -270,6 +335,87 @@ git merge dev-buyer
 | `Refactor` | 코드 리팩토링 |
 | `Test` | 테스트 코드, 리팩토링 테스트 코드 추가 |
 | `Chore` | 패키지 매니저 수정, 그 외 기타 수정 (ex: .gitignore) |
+
+## 🚀 CI/CD
+
+### GitHub Actions 자동 배포
+
+이 프로젝트는 GitHub Actions를 통해 자동으로 빌드, 테스트, 배포됩니다.
+
+#### 파이프라인
+
+```
+Push to main → CI (빌드/테스트) → Docker Image Build → 
+Docker Hub Push → AWS EC2 Deploy → Health Check
+```
+
+#### 배포 프로세스
+
+```bash
+# 1. 코드 커밋 및 Push
+git add .
+git commit -m "[Feat] #123 - 새로운 기능 추가"
+git push origin dev-{모듈}
+- main-{모듈}에 PR 요청
+
+# 2. GitHub Actions 자동 실행
+- 코드 품질 검사 (Spotless, Checkstyle)
+- 빌드 및 테스트
+- Docker 이미지 빌드
+- AWS EC2 배포
+
+# 3. 배포 확인
+# http://your-ec2-ip:8761 (Eureka Dashboard)
+# http://your-ec2-ip:8080 (API Gateway)
+```
+
+#### 필요한 GitHub Secrets
+
+| Secret | 설명 | 필요 여부 |
+|--------|------|----------|
+| `GITHUB_TOKEN` | GitHub Container Registry 인증 (자동 제공) | ✅ 자동 |
+| `EC2_HOST` | EC2 Public IP | ✅ 필수 |
+| `EC2_USERNAME` | EC2 SSH 사용자명 (예: ubuntu) | ✅ 필수 |
+| `EC2_SSH_KEY` | EC2 SSH Private Key (.pem 파일 내용) | ✅ 필수 |
+
+**참고:** `GITHUB_TOKEN`은 GitHub Actions가 자동으로 제공하므로 별도 설정 불필요!
+
+### 버전 관리 및 롤백
+
+#### 자동 생성되는 이미지 태그
+
+```
+ghcr.io/do-develop-space/baro-auth:
+├── latest                         # 최신 버전
+├── main-auth                      # 브랜치명
+├── main-auth-abc123d              # 브랜치-커밋SHA
+└── main-auth-20241205-143022      # 브랜치-타임스탬프
+```
+
+#### 롤백 방법
+
+```bash
+# EC2에서 실행
+
+# 1. 사용 가능한 버전 확인
+bash list-versions.sh auth
+
+# 2. 이전 버전으로 롤백
+bash rollback.sh auth main-auth-def456e
+
+# 3. 확인
+curl http://localhost:8081/actuator/health
+```
+
+#### 자동 정리
+
+- ✅ 배포 성공 후 오래된 이미지 자동 삭제
+- ✅ 최근 5개 버전만 GHCR에 유지
+- ✅ EC2 로컬 이미지 수동 정리 가능 (`cleanup-images.sh`)
+
+**📚 상세 가이드:**
+- [CI/CD 설정 가이드](docs/CICD_GUIDE.md) - 전체 설정 및 트러블슈팅
+- [버전 관리 가이드](docs/VERSION_MANAGEMENT.md) - 롤백 및 버전 관리
 
 ## 📝 라이선스
 

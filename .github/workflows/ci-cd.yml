@@ -1,0 +1,533 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      # - main
+      - main-*
+      - dev-*
+  pull_request:
+    branches:
+      # - main
+      - main-*
+      # - dev-*
+
+# GITHUB_TOKEN에 패키지 쓰기 권한 부여
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: do-develop-space  # 개인 GitHub 계정
+
+jobs:
+  # ==================================================
+  # CI: Build, Test, Code Quality
+  # ==================================================
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+      
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      
+      - name: Code formatting check (Spotless)
+        run: ./gradlew spotlessCheck
+      
+      - name: Lint check (Checkstyle)
+        run: ./gradlew checkstyleMain
+      
+      - name: Build with Gradle
+        run: ./gradlew build -x test
+      
+      - name: Run tests
+        run: ./gradlew test
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/build/test-results/test/'
+          if-no-files-found: ignore  # 파일이 없어도 에러 발생하지 않음
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            baro-auth/build/libs/*.jar
+            baro-buyer/build/libs/*.jar
+            baro-seller/build/libs/*.jar
+            baro-order/build/libs/*.jar
+            baro-support/build/libs/*.jar
+            baro-cloud/*/build/libs/*.jar
+
+  # ==================================================
+  # Docker: Build and Push Images
+  # ==================================================
+  # 브랜치에서 모듈 이름 추출
+  determine-service:
+    name: Determine Service to Build
+    runs-on: ubuntu-latest
+    outputs:
+      service: ${{ steps.module.outputs.service }}
+      module: ${{ steps.module.outputs.module }}
+      image_tag: ${{ steps.module.outputs.image_tag }}
+    steps:
+      - name: Extract service name from branch
+        id: module
+        run: |
+          if [[ "$GITHUB_REF" == refs/heads/main-* ]]; then
+            MODULE=$(echo ${GITHUB_REF#refs/heads/main-} | tr '[:upper:]' '[:lower:]')
+          elif [[ "$GITHUB_REF" == refs/heads/dev-* ]]; then
+            MODULE=$(echo ${GITHUB_REF#refs/heads/dev-} | tr '[:upper:]' '[:lower:]')
+          else
+            MODULE=""
+          fi
+          
+          # 모듈명을 서비스명으로 변환 (support -> baro-support, auth -> baro-auth 등)
+          # data: 이미지 빌드 없이 배포만
+          # cloud: 이미지 빌드 필요 (eureka, gateway, config)
+          # infra: data + cloud 모두 배포
+          case "$MODULE" in
+            auth) SERVICE="baro-auth" ;;
+            buyer) SERVICE="baro-buyer" ;;
+            seller) SERVICE="baro-seller" ;;
+            order) SERVICE="baro-order" ;;
+            support) SERVICE="baro-support" ;;
+            eureka) SERVICE="eureka" ;;
+            gateway) SERVICE="gateway" ;;
+            config) SERVICE="config" ;;
+            cloud) SERVICE="cloud" ;;  # cloud는 빌드 필요
+            data) SERVICE="data" ;;  # data는 빌드 없이 배포만
+            infra) SERVICE="infra" ;;  # infra는 deploy에서 처리
+            *) SERVICE="" ;;
+          esac
+          
+          # 이미지 태그 결정 (배포 시 사용)
+          if [[ "$GITHUB_REF" == refs/heads/main-* ]]; then
+            IMAGE_TAG="latest"
+          elif [[ "$GITHUB_REF" == refs/heads/dev-* ]]; then
+            # dev 브랜치는 브랜치 이름을 태그로 사용 (dev-support -> dev-support)
+            IMAGE_TAG="${GITHUB_REF#refs/heads/}"
+          else
+            IMAGE_TAG="latest"
+          fi
+          
+          echo "module=$MODULE" >> $GITHUB_OUTPUT
+          echo "service=$SERVICE" >> $GITHUB_OUTPUT
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "Extracted module: $MODULE -> service: $SERVICE with tag: $IMAGE_TAG"
+
+  docker-build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [build-and-test, determine-service]
+    timeout-minutes: 30  # Docker 빌드 타임아웃 설정
+    # 브랜치에서 추출한 서비스가 있을 때만 실행
+    # data는 이미지 빌드 없이 배포만 하므로 제외
+    # infra는 여러 서비스를 포함하므로 제외
+    if: |
+      github.event_name == 'push' && 
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/main-') || 
+      startsWith(github.ref, 'refs/heads/dev-')) &&
+      !contains(github.ref, 'main-data') && 
+      !contains(github.ref, 'main-infra') &&
+      !contains(github.ref, 'dev-infra') &&
+      needs.determine-service.outputs.service != '' &&
+      needs.determine-service.outputs.service != 'infra' &&
+      needs.determine-service.outputs.service != 'data'
+    
+    # cloud 모듈일 때는 eureka, gateway, config를 각각 빌드
+    strategy:
+      matrix:
+        service: ${{ needs.determine-service.outputs.service == 'cloud' && fromJSON('["eureka", "gateway", "config"]') || fromJSON(format('["{0}"]', needs.determine-service.outputs.service)) }}
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      
+      - name: Set service name
+        id: service
+        run: |
+          echo "service=${{ matrix.service }}" >> $GITHUB_OUTPUT
+          echo "Building service: ${{ matrix.service }}"
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          # buildkit 이미지 pull 실패 시 재시도 및 타임아웃 설정
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+          buildkitd-flags: --allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host
+          version: latest
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: do-develop-space
+          password: ${{ secrets.GHCR_PAT }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          tags: |
+            # main-* 브랜치: latest 태그 (항상 최신 프로덕션 버전)
+            type=raw,value=${{ startsWith(github.ref, 'refs/heads/main-') && 'latest' || '' }}
+            # dev-* 브랜치: 브랜치 이름을 태그로 사용 (dev-support, dev-auth 등)
+            # 각 dev 브랜치가 독립적인 이미지를 가지도록 함
+            type=ref,event=branch
+            # 커밋 SHA 기반 태그 (롤백용)
+            type=sha,prefix={{branch}}-,format=short
+            # 타임스탬프 기반 태그 (배포 이력 추적용)
+            type=raw,value={{branch}}-{{date 'YYYYMMDD-HHmmss'}}
+          flavor: |
+            # main-* 브랜치만 latest=true로 설정
+            latest=${{ startsWith(github.ref, 'refs/heads/main-') }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:buildcache,mode=max
+      
+      - name: Make package public
+        if: success()
+        run: |
+          PACKAGE_NAME="${{ matrix.service }}"
+          echo "Making package ${PACKAGE_NAME} public..."
+          
+          # GitHub API를 사용하여 패키지 visibility를 public으로 변경
+          curl -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/user/packages/container/${PACKAGE_NAME} \
+            -d '{"visibility":"public"}' || echo "Failed to make package public (may already be public or require manual setup)"
+          
+          echo "✅ Package ${PACKAGE_NAME} visibility set to public"
+
+  # ==================================================
+  # CD: Deploy to AWS EC2 (모듈별)
+  # ==================================================
+  deploy:
+    name: Deploy Module to AWS EC2
+    runs-on: ubuntu-latest
+    needs: [build-and-test, determine-service]  # determine-service에서 모듈명 가져오기
+    if: |
+      (startsWith(github.ref, 'refs/heads/main-') || startsWith(github.ref, 'refs/heads/dev-')) &&
+      needs.determine-service.outputs.module != ''
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Extract module name
+        id: module
+        run: |
+          # determine-service에서 이미 추출한 모듈명 사용
+          MODULE="${{ needs.determine-service.outputs.module }}"
+          echo "name=$MODULE" >> $GITHUB_OUTPUT
+          echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+          echo "Deploying module: $MODULE from branch: ${GITHUB_REF#refs/heads/}"
+      
+      - name: Deploy to EC2
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USERNAME }}
+          MODULE_NAME: ${{ steps.module.outputs.name }}
+          BRANCH_NAME: ${{ steps.module.outputs.branch }}
+        timeout-minutes: 10  # 배포 타임아웃 설정
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          
+          # determine-service에서 이미 결정된 이미지 태그 사용
+          IMAGE_TAG="${{ needs.determine-service.outputs.image_tag }}"
+          
+          # 모듈명 확인 (디버깅용)
+          echo "Deploying module: ${MODULE_NAME} with image tag: ${IMAGE_TAG}"
+          echo "Branch: ${BRANCH_NAME}"
+          
+          # SSH 연결 옵션 (안정성 개선)
+          SSH_OPTS="-i private_key.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o ConnectTimeout=10 -o TCPKeepAlive=yes"
+          
+          # SSH 연결 테스트 (재시도 로직)
+          echo "Testing SSH connection to ${USER}@${HOST}..."
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          SSH_CONNECTED=false
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if ssh $SSH_OPTS -o ConnectTimeout=10 ${USER}@${HOST} "echo 'SSH connection successful'" 2>/dev/null; then
+              SSH_CONNECTED=true
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "⚠️ SSH connection attempt $RETRY_COUNT failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
+          
+          if [ "$SSH_CONNECTED" = false ]; then
+            echo "❌ Failed to connect to EC2 after $MAX_RETRIES attempts"
+            echo "💡 Please check:"
+            echo "   1. EC2 instance is running"
+            echo "   2. Security Group allows SSH (port 22) from GitHub Actions IP"
+            echo "   3. EC2 instance is accessible"
+            rm -f private_key.pem
+            exit 1
+          fi
+          
+          echo "✅ SSH connection established"
+          
+          # EC2에 배포 디렉토리 생성
+          ssh $SSH_OPTS ${USER}@${HOST} "mkdir -p /home/${USER}/apps/BE"
+          
+          # EC2에 배포 스크립트 및 해당 모듈의 docker-compose 파일만 복사
+          scp $SSH_OPTS \
+            ./scripts/deploy-module.sh ${USER}@${HOST}:/home/${USER}/apps/BE/
+          
+          scp $SSH_OPTS \
+            ./docker-compose.${MODULE_NAME}.yml ${USER}@${HOST}:/home/${USER}/apps/BE/
+          
+          # 인프라 docker-compose 파일도 복사 (필요시)
+          scp $SSH_OPTS \
+            ./docker-compose.data.yml ${USER}@${HOST}:/home/${USER}/apps/BE/ 2>/dev/null || true
+          scp $SSH_OPTS \
+            ./docker-compose.cloud.yml ${USER}@${HOST}:/home/${USER}/apps/BE/ 2>/dev/null || true
+          
+          # Elasticsearch 빌드를 위한 docker 디렉토리 복사 (data 모듈인 경우)
+          if [ "${MODULE_NAME}" = "data" ]; then
+            echo "📦 Copying Elasticsearch build context..."
+            ssh $SSH_OPTS ${USER}@${HOST} "mkdir -p /home/${USER}/apps/BE/docker/baro-es"
+            scp $SSH_OPTS -r \
+              ./docker/baro-es/* ${USER}@${HOST}:/home/${USER}/apps/BE/docker/baro-es/ 2>/dev/null || true
+          fi
+          
+          # GHCR_PAT 또는 GITHUB_TOKEN 사용 (GHCR_PAT 우선)
+          # GHCR_PAT는 Personal Access Token으로 패키지 접근 권한이 필요
+          if [ -n "${{ secrets.GHCR_PAT }}" ]; then
+            GHCR_TOKEN="${{ secrets.GHCR_PAT }}"
+          else
+            GHCR_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          fi
+          
+          # 모듈별 배포 스크립트 실행 (GITHUB_TOKEN, IMAGE_TAG 전달)
+          # 백그라운드로 실행하여 SSH 연결이 끊어져도 계속 진행되도록
+          echo "🚀 Starting deployment in background..."
+          DEPLOY_LOG="/home/${USER}/apps/BE/deploy-${MODULE_NAME}-$(date +%Y%m%d-%H%M%S).log"
+          
+          # 배포 스크립트를 백그라운드로 실행하고 로그 파일에 저장
+          ssh $SSH_OPTS ${USER}@${HOST} \
+            "cd /home/${USER}/apps/BE && \
+             nohup bash -c 'GITHUB_TOKEN=${GHCR_TOKEN} IMAGE_TAG=${IMAGE_TAG} bash ./deploy-module.sh ${MODULE_NAME}' > ${DEPLOY_LOG} 2>&1 & \
+             echo \$! > /tmp/deploy-${MODULE_NAME}.pid"
+          
+          echo "⏳ Deployment started in background. PID saved to /tmp/deploy-${MODULE_NAME}.pid"
+          echo "📝 Log file: ${DEPLOY_LOG}"
+          echo "⏳ Waiting 10 seconds for initial deployment steps..."
+          sleep 10
+          
+          # 배포 진행 상황 확인 (최대 5분 대기)
+          echo "📊 Monitoring deployment progress..."
+          MAX_WAIT=300  # 5분
+          ELAPSED=0
+          INTERVAL=10   # 10초마다 확인
+          
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            # 배포 프로세스가 실행 중인지 확인
+            if ssh $SSH_OPTS ${USER}@${HOST} "test -f /tmp/deploy-${MODULE_NAME}.pid && ps -p \$(cat /tmp/deploy-${MODULE_NAME}.pid) > /dev/null 2>&1"; then
+              # 로그의 마지막 몇 줄 확인
+              LAST_LOG=$(ssh $SSH_OPTS ${USER}@${HOST} "tail -n 3 ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not ready yet'")
+              echo "[${ELAPSED}s] Deployment in progress... Last log: ${LAST_LOG}"
+              sleep $INTERVAL
+              ELAPSED=$((ELAPSED + INTERVAL))
+            else
+              # 프로세스가 종료됨 - 성공 또는 실패 확인
+              echo "✅ Deployment process completed. Checking final status..."
+              
+              # 배포 스크립트의 exit code 확인
+              EXIT_CODE=$(ssh $SSH_OPTS ${USER}@${HOST} "if [ -f /tmp/deploy-${MODULE_NAME}.pid ]; then wait \$(cat /tmp/deploy-${MODULE_NAME}.pid) 2>/dev/null; echo \$?; else echo '1'; fi" 2>/dev/null || echo "1")
+              
+              # 전체 로그 가져오기
+              echo "📝 Fetching deployment log..."
+              DEPLOY_LOG_CONTENT=$(ssh $SSH_OPTS ${USER}@${HOST} "cat ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'" 2>/dev/null || echo "Could not fetch log")
+              echo "$DEPLOY_LOG_CONTENT"
+              echo ""
+              
+              # 배포 스크립트 exit code 확인
+              if [ "$EXIT_CODE" != "0" ] && [ "$EXIT_CODE" != "" ]; then
+                echo "⚠️ Deployment script exited with code: $EXIT_CODE"
+              fi
+              
+              # 컨테이너 상태 확인
+              echo "🔍 Checking container status..."
+              # data 모듈인 경우 MySQL만 체크, 다른 모듈은 해당 모듈 컨테이너 체크
+              if [ "${MODULE_NAME}" = "data" ]; then
+                CHECK_CONTAINER="baro-mysql"
+              else
+                CHECK_CONTAINER="baro-${MODULE_NAME}"
+              fi
+              
+              CONTAINER_STATUS=$(ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${CHECK_CONTAINER} || echo 'No container found'" 2>/dev/null || echo "Could not check container status")
+              echo "$CONTAINER_STATUS"
+              echo ""
+              
+              # 컨테이너가 실행 중인지 확인
+              if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${CHECK_CONTAINER}" 2>/dev/null; then
+                echo "✅ Container is running. Deployment appears successful!"
+                rm -f private_key.pem
+                exit 0
+              else
+                echo "⚠️ Container is not running. Deployment may have failed."
+                
+                # 컨테이너 로그 확인 (존재하는 경우)
+                if echo "$CONTAINER_STATUS" | grep -q "${CHECK_CONTAINER}"; then
+                  echo "🔍 Checking container logs..."
+                  ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 50 2>&1 || echo 'Could not fetch container logs'" || echo "Could not fetch container logs"
+                fi
+                
+                echo ""
+                echo "📝 Full log location: ${DEPLOY_LOG}"
+                echo "💡 To check manually: ssh ${USER}@${HOST} 'cat ${DEPLOY_LOG}'"
+                rm -f private_key.pem
+                exit 1
+              fi
+            fi
+          done
+          
+          # 타임아웃 발생
+          echo "⏱️ Deployment timeout after ${MAX_WAIT} seconds"
+          echo "📝 Fetching recent log entries..."
+          ssh $SSH_OPTS ${USER}@${HOST} "tail -n 50 ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'" || echo "Could not fetch log"
+          echo ""
+          echo "🔍 Checking container status..."
+          # data 모듈인 경우 MySQL만 체크, 다른 모듈은 해당 모듈 컨테이너 체크
+          if [ "${MODULE_NAME}" = "data" ]; then
+            CHECK_CONTAINER="baro-mysql"
+          else
+            CHECK_CONTAINER="baro-${MODULE_NAME}"
+          fi
+          
+          ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${CHECK_CONTAINER} || echo 'No container found'" || echo "Could not check container status"
+          echo ""
+          echo "🔍 Checking recent container logs (if exists)..."
+          ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 30 2>&1 || echo 'Container logs not available'" || echo "Could not fetch container logs"
+          
+          # 컨테이너 상태 확인
+          if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${CHECK_CONTAINER}"; then
+            echo "✅ Container is running despite timeout. Deployment may have succeeded."
+            rm -f private_key.pem
+            exit 0
+          else
+            echo "❌ Container is not running. Deployment may have failed."
+            echo "💡 Check full log manually: ssh ${USER}@${HOST} 'cat ${DEPLOY_LOG}'"
+            rm -f private_key.pem
+            exit 1
+          fi
+      
+      - name: Notify deployment status
+        if: always()
+        env:
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USERNAME }}
+          MODULE_NAME: ${{ steps.module.outputs.name }}
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment successful for module: ${{ steps.module.outputs.name }}"
+          else
+            echo "❌ Deployment failed for module: ${{ steps.module.outputs.name }}"
+            echo ""
+            echo "💡 Troubleshooting steps:"
+            echo "   1. Check EC2 instance status: AWS Console → EC2 → Instances"
+            echo "   2. Verify Security Group allows SSH (port 22) from GitHub Actions IP ranges"
+            echo "   3. Check if instance is running: aws ec2 describe-instances --instance-ids <instance-id>"
+            echo "   4. Test SSH manually: ssh ${USER}@${HOST} 'echo test'"
+            # data 모듈인 경우 MySQL만 체크, 다른 모듈은 해당 모듈 컨테이너 체크
+            if [ "${MODULE_NAME}" = "data" ]; then
+              echo "   5. Check deployment status: ssh ${USER}@${HOST} 'docker ps | grep baro-mysql'"
+            else
+              echo "   5. Check deployment status: ssh ${USER}@${HOST} 'docker ps | grep baro-${MODULE_NAME}'"
+            fi
+            echo ""
+            echo "📝 Note: If SSH connection timed out, the deployment script might not have run."
+            echo "   The container might still be running with the previous version."
+          fi
+
+  # ==================================================
+  # Cleanup: 오래된 이미지 정리
+  # ==================================================
+  cleanup:
+    name: Cleanup Old Images
+    runs-on: ubuntu-latest
+    needs: [deploy, determine-service]
+    if: |
+      success() &&
+      needs.determine-service.outputs.service != '' &&
+      needs.determine-service.outputs.service != 'data' &&
+      needs.determine-service.outputs.service != 'cloud' &&
+      needs.determine-service.outputs.service != 'infra'
+    permissions:
+      contents: read
+      packages: write  # 패키지 삭제 권한 필요
+
+    steps:
+      - name: Delete old container images
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: ${{ needs.determine-service.outputs.service }}
+          package-type: 'container'
+          min-versions-to-keep: 5
+          delete-only-untagged-versions: 'false'
+        continue-on-error: true  # 패키지가 없어도 실패하지 않도록
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_PAT }}  # 명시적으로 토큰 전달
+
+  # ==================================================
+  # Notification (선택사항)
+  # ==================================================
+  # notify:
+  #   name: Send Notifications
+  #   runs-on: ubuntu-latest
+  #   needs: [build-and-test, docker-build, deploy]
+  #   if: always()
+  #   
+  #   steps:
+  #     - name: Send Slack notification
+  #       uses: 8398a7/action-slack@v3
+  #       with:
+  #         status: ${{ job.status }}
+  #         text: 'CI/CD Pipeline completed'
+  #         webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+

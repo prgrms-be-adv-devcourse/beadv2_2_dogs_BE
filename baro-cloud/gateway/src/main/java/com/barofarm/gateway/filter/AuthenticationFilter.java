@@ -17,60 +17,55 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Component
-public class AuthenticationFilter
-    extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
+public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
 
-  @Value("${jwt.secret:barofarm-secret-key-for-jwt-authentication-must-be-256-bits-long}")
-  private String jwtSecret;
+    @Value("${jwt.secret:barofarm-secret-key-for-jwt-authentication-must-be-256-bits-long}")
+    private String jwtSecret;
 
-  public AuthenticationFilter() {
-    super(Config.class);
-  }
+    public AuthenticationFilter() {
+        super(Config.class);
+    }
 
-  @Override
-  public GatewayFilter apply(Config config) {
-    return (exchange, chain) -> {
-      ServerHttpRequest request = exchange.getRequest();
+    @Override
+    public GatewayFilter apply(Config config) {
+        return (exchange, chain) -> {
+            ServerHttpRequest request = exchange.getRequest();
 
-      String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-      if (authHeader == null) {
-        return onError(exchange, "No Authorization header", HttpStatus.UNAUTHORIZED);
-      }
-      if (!authHeader.startsWith("Bearer ")) {
-        return onError(exchange, "Invalid Authorization header", HttpStatus.UNAUTHORIZED);
-      }
+            String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            if (authHeader == null) {
+                return onError(exchange, "No Authorization header", HttpStatus.UNAUTHORIZED);
+            }
+            if (!authHeader.startsWith("Bearer ")) {
+                return onError(exchange, "Invalid Authorization header", HttpStatus.UNAUTHORIZED);
+            }
 
-      String token = authHeader.substring(7);
+            String token = authHeader.substring(7);
 
-      try {
-        Claims claims = validateToken(token);
+            try {
+                Claims claims = validateToken(token);
 
-        ServerHttpRequest modifiedRequest =
-            request
-                .mutate()
-                .header("X-User-Id", claims.getSubject())
-                .header("X-User-Role", claims.get("role", String.class))
-                .build();
+                ServerHttpRequest modifiedRequest = request.mutate().header("X-User-Id", claims.getSubject())
+                        .header("X-User-Role", claims.get("role", String.class)).build();
 
-        return chain.filter(exchange.mutate().request(modifiedRequest).build());
-      } catch (Exception e) {
-        return onError(exchange, "Invalid token: " + e.getMessage(), HttpStatus.UNAUTHORIZED);
-      }
-    };
-  }
+                return chain.filter(exchange.mutate().request(modifiedRequest).build());
+            } catch (Exception e) {
+                return onError(exchange, "Invalid token: " + e.getMessage(), HttpStatus.UNAUTHORIZED);
+            }
+        };
+    }
 
-  private Claims validateToken(String token) {
-    SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-    return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
-  }
+    private Claims validateToken(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+    }
 
-  private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus status) {
-    ServerHttpResponse response = exchange.getResponse();
-    response.setStatusCode(status);
-    return response.setComplete();
-  }
+    private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus status) {
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(status);
+        return response.setComplete();
+    }
 
-  public static class Config {
-    // Configuration properties if needed
-  }
+    public static class Config {
+        // Configuration properties if needed
+    }
 }
