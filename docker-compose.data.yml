@@ -35,8 +35,17 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE:-barofarm}
       - MYSQL_USER=${MYSQL_USER:-barouser}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+      # 모듈별 데이터베이스 환경 변수 (선택사항, 스크립트에서 자동 생성)
+      # MYSQL_DATABASE_AUTH=baroauth
+      # MYSQL_DATABASE_SELLER=baroseller
+      # MYSQL_DATABASE_BUYER=barobuyer
+      # MYSQL_DATABASE_ORDER=baroorder
+      # MYSQL_DATABASE_SUPPORT=barosupport
     volumes:
       - mysql-data:/var/lib/mysql
+      # 초기화 스크립트: scripts/init-db/01-create-databases.sql
+      # - baroauth, baroseller, barobuyer, baroorder, barosupport 데이터베이스 자동 생성
+      # - barouser에게 모든 데이터베이스에 대한 모든 권한 부여
       - ./scripts/init-db:/docker-entrypoint-initdb.d
     restart: unless-stopped
     networks:
@@ -104,6 +113,7 @@ services:
   # ===================================
   elasticsearch:
     # 커스텀 이미지 사용 (Nori 분석기 포함)
+    image: baro-elasticsearch:latest
     build:
       context: ./docker/baro-es
       dockerfile: Dockerfile
