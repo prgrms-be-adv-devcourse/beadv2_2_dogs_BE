@@ -53,6 +53,9 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.6.0
     container_name: baro-kafka
+    # init: true - tini를 PID 1로 실행하여 zombie 프로세스 방지
+    # tini가 모든 자식 프로세스의 종료 상태를 수집(wait)하여 zombie 발생 방지
+    init: true
     ports:
       - "9092:9092"  # Broker listener
       - "9093:9093"  # Controller listener
@@ -87,8 +90,11 @@ services:
     networks:
       - baro-network
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
-      interval: 10s
+      # init: true로 tini가 PID 1로 실행되어 모든 자식 프로세스의 종료 상태를 수집
+      # CMD 사용으로 shell 없이 직접 실행 (추가 안전장치)
+      # interval을 30s로 늘려 healthcheck 빈도 감소
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
       timeout: 5s
       retries: 10
       start_period: 40s
