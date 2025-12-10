@@ -18,7 +18,7 @@ spring:
           predicates:
             - Path=/api/auth/**
           filters:
-            - RewritePath=/api/auth/(?<segment>.*), /${segment}
+            - RewritePath=/api/(?<segment>.*), /${segment}
 
         # Buyer Service
         - id: buyer-service
@@ -33,7 +33,7 @@ spring:
         - id: seller-service
           uri: lb://seller-service
           predicates:
-            - Path=/api/sellers/**,/api/farms/**
+            - Path=/sellers/**
           filters:
             - RewritePath=/api/(?<segment>.*), /${segment}
             - AuthenticationFilter
