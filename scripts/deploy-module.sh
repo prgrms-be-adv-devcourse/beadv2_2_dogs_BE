@@ -77,6 +77,11 @@ fi
 GITHUB_USERNAME="${GITHUB_USERNAME:-do-develop-space}"
 PROJECT_DIR="${HOME}/apps/BE"
 
+# Docker Compose 프로젝트 이름 설정
+# Docker Compose는 디렉토리 이름을 기본 프로젝트 이름으로 사용하므로
+# be_baro-network를 사용하도록 설정
+export COMPOSE_PROJECT_NAME="be"
+
 # 디렉토리 생성 (없으면)
 mkdir -p ${PROJECT_DIR}
 
@@ -90,8 +95,43 @@ log_info "🚀 Deploying module: ${MODULE_NAME}"
 log_step "📦 Logging in to GitHub Container Registry..."
 if [ -n "${GITHUB_TOKEN}" ]; then
     echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${GITHUB_USERNAME}" --password-stdin
+    if [ $? -eq 0 ]; then
+        log_info "✅ Successfully logged in to GHCR"
+    else
+        log_error "❌ Failed to login to GHCR. Please check your token permissions."
+        log_warn "💡 Tip: Use GHCR_PAT (Personal Access Token) with 'read:packages' permission"
+        exit 1
+    fi
 else
     log_warn "GITHUB_TOKEN not set, skipping registry login"
+    log_warn "⚠️  Private images may fail to pull without authentication"
+fi
+
+# ===================================
+# 1.5. Docker 네트워크 확인 및 생성
+# ===================================
+log_step "🌐 Checking Docker network..."
+# Docker Compose 프로젝트 이름 설정 (이미 위에서 설정했지만 명시적으로 다시 설정)
+export COMPOSE_PROJECT_NAME="be"
+
+# be_baro-network 확인 및 생성 (Docker Compose가 프로젝트 이름을 접두사로 붙임)
+if docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
+    log_info "✅ Found be_baro-network"
+else
+    log_info "Creating be_baro-network..."
+    # 네트워크 생성 시도 (이미 존재하면 에러 무시)
+    CREATE_OUTPUT=$(docker network create be_baro-network 2>&1)
+    CREATE_EXIT_CODE=$?
+    
+    if [ $CREATE_EXIT_CODE -eq 0 ]; then
+        log_info "✅ Created be_baro-network"
+    elif echo "$CREATE_OUTPUT" | grep -q "already exists"; then
+        log_info "✅ be_baro-network already exists"
+    else
+        # 실제로 생성 실패한 경우에만 에러
+        log_error "❌ Failed to create be_baro-network: $CREATE_OUTPUT"
+        exit 1
+    fi
 fi
 
 # ===================================
@@ -114,6 +154,11 @@ check_cloud_infra() {
     log_step "🔍 Checking Spring Cloud infrastructure..."
     if ! docker ps | grep -q baro-eureka; then
         log_warn "Spring Cloud infrastructure not running. Starting cloud infrastructure first..."
+        # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
+        # 브랜치별 배포 시 동일한 태그 사용 (dev-support -> dev-support, main-support -> latest)
+        local cloud_image_tag="${IMAGE_TAG:-latest}"
+        log_info "Using image tag for cloud infrastructure: ${cloud_image_tag}"
+        export IMAGE_TAG="${cloud_image_tag}"
         $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
         $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
         log_info "Waiting for Spring Cloud to be ready (30 seconds)..."
@@ -135,20 +180,53 @@ deploy_module() {
         exit 1
     fi
     
+    # 네트워크 확인
+    if ! docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
+        log_error "❌ be_baro-network not found!"
+        log_error "Please create the network first: docker network create be_baro-network"
+        exit 1
+    fi
+    
+    # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
+    export IMAGE_TAG="${IMAGE_TAG:-latest}"
+    log_info "Using image tag: ${IMAGE_TAG}"
+    
     # 현재 버전 기록 (롤백용)
     CURRENT_IMAGE=$(docker inspect "baro-${module}" --format='{{.Config.Image}}' 2>/dev/null || echo "none")
     
-    log_step "📥 Pulling latest image for $module..."
-    $DOCKER_COMPOSE -f "$compose_file" pull
+    log_step "📥 Pulling image for $module (tag: ${IMAGE_TAG})..."
+    if ! $DOCKER_COMPOSE -f "$compose_file" pull; then
+        log_error "❌ Failed to pull image for $module"
+        exit 1
+    fi
     
     # Pull한 이미지 정보
     NEW_IMAGE=$($DOCKER_COMPOSE -f "$compose_file" config | grep "image:" | head -1 | awk '{print $2}')
+    log_info "Image to deploy: $NEW_IMAGE"
     
     log_step "🛑 Stopping existing container for $module..."
     $DOCKER_COMPOSE -f "$compose_file" down || true
     
     log_step "🏃 Starting $module..."
-    $DOCKER_COMPOSE -f "$compose_file" up -d
+    if ! $DOCKER_COMPOSE -f "$compose_file" up -d; then
+        log_error "❌ Failed to start container for $module"
+        log_error "Checking container logs..."
+        docker logs baro-${module} --tail 50 2>&1 || echo "Container logs not available"
+        exit 1
+    fi
+    
+    # 컨테이너가 정상적으로 시작되었는지 확인
+    sleep 3
+    if ! docker ps | grep -q "baro-${module}"; then
+        log_error "❌ Container baro-${module} is not running after start"
+        log_error "Checking container status..."
+        docker ps -a | grep "baro-${module}" || echo "Container not found"
+        log_error "Checking container logs..."
+        docker logs baro-${module} --tail 50 2>&1 || echo "Container logs not available"
+        exit 1
+    fi
+    
+    log_info "✅ Container baro-${module} is running"
     
     # 배포 이력 저장
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Deploy: $module | Previous: $CURRENT_IMAGE | New: $NEW_IMAGE" >> ${PROJECT_DIR}/deployment-history.log
@@ -191,6 +269,20 @@ deploy_all() {
 case $MODULE_NAME in
     data)
         log_step "Deploying data infrastructure..."
+        # 네트워크가 없으면 생성 (data 인프라가 네트워크를 생성함)
+        if ! docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
+            log_info "Creating be_baro-network..."
+            CREATE_OUTPUT=$(docker network create be_baro-network 2>&1)
+            CREATE_EXIT_CODE=$?
+            if [ $CREATE_EXIT_CODE -eq 0 ]; then
+                log_info "✅ Created be_baro-network"
+            elif echo "$CREATE_OUTPUT" | grep -q "already exists"; then
+                log_info "✅ be_baro-network already exists"
+            else
+                log_error "❌ Failed to create be_baro-network: $CREATE_OUTPUT"
+                exit 1
+            fi
+        fi
         $DOCKER_COMPOSE -f docker-compose.data.yml pull
         $DOCKER_COMPOSE -f docker-compose.data.yml down || true
         $DOCKER_COMPOSE -f docker-compose.data.yml up -d
@@ -199,26 +291,71 @@ case $MODULE_NAME in
     
     cloud)
         log_step "Deploying Spring Cloud infrastructure..."
+        # 네트워크 확인
+        if ! docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
+            log_error "❌ be_baro-network not found!"
+            log_error "Please create the network first: docker network create be_baro-network"
+            exit 1
+        fi
         check_data_infra
+        # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
+        export IMAGE_TAG="${IMAGE_TAG:-latest}"
+        log_info "Using image tag for cloud infrastructure: ${IMAGE_TAG}"
         $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
         $DOCKER_COMPOSE -f docker-compose.cloud.yml down || true
         $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
         log_info "✅ Spring Cloud infrastructure deployed successfully!"
         ;;
     
-    # infra)
-    #     log_step "Deploying all infrastructure (data + cloud)..."
-    #     $DOCKER_COMPOSE -f docker-compose.data.yml pull
-    #     $DOCKER_COMPOSE -f docker-compose.data.yml up -d
-    #     sleep 20
-    #     $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
-    #     $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
-    #     log_info "✅ All infrastructure deployed successfully!"
-    #     ;;
+    infra)
+        log_step "Deploying all infrastructure (data + cloud)..."
+        # 네트워크 확인
+        if ! docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
+            log_error "❌ be_baro-network not found!"
+            log_error "Please create the network first: docker network create be_baro-network"
+            exit 1
+        fi
+        # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
+        export IMAGE_TAG="${IMAGE_TAG:-latest}"
+        log_info "Using image tag for infrastructure: ${IMAGE_TAG}"
+        
+        # 1. 데이터 인프라 배포 (이미 실행 중이면 건너뛰기)
+        if docker ps | grep -q baro-mysql; then
+            log_info "✅ Data infrastructure is already running. Skipping data deployment."
+        else
+            log_info "Step 1/2: Deploying data infrastructure..."
+            $DOCKER_COMPOSE -f docker-compose.data.yml pull
+            $DOCKER_COMPOSE -f docker-compose.data.yml down || true
+            $DOCKER_COMPOSE -f docker-compose.data.yml up -d
+            sleep 20
+        fi
+        
+        # 2. Cloud 인프라 배포 (이미 실행 중이면 건너뛰기)
+        # if docker ps | grep -q baro-eureka; then
+        #     log_info "✅ Cloud infrastructure is already running. Skipping cloud deployment."
+        # else
+        #     log_info "Step 2/2: Deploying Spring Cloud infrastructure..."
+        #     $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
+        #     $DOCKER_COMPOSE -f docker-compose.cloud.yml down || true
+        #     $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
+        #     sleep 30
+        # fi
+        
+        log_info "✅ All infrastructure deployed successfully!"
+        ;;
     
     auth|buyer|seller|order|support)
+        # 데이터 인프라는 필수 (Redis, MySQL, Kafka)
         check_data_infra
-        check_cloud_infra
+        # Cloud 인프라는 선택적 (이미 실행 중이면 체크만, 없으면 경고만)
+        if ! docker ps | grep -q baro-eureka; then
+            log_warn "⚠️  Cloud infrastructure (Eureka, Gateway, Config) is not running."
+            log_warn "⚠️  The module may not work properly without cloud infrastructure."
+            log_warn "⚠️  If needed, deploy cloud infrastructure separately: bash deploy-module.sh cloud"
+        else
+            log_info "✅ Cloud infrastructure is already running."
+        fi
+        # 모듈만 단독 배포
         deploy_module "$MODULE_NAME"
         ;;
     

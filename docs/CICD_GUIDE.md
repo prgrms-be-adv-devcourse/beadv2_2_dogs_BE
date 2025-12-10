@@ -99,10 +99,26 @@ ghcr.io/do-develop-space/eureka:latest
 ...
 ```
 
-**이미지 공개 설정 (선택사항):**
-1. GitHub 레포지토리 → Packages
-2. 각 패키지 클릭 → Package settings
-3. "Change visibility" → Public (필요시)
+**이미지 공개 설정 (자동):**
+✅ **CI/CD 파이프라인에서 자동으로 패키지를 public으로 설정합니다!**
+
+이미지를 push한 후 자동으로 GitHub API를 통해 패키지 visibility를 public으로 변경합니다.
+따라서 별도로 수동 설정할 필요가 없습니다.
+
+**수동 설정이 필요한 경우:**
+만약 자동 설정이 실패하거나 수동으로 변경하려면:
+
+1. GitHub → https://github.com/users/do-develop-space/packages
+2. 변경할 패키지 클릭 (예: `baro-support`)
+3. 우측 하단의 **"Package settings"** 클릭
+4. **"Change visibility"** 또는 **"Danger Zone"** 섹션에서 **"Change visibility"** 클릭
+5. **"Make public"** 선택
+6. 패키지 이름 입력하여 확인
+
+**참고:**
+- ✅ Public 패키지는 인증 없이 pull 가능
+- ⚠️ Private 패키지는 `GHCR_PAT` 또는 `GITHUB_TOKEN` 필요
+- ✅ 모든 서비스 패키지가 자동으로 public으로 설정됨
 
 ### 2. AWS EC2 인스턴스
 
@@ -207,6 +223,12 @@ newgrp docker
 # 작업 디렉토리 생성
 mkdir -p ~/apps/BE
 cd ~/apps/BE
+
+# Docker 네트워크 생성 (필수, 이미 있으면 무시됨)
+# docker network create baro-network 2>/dev/null || echo "baro-network already exists"
+
+# 네트워크 확인
+# docker network ls | grep baro-network
 
 # 환경 변수 파일 생성 (선택사항)
 cat > .env << EOF
