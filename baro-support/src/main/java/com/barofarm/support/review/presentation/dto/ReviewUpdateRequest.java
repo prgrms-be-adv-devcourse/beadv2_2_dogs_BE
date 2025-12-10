@@ -1,6 +1,5 @@
 package com.barofarm.support.review.presentation.dto;
 
-import com.barofarm.support.review.application.dto.request.ReviewCreateCommand;
 import com.barofarm.support.review.application.dto.request.ReviewUpdateCommand;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

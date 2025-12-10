@@ -13,13 +13,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/reviews")
 @RequiredArgsConstructor
-public class ReviewController {
+public class ReviewController implements ReviewSwaggerApi {
 
     private final ReviewService reviewService;
 

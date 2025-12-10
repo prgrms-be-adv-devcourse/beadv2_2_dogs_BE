@@ -1,4 +1,4 @@
-package com.barofarm.support.review.client.dto;
+package com.barofarm.support.review.client.product.dto;
 
 import com.barofarm.support.common.exception.CustomException;
 import com.barofarm.support.review.exception.ReviewErrorCode;

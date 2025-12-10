@@ -1,6 +1,5 @@
 package com.barofarm.support.common.exception;
 
-import co.elastic.clients.elasticsearch._types.ErrorResponse;
 import com.barofarm.support.common.response.ResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
