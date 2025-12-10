@@ -326,6 +326,14 @@ jobs:
           scp $SSH_OPTS \
             ./docker-compose.cloud.yml ${USER}@${HOST}:/home/${USER}/apps/BE/ 2>/dev/null || true
           
+          # Elasticsearch 빌드를 위한 docker 디렉토리 복사 (data 모듈인 경우)
+          if [ "${MODULE_NAME}" = "data" ]; then
+            echo "📦 Copying Elasticsearch build context..."
+            ssh $SSH_OPTS ${USER}@${HOST} "mkdir -p /home/${USER}/apps/BE/docker/baro-es"
+            scp $SSH_OPTS -r \
+              ./docker/baro-es/* ${USER}@${HOST}:/home/${USER}/apps/BE/docker/baro-es/ 2>/dev/null || true
+          fi
+          
           # GHCR_PAT 또는 GITHUB_TOKEN 사용 (GHCR_PAT 우선)
           # GHCR_PAT는 Personal Access Token으로 패키지 접근 권한이 필요
           if [ -n "${{ secrets.GHCR_PAT }}" ]; then

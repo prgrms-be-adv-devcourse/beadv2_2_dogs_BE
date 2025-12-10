@@ -49,6 +49,15 @@ detect_docker_compose() {
 DOCKER_COMPOSE=$(detect_docker_compose)
 log_info "Using Docker Compose command: $DOCKER_COMPOSE"
 
+# Docker Compose 명령어를 함수로 래핑하여 안전하게 사용
+docker_compose_cmd() {
+    if [[ "$DOCKER_COMPOSE" == "docker compose" ]]; then
+        docker compose "$@"
+    else
+        docker-compose "$@"
+    fi
+}
+
 # ===================================
 # 파라미터 검증
 # ===================================
@@ -59,7 +68,7 @@ if [ -z "$MODULE_NAME" ]; then
     echo "Usage: bash deploy-module.sh [MODULE_NAME]"
     echo ""
     echo "Available modules:"
-    echo "  - data    (데이터 인프라: Redis, MySQL, Kafka)"
+    echo "  - data    (데이터 인프라: Redis, MySQL, Kafka, Elasticsearch)"
     echo "  - cloud   (Spring Cloud: Eureka, Gateway, Config)"
     echo "  - infra   (data + cloud)"
     echo "  - auth    (인증 모듈)"
@@ -141,8 +150,8 @@ check_data_infra() {
     log_step "🔍 Checking data infrastructure..."
     if ! docker ps | grep -q baro-redis; then
         log_warn "Data infrastructure not running. Starting data infrastructure first..."
-        $DOCKER_COMPOSE -f docker-compose.data.yml pull
-        $DOCKER_COMPOSE -f docker-compose.data.yml up -d
+        docker_compose_cmd -f docker-compose.data.yml pull
+        docker_compose_cmd -f docker-compose.data.yml up -d
         log_info "Waiting for data infrastructure to be ready (20 seconds)..."
         sleep 20
     else
@@ -159,8 +168,8 @@ check_cloud_infra() {
         local cloud_image_tag="${IMAGE_TAG:-latest}"
         log_info "Using image tag for cloud infrastructure: ${cloud_image_tag}"
         export IMAGE_TAG="${cloud_image_tag}"
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
+        docker_compose_cmd -f docker-compose.cloud.yml pull
+        docker_compose_cmd -f docker-compose.cloud.yml up -d
         log_info "Waiting for Spring Cloud to be ready (30 seconds)..."
         sleep 30
     else
@@ -195,20 +204,20 @@ deploy_module() {
     CURRENT_IMAGE=$(docker inspect "baro-${module}" --format='{{.Config.Image}}' 2>/dev/null || echo "none")
     
     log_step "📥 Pulling image for $module (tag: ${IMAGE_TAG})..."
-    if ! $DOCKER_COMPOSE -f "$compose_file" pull; then
+    if ! docker_compose_cmd -f "$compose_file" pull; then
         log_error "❌ Failed to pull image for $module"
         exit 1
     fi
     
     # Pull한 이미지 정보
-    NEW_IMAGE=$($DOCKER_COMPOSE -f "$compose_file" config | grep "image:" | head -1 | awk '{print $2}')
+    NEW_IMAGE=$(docker_compose_cmd -f "$compose_file" config | grep "image:" | head -1 | awk '{print $2}')
     log_info "Image to deploy: $NEW_IMAGE"
     
     log_step "🛑 Stopping existing container for $module..."
-    $DOCKER_COMPOSE -f "$compose_file" down || true
+    docker_compose_cmd -f "$compose_file" down || true
     
     log_step "🏃 Starting $module..."
-    if ! $DOCKER_COMPOSE -f "$compose_file" up -d; then
+    if ! docker_compose_cmd -f "$compose_file" up -d; then
         log_error "❌ Failed to start container for $module"
         log_error "Checking container logs..."
         docker logs baro-${module} --tail 50 2>&1 || echo "Container logs not available"
@@ -243,14 +252,14 @@ deploy_all() {
     
     # 1. 데이터 인프라
     log_info "Step 1/4: Deploying data infrastructure..."
-    $DOCKER_COMPOSE -f docker-compose.data.yml pull
-    $DOCKER_COMPOSE -f docker-compose.data.yml up -d
+        docker_compose_cmd -f docker-compose.data.yml pull
+        docker_compose_cmd -f docker-compose.data.yml up -d
     sleep 20
     
     # 2. Spring Cloud 인프라
     log_info "Step 2/4: Deploying Spring Cloud infrastructure..."
-    $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
-    $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
+        docker_compose_cmd -f docker-compose.cloud.yml pull
+        docker_compose_cmd -f docker-compose.cloud.yml up -d
     sleep 30
     
     # 3. 비즈니스 모듈들
@@ -283,9 +292,12 @@ case $MODULE_NAME in
                 exit 1
             fi
         fi
-        $DOCKER_COMPOSE -f docker-compose.data.yml pull
-        $DOCKER_COMPOSE -f docker-compose.data.yml down || true
-        $DOCKER_COMPOSE -f docker-compose.data.yml up -d
+        # Elasticsearch 커스텀 이미지 빌드가 필요하므로 pull 대신 build
+        log_step "🔨 Building Elasticsearch image (if needed)..."
+        docker_compose_cmd -f docker-compose.data.yml build elasticsearch || log_warn "Build failed, trying pull..."
+        docker_compose_cmd -f docker-compose.data.yml pull || true
+        docker_compose_cmd -f docker-compose.data.yml down || true
+        docker_compose_cmd -f docker-compose.data.yml up -d
         log_info "✅ Data infrastructure deployed successfully!"
         ;;
     
@@ -301,9 +313,9 @@ case $MODULE_NAME in
         # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
         export IMAGE_TAG="${IMAGE_TAG:-latest}"
         log_info "Using image tag for cloud infrastructure: ${IMAGE_TAG}"
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml down || true
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
+        docker_compose_cmd -f docker-compose.cloud.yml pull
+        docker_compose_cmd -f docker-compose.cloud.yml down || true
+        docker_compose_cmd -f docker-compose.cloud.yml up -d
         log_info "✅ Spring Cloud infrastructure deployed successfully!"
         ;;
     
@@ -324,9 +336,9 @@ case $MODULE_NAME in
             log_info "✅ Data infrastructure is already running. Skipping data deployment."
         else
             log_info "Step 1/2: Deploying data infrastructure..."
-            $DOCKER_COMPOSE -f docker-compose.data.yml pull
-            $DOCKER_COMPOSE -f docker-compose.data.yml down || true
-            $DOCKER_COMPOSE -f docker-compose.data.yml up -d
+            docker_compose_cmd -f docker-compose.data.yml pull
+            docker_compose_cmd -f docker-compose.data.yml down || true
+            docker_compose_cmd -f docker-compose.data.yml up -d
             sleep 20
         fi
         
