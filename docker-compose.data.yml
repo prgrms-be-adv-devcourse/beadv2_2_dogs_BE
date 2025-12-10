@@ -1,5 +1,5 @@
 # 데이터 인프라 서비스
-# Redis, MySQL, Kafka 등 데이터 저장소
+# Redis, MySQL, Kafka, Elasticsearch 등 데이터 저장소
 
 services:
   # ===================================
@@ -93,6 +93,31 @@ services:
       retries: 10
       start_period: 40s
 
+  # ===================================
+  # Search Engine (Elasticsearch)
+  # ===================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: baro-elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
 volumes:
   # redis-data:
   #   driver: local
@@ -100,10 +125,12 @@ volumes:
     driver: local
   kafka-data:
     driver: local
+  elasticsearch-data:
+    driver: local
 
 networks:
   baro-network:
     # Docker Compose가 프로젝트 이름을 접두사로 붙이므로 be_baro-network 사용
     name: be_baro-network  # 네트워크 이름 명시적으로 지정
-    external: true  # 외부에서 생성된 네트워크 사용 (스크립트에서 생성)
+    external: true
 
