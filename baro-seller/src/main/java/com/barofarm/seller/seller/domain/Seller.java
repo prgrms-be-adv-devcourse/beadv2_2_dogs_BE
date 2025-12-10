@@ -1,7 +1,12 @@
 package com.barofarm.seller.seller.domain;
 
 import com.barofarm.seller.common.entity.BaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -57,7 +62,13 @@ public class Seller extends BaseEntity {
         this.status = status;
     }
 
-    public static Seller of(String storeName, String businessRegNo, String businessOwnerName, String settlementBank, String settlementAccount) {
+    public static Seller of(
+        String storeName,
+        String businessRegNo,
+        String businessOwnerName,
+        String settlementBank,
+        String settlementAccount
+    ) {
         return new Seller(
             UUID.randomUUID(),
             storeName,
