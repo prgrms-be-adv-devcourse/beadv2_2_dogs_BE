@@ -6,9 +6,10 @@ import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.order.application.dto.request.OrderCreateCommand;
 import com.barofarm.order.order.application.dto.response.OrderCreateInfo;
 import com.barofarm.order.order.application.dto.response.OrderDetailInfo;
+import com.barofarm.order.order.client.InventoryClient;
 import com.barofarm.order.order.domain.Order;
-import com.barofarm.order.order.domain.OrderItemRepository;
 import com.barofarm.order.order.domain.OrderRepository;
+import com.barofarm.order.order.presentation.dto.InventoryDecreaseRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,10 +23,20 @@ import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
+    private final InventoryClient inventoryClient;
 
     @Transactional
     public ResponseDto<OrderCreateInfo> createOrder(UUID mockUserId, OrderCreateCommand command){
+//        InventoryDecreaseRequest inventoryRequest = new InventoryDecreaseRequest(
+//            command.items().stream()
+//                .map(item -> new InventoryDecreaseRequest.Item(
+//                    item.productId(),
+//                    item.quantity()
+//                ))
+//                .toList()
+//        );
+//        inventoryClient.decreaseStock(inventoryRequest);
+
         Order order = Order.of(mockUserId, command.address());
 
         for (OrderCreateCommand.OrderItemCreateCommand item : command.items()) {
@@ -36,7 +47,6 @@ public class OrderService {
             );
         }
 
-        // TODO: 재고 서비스에서 수량 감소 로직 추가
         Order saved = orderRepository.save(order);
         return ResponseDto.ok(OrderCreateInfo.from(saved));
     }

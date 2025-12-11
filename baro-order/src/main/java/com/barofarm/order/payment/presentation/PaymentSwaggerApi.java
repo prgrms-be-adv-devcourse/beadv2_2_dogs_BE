@@ -1,0 +1,50 @@
+package com.barofarm.order.payment.presentation;
+
+import com.barofarm.order.common.response.ResponseDto;
+import com.barofarm.order.payment.application.dto.response.TossPaymentConfirmInfo;
+import com.barofarm.order.payment.presentation.dto.TossPaymentConfirmRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Tag(name = "Payment", description = "결제 관련 API")
+@RequestMapping("${api.v1}/payments")
+public interface PaymentSwaggerApi {
+
+    @Operation(
+        summary = "토스 결제 승인",
+        description = "Toss Payments 결제 승인 API를 호출하여 결제를 확정하고, 주문을 결제 완료 상태로 변경한다."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "결제 승인 성공",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "요청 값 검증 실패",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "유효한 Toss Secret Key가 설정되어 있지 않음 (INVALID_SECRET_KEY)",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "주문을 찾을 수 없음 (ORDER_NOT_FOUND)",
+            content = @Content(mediaType = "application/json")
+        )
+    })
+    @PostMapping("/toss/confirm")
+    ResponseDto<TossPaymentConfirmInfo> confirmPayment(
+        @Valid @RequestBody TossPaymentConfirmRequest confirmRequest
+    );
+}

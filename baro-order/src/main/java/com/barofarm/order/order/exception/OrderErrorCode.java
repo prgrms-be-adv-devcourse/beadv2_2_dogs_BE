@@ -9,6 +9,10 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum OrderErrorCode implements BaseErrorCode {
 
+    OUT_OF_STOCK(HttpStatus.CONFLICT, "재고가 부족합니다."),
+    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."),
+    INVENTORY_SERVICE_ERROR(HttpStatus.BAD_GATEWAY, "재고 서비스 호출에 실패했습니다."),
+
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 주문 정보입니다.");
 
     private final HttpStatus status;

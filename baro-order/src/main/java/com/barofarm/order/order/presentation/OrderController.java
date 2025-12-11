@@ -15,7 +15,7 @@ import java.util.UUID;
 @RequestMapping("${api.v1}/orders")
 @RequiredArgsConstructor
 // TODO: 나중에 인증/인가 붙이면 @RequestHeader("userId") UUID sellerId 사용
-public class OrderController {
+public class OrderController implements OrderSwaggerApi {
 
     private final OrderService orderService;
 
