@@ -4,6 +4,7 @@ import com.barofarm.buyer.common.exception.CustomException;
 import com.barofarm.buyer.product.application.dto.ProductCreateCommand;
 import com.barofarm.buyer.product.application.dto.ProductDetailInfo;
 import com.barofarm.buyer.product.application.dto.ProductUpdateCommand;
+import com.barofarm.buyer.product.application.event.ProductEventPublisher;
 import com.barofarm.buyer.product.domain.Product;
 import com.barofarm.buyer.product.domain.ProductRepository;
 import com.barofarm.buyer.product.domain.ProductStatus;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
   private final ProductRepository productRepository;
+  private final ProductEventPublisher productEventPublisher;
 
   @Transactional(readOnly = true)
   public ProductDetailInfo getProductDetail(UUID id) {
@@ -49,6 +51,9 @@ public class ProductService {
 
     productRepository.save(product);
 
+    // 카프카 이벤트 발행
+    productEventPublisher.publishProductCreated(product);
+
     return ProductDetailInfo.from(product);
   }
 
@@ -74,6 +79,9 @@ public class ProductService {
         command.stockQuantity(),
         command.productStatus());
 
+      // 카프카 이벤트 발행
+      productEventPublisher.publishProductUpdated(product);
+
     return ProductDetailInfo.from(product);
   }
 
@@ -92,5 +100,8 @@ public class ProductService {
     product.validateOwner(memberId);
 
     productRepository.deleteById(id);
+
+      // 카프카 이벤트 발행
+      productEventPublisher.publishProductDeleted(product);
   }
 }

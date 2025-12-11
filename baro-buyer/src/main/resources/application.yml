@@ -14,6 +14,11 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${MYSQL_USER:}
     password: ${MYSQL_PASSWORD:}
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   jpa:
     hibernate:
       ddl-auto: update  # 일시적으로 update로 변경 (스키마 수정 후 validate로 변경)
