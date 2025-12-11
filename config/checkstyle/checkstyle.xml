@@ -28,6 +28,12 @@
         <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
     </module>
 
+    <!-- Suppressions 파일 적용 -->
+    <module name="SuppressionFilter">
+        <property name="file" value="${suppressionFile}"/>
+        <property name="optional" value="true"/>
+    </module>
+
     <module name="TreeWalker">
         <!-- Naming Conventions -->
         <module name="ConstantName"/>

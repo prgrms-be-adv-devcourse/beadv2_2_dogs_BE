@@ -25,7 +25,12 @@ subprojects {
     java {
         toolchain {
             languageVersion = JavaLanguageVersion.of(21)
-            vendor = JvmVendorSpec.JETBRAINS
+            // CI/CD 환경(GitHub Actions 등)에서는 vendor 체크를 건너뛰어
+            // temurin(OpenJDK) 등 모든 JDK를 허용
+            // 로컬 개발 환경에서만 JetBrains JDK 사용
+            if (!System.getenv('CI') && !System.getenv('GITHUB_ACTIONS')) {
+                vendor = JvmVendorSpec.JETBRAINS
+            }
         }
     }
 
@@ -74,6 +79,10 @@ subprojects {
     checkstyle {
         toolVersion = '10.21.4'
         configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        configDirectory = rootProject.file('config/checkstyle')
+        configProperties = [
+            'suppressionFile': rootProject.file('config/checkstyle/suppressions.xml').absolutePath
+        ]
         ignoreFailures = false
         maxWarnings = 0
     }

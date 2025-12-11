@@ -1,0 +1,25 @@
+# Seller 모듈
+# 판매자, 농장 관리
+
+services:
+  baro-seller:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/baro-seller:${IMAGE_TAG:-latest}
+    container_name: baro-seller
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - MYSQL_DATABASE=${MYSQL_DATABASE_SELLER:-baroseller}
+      - MYSQL_USER=${MYSQL_USER:-barouser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+    restart: unless-stopped
+    networks:
+      - baro-network
+
+networks:
+  baro-network:
+    name: be_baro-network  # 네트워크 이름 명시적으로 지정
+    external: true
+
