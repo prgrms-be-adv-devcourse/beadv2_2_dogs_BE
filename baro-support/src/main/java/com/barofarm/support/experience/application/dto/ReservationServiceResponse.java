@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 예약 서비스 레이어 응답 DTO */
+/** 예약 서비스 Response DTO */
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

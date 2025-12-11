@@ -3,7 +3,6 @@ package com.barofarm.support.experience.infrastructure;
 import com.barofarm.support.experience.domain.Reservation;
 import com.barofarm.support.experience.domain.ReservationStatus;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,22 +12,6 @@ import org.springframework.data.repository.query.Param;
 
 /** 예약 JPA Repository */
 public interface ReservationJpaRepository extends JpaRepository<Reservation, UUID> {
-
-    /**
-     * 체험 ID로 예약 목록 조회
-     *
-     * @param experienceId 체험 ID
-     * @return 예약 목록
-     */
-    List<Reservation> findByExperienceId(UUID experienceId);
-
-    /**
-     * 구매자 ID로 예약 목록 조회
-     *
-     * @param buyerId 구매자 ID
-     * @return 예약 목록
-     */
-    List<Reservation> findByBuyerId(UUID buyerId);
 
     /**
      * 체험 ID로 예약 목록 조회 (페이지네이션)

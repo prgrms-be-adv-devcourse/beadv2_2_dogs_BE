@@ -4,7 +4,6 @@ import com.barofarm.support.experience.domain.Reservation;
 import com.barofarm.support.experience.domain.ReservationRepository;
 import com.barofarm.support.experience.domain.ReservationStatus;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -27,16 +26,6 @@ public class ReservationRepositoryAdapter implements ReservationRepository {
     @Override
     public Optional<Reservation> findById(UUID reservationId) {
         return jpaRepository.findById(reservationId);
-    }
-
-    @Override
-    public List<Reservation> findByExperienceId(UUID experienceId) {
-        return jpaRepository.findByExperienceId(experienceId);
-    }
-
-    @Override
-    public List<Reservation> findByBuyerId(UUID buyerId) {
-        return jpaRepository.findByBuyerId(buyerId);
     }
 
     @Override

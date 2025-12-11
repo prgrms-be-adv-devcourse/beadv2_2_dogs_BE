@@ -29,7 +29,7 @@ public class ReservationRequest {
     @NotNull(message = "구매자 ID는 필수입니다")
     private UUID buyerId;
 
-    @Schema(description = "방문 날짜", example = "2025-03-15", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "방문 날짜", example = "2025-12-15", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "방문 날짜는 필수입니다")
     private LocalDate reservedDate;
 

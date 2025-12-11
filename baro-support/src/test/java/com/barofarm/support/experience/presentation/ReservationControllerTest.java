@@ -41,6 +41,7 @@ class ReservationControllerTest {
     private UUID experienceId;
     private UUID buyerId;
     private UUID reservationId;
+    private UUID userId;
     private ReservationRequest request;
     private ReservationServiceResponse serviceResponse;
 
@@ -49,6 +50,7 @@ class ReservationControllerTest {
         experienceId = UUID.randomUUID();
         buyerId = UUID.randomUUID();
         reservationId = UUID.randomUUID();
+        userId = buyerId; // 기본적으로 buyerId와 동일하게 설정
 
         request = new ReservationRequest(experienceId, buyerId, LocalDate.of(2025, 3, 15), "10:00-12:00", 2,
                 BigInteger.valueOf(30000));
@@ -61,37 +63,38 @@ class ReservationControllerTest {
     @Test
     @DisplayName("POST /api/reservations - 예약 생성")
     void createReservation() {
-        when(reservationService.createReservation(any())).thenReturn(serviceResponse);
+        when(reservationService.createReservation(eq(userId), any())).thenReturn(serviceResponse);
 
-        ResponseDto<ReservationResponse> result = reservationController.createReservation(request);
+        ResponseDto<ReservationResponse> result = reservationController.createReservation(userId, request);
 
         assertThat(result).isNotNull();
         assertThat(result.data()).isNotNull();
         assertThat(result.data().getHeadCount()).isEqualTo(2);
         assertThat(result.data().getStatus()).isEqualTo(ReservationStatus.REQUESTED);
-        verify(reservationService, times(1)).createReservation(any());
+        verify(reservationService, times(1)).createReservation(eq(userId), any());
     }
 
     @Test
     @DisplayName("GET /api/reservations/{reservationId} - ID로 예약 조회")
     void getReservationById() {
         // given
-        when(reservationService.getReservationById(reservationId)).thenReturn(serviceResponse);
+        when(reservationService.getReservationById(eq(userId), eq(reservationId))).thenReturn(serviceResponse);
 
         // when
-        ResponseDto<ReservationResponse> result = reservationController.getReservationById(reservationId);
+        ResponseDto<ReservationResponse> result = reservationController.getReservationById(userId, reservationId);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.data()).isNotNull();
         assertThat(result.data().getReservationId()).isEqualTo(reservationId);
-        verify(reservationService, times(1)).getReservationById(reservationId);
+        verify(reservationService, times(1)).getReservationById(eq(userId), eq(reservationId));
     }
 
     @Test
     @DisplayName("GET /api/reservations?experienceId=xxx - 체험 ID로 예약 목록 조회")
     void getReservationsByExperienceId() {
         // given
+        UUID sellerId = UUID.randomUUID();
         UUID reservationId2 = UUID.randomUUID();
         ReservationServiceResponse serviceResponse2 = new ReservationServiceResponse(reservationId2, experienceId,
                 buyerId, LocalDate.of(2025, 3, 16), "14:00-16:00", 3, BigInteger.valueOf(45000),
@@ -100,11 +103,11 @@ class ReservationControllerTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<ReservationServiceResponse> servicePage = new PageImpl<>(
                 java.util.Arrays.asList(serviceResponse, serviceResponse2), pageable, 2);
-        when(reservationService.getReservationsByExperienceId(eq(experienceId), any(Pageable.class)))
+        when(reservationService.getReservationsByExperienceId(eq(sellerId), eq(experienceId), any(Pageable.class)))
                 .thenReturn(servicePage);
 
         // when
-        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(experienceId, null,
+        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(sellerId, experienceId, null,
                 pageable);
 
         // then
@@ -112,7 +115,7 @@ class ReservationControllerTest {
         assertThat(result.data()).isNotNull();
         assertThat(result.data().content()).hasSize(2);
         assertThat(result.data().content()).extracting("experienceId").containsOnly(experienceId);
-        verify(reservationService, times(1)).getReservationsByExperienceId(eq(experienceId), any(Pageable.class));
+        verify(reservationService, times(1)).getReservationsByExperienceId(eq(sellerId), eq(experienceId), any(Pageable.class));
     }
 
     @Test
@@ -127,10 +130,10 @@ class ReservationControllerTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<ReservationServiceResponse> servicePage = new PageImpl<>(
                 java.util.Arrays.asList(serviceResponse, serviceResponse2), pageable, 2);
-        when(reservationService.getReservationsByBuyerId(eq(buyerId), any(Pageable.class))).thenReturn(servicePage);
+        when(reservationService.getReservationsByBuyerId(eq(userId), eq(buyerId), any(Pageable.class))).thenReturn(servicePage);
 
         // when
-        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(null, buyerId,
+        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(userId, null, buyerId,
                 pageable);
 
         // then
@@ -138,7 +141,7 @@ class ReservationControllerTest {
         assertThat(result.data()).isNotNull();
         assertThat(result.data().content()).hasSize(2);
         assertThat(result.data().content()).extracting("buyerId").containsOnly(buyerId);
-        verify(reservationService, times(1)).getReservationsByBuyerId(eq(buyerId), any(Pageable.class));
+        verify(reservationService, times(1)).getReservationsByBuyerId(eq(userId), eq(buyerId), any(Pageable.class));
     }
 
     @Test
@@ -148,50 +151,51 @@ class ReservationControllerTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(null, null,
+        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(userId, null, null,
                 pageable);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.data()).isNotNull();
         assertThat(result.data().content()).isEmpty();
-        verify(reservationService, never()).getReservationsByExperienceId(any(), any());
-        verify(reservationService, never()).getReservationsByBuyerId(any(), any());
+        verify(reservationService, never()).getReservationsByExperienceId(any(), any(), any());
+        verify(reservationService, never()).getReservationsByBuyerId(any(), any(), any());
     }
 
     @Test
     @DisplayName("PUT /api/reservations/{reservationId}/status - 예약 상태 변경")
     void updateReservationStatus() {
         // given
+        UUID sellerId = UUID.randomUUID();
         ReservationServiceResponse updatedServiceResponse = new ReservationServiceResponse(reservationId, experienceId,
                 buyerId, LocalDate.of(2025, 3, 15), "10:00-12:00", 2, BigInteger.valueOf(30000),
                 ReservationStatus.CONFIRMED, LocalDateTime.now(), LocalDateTime.now());
 
-        when(reservationService.updateReservationStatus(eq(reservationId), eq(ReservationStatus.CONFIRMED)))
+        when(reservationService.updateReservationStatus(eq(sellerId), eq(reservationId), eq(ReservationStatus.CONFIRMED)))
                 .thenReturn(updatedServiceResponse);
 
         // when
-        ResponseDto<ReservationResponse> result = reservationController.updateReservationStatus(reservationId,
+        ResponseDto<ReservationResponse> result = reservationController.updateReservationStatus(sellerId, reservationId,
                 ReservationStatus.CONFIRMED);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.data()).isNotNull();
         assertThat(result.data().getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
-        verify(reservationService, times(1)).updateReservationStatus(eq(reservationId), eq(ReservationStatus.CONFIRMED));
+        verify(reservationService, times(1)).updateReservationStatus(eq(sellerId), eq(reservationId), eq(ReservationStatus.CONFIRMED));
     }
 
     @Test
     @DisplayName("DELETE /api/reservations/{reservationId} - 예약 삭제")
     void deleteReservation() {
         // given
-        doNothing().when(reservationService).deleteReservation(reservationId);
+        doNothing().when(reservationService).deleteReservation(userId, reservationId);
 
         // when
-        ResponseDto<Void> result = reservationController.deleteReservation(reservationId);
+        ResponseDto<Void> result = reservationController.deleteReservation(userId, reservationId);
 
         // then
         assertThat(result).isNotNull();
-        verify(reservationService, times(1)).deleteReservation(reservationId);
+        verify(reservationService, times(1)).deleteReservation(userId, reservationId);
     }
 }

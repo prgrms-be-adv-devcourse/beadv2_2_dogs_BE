@@ -1,13 +1,12 @@
 package com.barofarm.support.experience.domain;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-/** 예약 리포지토리 인터페이스 (Port) */
+/** 예약 인터페이스 */
 public interface ReservationRepository {
 
     /**
@@ -25,22 +24,6 @@ public interface ReservationRepository {
      * @return 예약 (Optional)
      */
     Optional<Reservation> findById(UUID reservationId);
-
-    /**
-     * 체험 ID로 예약 목록 조회
-     *
-     * @param experienceId 체험 ID
-     * @return 예약 목록
-     */
-    List<Reservation> findByExperienceId(UUID experienceId);
-
-    /**
-     * 구매자 ID로 예약 목록 조회
-     *
-     * @param buyerId 구매자 ID
-     * @return 예약 목록
-     */
-    List<Reservation> findByBuyerId(UUID buyerId);
 
     /**
      * ID로 예약 존재 여부 확인

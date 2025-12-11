@@ -14,14 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Reservation", description = "체험 예약 관리 API")
 @RequestMapping("${api.v1}/reservations")
@@ -41,7 +34,10 @@ public interface ReservationSwaggerApi {
         )
     })
     @PostMapping
-    ResponseDto<ReservationResponse> createReservation(@Valid @RequestBody ReservationRequest request);
+    ResponseDto<ReservationResponse> createReservation(
+        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
+        @Valid @RequestBody ReservationRequest request
+    );
 
     @Operation(summary = "예약 상세 조회", description = "예약 ID로 예약 상세 정보를 조회합니다.")
     @ApiResponses({
@@ -58,6 +54,7 @@ public interface ReservationSwaggerApi {
     })
     @GetMapping("/{reservationId}")
     ResponseDto<ReservationResponse> getReservationById(
+        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
         @Parameter(description = "예약 ID", required = true) @PathVariable("reservationId") UUID reservationId
     );
 
@@ -71,6 +68,7 @@ public interface ReservationSwaggerApi {
     })
     @GetMapping
     ResponseDto<CustomPage<ReservationResponse>> getReservations(
+        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
         @Parameter(description = "체험 ID (선택사항)", required = false) @RequestParam(required = false) UUID experienceId,
         @Parameter(description = "구매자 ID (선택사항)", required = false) @RequestParam(required = false) UUID buyerId,
         Pageable pageable
@@ -91,6 +89,7 @@ public interface ReservationSwaggerApi {
     })
     @PutMapping("/{reservationId}/status")
     ResponseDto<ReservationResponse> updateReservationStatus(
+        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
         @Parameter(description = "예약 ID", required = true) @PathVariable("reservationId") UUID reservationId,
         @Parameter(description = "변경할 상태", required = true) @RequestParam ReservationStatus status
     );
@@ -110,6 +109,7 @@ public interface ReservationSwaggerApi {
     })
     @DeleteMapping("/{reservationId}")
     ResponseDto<Void> deleteReservation(
+        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
         @Parameter(description = "예약 ID", required = true) @PathVariable("reservationId") UUID reservationId
     );
 }

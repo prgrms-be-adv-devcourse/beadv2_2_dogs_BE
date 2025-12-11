@@ -11,7 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 예약 응답 DTO */
+/** 예약 Response DTO */
 @Schema(description = "예약 응답")
 @Getter
 @NoArgsConstructor
@@ -27,7 +27,7 @@ public class ReservationResponse {
     @Schema(description = "구매자 ID", example = "550e8400-e29b-41d4-a716-446655440001")
     private UUID buyerId;
 
-    @Schema(description = "방문 날짜", example = "2025-03-15")
+    @Schema(description = "방문 날짜", example = "2025-12-15")
     private LocalDate reservedDate;
 
     @Schema(description = "예약 시간대", example = "10:00-12:00")

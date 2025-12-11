@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,27 +25,34 @@ public class ReservationController implements ReservationSwaggerApi {
     private final ReservationService reservationService;
 
     @Override
-    public ResponseDto<ReservationResponse> createReservation(@Valid @RequestBody ReservationRequest request) {
-        ReservationServiceResponse serviceResponse = reservationService.createReservation(request.toServiceRequest());
+    public ResponseDto<ReservationResponse> createReservation(
+            @RequestHeader("X-User-Id") UUID userId,
+            @Valid @RequestBody ReservationRequest request
+    ) {
+        ReservationServiceResponse serviceResponse = reservationService.createReservation(userId, request.toServiceRequest());
         return ResponseDto.ok(ReservationResponse.from(serviceResponse));
     }
 
     @Override
-    public ResponseDto<ReservationResponse> getReservationById(@PathVariable("reservationId") UUID reservationId) {
-        ReservationServiceResponse serviceResponse = reservationService.getReservationById(reservationId);
+    public ResponseDto<ReservationResponse> getReservationById(
+            @RequestHeader("X-User-Id") UUID userId,
+            @PathVariable("reservationId") UUID reservationId
+    ) {
+        ReservationServiceResponse serviceResponse = reservationService.getReservationById(userId, reservationId);
         return ResponseDto.ok(ReservationResponse.from(serviceResponse));
     }
 
     @Override
     public ResponseDto<CustomPage<ReservationResponse>> getReservations(
-        @RequestParam(required = false) UUID experienceId,
-        @RequestParam(required = false) UUID buyerId,
-        Pageable pageable) {
-
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestParam(required = false) UUID experienceId,
+            @RequestParam(required = false) UUID buyerId,
+            Pageable pageable
+    ) {
         var servicePage = experienceId != null
-            ? reservationService.getReservationsByExperienceId(experienceId, pageable)
+            ? reservationService.getReservationsByExperienceId(userId, experienceId, pageable)
             : buyerId != null
-                ? reservationService.getReservationsByBuyerId(buyerId, pageable)
+                ? reservationService.getReservationsByBuyerId(userId, buyerId, pageable)
                 : null;
 
         if (servicePage == null) {
@@ -60,15 +68,20 @@ public class ReservationController implements ReservationSwaggerApi {
 
     @Override
     public ResponseDto<ReservationResponse> updateReservationStatus(
-        @PathVariable("reservationId") UUID reservationId,
-        @RequestParam ReservationStatus status) {
-        ReservationServiceResponse serviceResponse = reservationService.updateReservationStatus(reservationId, status);
+            @RequestHeader("X-User-Id") UUID userId,
+            @PathVariable("reservationId") UUID reservationId,
+            @RequestParam ReservationStatus status
+    ) {
+        ReservationServiceResponse serviceResponse = reservationService.updateReservationStatus(userId, reservationId, status);
         return ResponseDto.ok(ReservationResponse.from(serviceResponse));
     }
 
     @Override
-    public ResponseDto<Void> deleteReservation(@PathVariable("reservationId") UUID reservationId) {
-        reservationService.deleteReservation(reservationId);
+    public ResponseDto<Void> deleteReservation(
+            @RequestHeader("X-User-Id") UUID userId,
+            @PathVariable("reservationId") UUID reservationId
+    ) {
+        reservationService.deleteReservation(userId, reservationId);
         return ResponseDto.ok(null);
     }
 }
