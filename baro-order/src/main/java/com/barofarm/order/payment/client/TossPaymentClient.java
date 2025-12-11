@@ -1,5 +1,6 @@
 package com.barofarm.order.payment.client;
 
+import com.barofarm.order.common.exception.CustomException;
 import com.barofarm.order.payment.application.dto.request.TossPaymentConfirmCommand;
 import com.barofarm.order.payment.client.dto.TossPaymentResponse;
 import org.springframework.http.HttpEntity;
@@ -13,6 +14,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.barofarm.order.payment.exception.PaymentErrorCode.INVALID_SECRET_KEY;
 
 @Component
 public class TossPaymentClient {
@@ -28,7 +31,7 @@ public class TossPaymentClient {
 
     public TossPaymentResponse confirm(TossPaymentConfirmCommand command) {
         if (properties.getSecretKey() == null || properties.getSecretKey().isBlank()) {
-            throw new IllegalStateException("Toss secret key is not configured");
+            throw new CustomException(INVALID_SECRET_KEY);
         }
         HttpHeaders headers = createHeaders();
 
