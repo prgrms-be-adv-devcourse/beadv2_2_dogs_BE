@@ -1,6 +1,7 @@
 package com.barofarm.support.search.product.presentation;
 
 import com.barofarm.support.search.product.application.ProductAutocompleteService;
+import com.barofarm.support.search.product.application.dto.ProductAutoItem;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +17,7 @@ public class ProductAutocompleteController {
     private final ProductAutocompleteService service;
 
     @GetMapping
-    public List<String> autocomplete(@RequestParam String query) {
+    public List<ProductAutoItem> autocomplete(@RequestParam String query) {
         return service.autocomplete(query);
     }
 }

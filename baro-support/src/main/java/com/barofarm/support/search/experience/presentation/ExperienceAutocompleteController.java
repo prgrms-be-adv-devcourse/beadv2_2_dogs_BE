@@ -1,6 +1,7 @@
 package com.barofarm.support.search.experience.presentation;
 
 import com.barofarm.support.search.experience.application.ExperienceAutocompleteService;
+import com.barofarm.support.search.experience.application.dto.ExperienceAutoItem;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +17,7 @@ public class ExperienceAutocompleteController {
     private final ExperienceAutocompleteService service;
 
     @GetMapping
-    public List<String> autocomplete(@RequestParam String query) {
+    public List<ExperienceAutoItem> autocomplete(@RequestParam String query) {
         return service.autocomplete(query);
     }
 }

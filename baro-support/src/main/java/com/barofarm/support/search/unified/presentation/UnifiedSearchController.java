@@ -2,6 +2,7 @@ package com.barofarm.support.search.unified.presentation;
 
 import com.barofarm.support.common.response.ResponseDto;
 import com.barofarm.support.search.unified.application.UnifiedSearchService;
+import com.barofarm.support.search.unified.application.dto.UnifiedAutoCompleteResponse;
 import com.barofarm.support.search.unified.application.dto.UnifiedSearchResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,6 +28,13 @@ public class UnifiedSearchController {
         @Parameter(description = "검색어", example = "토마토") @RequestParam String q,
         @PageableDefault(size = 10) Pageable pageable) {
         UnifiedSearchResponse response = unifiedSearchService.search(q, pageable);
+        return ResponseDto.ok(response);
+    }
+
+    @GetMapping("/autocomplete")
+    public ResponseDto<UnifiedAutoCompleteResponse> autocomplete(
+        @Parameter(description = "자동완성 검색어", example = "토마") @RequestParam String q) {
+        UnifiedAutoCompleteResponse response = unifiedSearchService.autocomplete(q);
         return ResponseDto.ok(response);
     }
 }

@@ -1,6 +1,7 @@
 package com.barofarm.support.search.farm.presentation;
 
 import com.barofarm.support.search.farm.application.FarmAutocompleteService;
+import com.barofarm.support.search.farm.application.dto.FarmAutoItem;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +17,7 @@ public class FarmAutocompleteController {
     private final FarmAutocompleteService service;
 
     @GetMapping
-    public List<String> autocomplete(@RequestParam String query) {
+    public List<FarmAutoItem> autocomplete(@RequestParam String query) {
         return service.autocomplete(query);
     }
 }

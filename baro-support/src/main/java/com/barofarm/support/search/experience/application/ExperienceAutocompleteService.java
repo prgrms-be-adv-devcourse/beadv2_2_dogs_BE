@@ -1,6 +1,6 @@
 package com.barofarm.support.search.experience.application;
 
-import com.barofarm.support.search.experience.domain.ExperienceAutocompleteDocument;
+import com.barofarm.support.search.experience.application.dto.ExperienceAutoItem;
 import com.barofarm.support.search.experience.infrastructure.elasticsearch.ExperienceAutocompleteRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -12,9 +12,9 @@ public class ExperienceAutocompleteService {
 
     private final ExperienceAutocompleteRepository repository;
 
-    public List<String> autocomplete(String query) {
+    public List<ExperienceAutoItem> autocomplete(String query) {
         return repository.findByPrefix(query).stream()
-            .map(ExperienceAutocompleteDocument::getExperienceName)
+            .map(document -> new ExperienceAutoItem(document.getExperienceId(), document.getExperienceName()))
             .distinct()
             .limit(5) // 자동완성 5개까지 출력
             .toList();
