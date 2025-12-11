@@ -442,30 +442,72 @@ jobs:
               
               # 컨테이너 상태 확인
               echo "🔍 Checking container status..."
-              # data 모듈인 경우 MySQL만 체크, 다른 모듈은 해당 모듈 컨테이너 체크
+              # 모듈별 컨테이너 확인
               if [ "${MODULE_NAME}" = "data" ]; then
                 CHECK_CONTAINER="baro-mysql"
-              else
-                CHECK_CONTAINER="baro-${MODULE_NAME}"
-              fi
-              
-              CONTAINER_STATUS=$(ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${CHECK_CONTAINER} || echo 'No container found'" 2>/dev/null || echo "Could not check container status")
-              echo "$CONTAINER_STATUS"
-              echo ""
-              
-              # 컨테이너가 실행 중인지 확인
-              if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${CHECK_CONTAINER}" 2>/dev/null; then
-                echo "✅ Container is running. Deployment appears successful!"
-                rm -f private_key.pem
-                exit 0
-              else
-                echo "⚠️ Container is not running. Deployment may have failed."
+                CONTAINER_STATUS=$(ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${CHECK_CONTAINER} || echo 'No container found'" 2>/dev/null || echo "Could not check container status")
+                echo "$CONTAINER_STATUS"
+                echo ""
                 
-                # 컨테이너 로그 확인 (존재하는 경우)
-                if echo "$CONTAINER_STATUS" | grep -q "${CHECK_CONTAINER}"; then
-                  echo "🔍 Checking container logs..."
-                  ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 50 2>&1 || echo 'Could not fetch container logs'" || echo "Could not fetch container logs"
+                # 컨테이너가 실행 중인지 확인
+                if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${CHECK_CONTAINER}" 2>/dev/null; then
+                  echo "✅ Container is running. Deployment appears successful!"
+                  rm -f private_key.pem
+                  exit 0
+                else
+                  echo "⚠️ Container is not running. Deployment may have failed."
+                  if echo "$CONTAINER_STATUS" | grep -q "${CHECK_CONTAINER}"; then
+                    echo "🔍 Checking container logs..."
+                    ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 50 2>&1 || echo 'Could not fetch container logs'" || echo "Could not fetch container logs"
+                  fi
                 fi
+              elif [ "${MODULE_NAME}" = "cloud" ]; then
+                # cloud 모듈은 eureka, gateway, config 3개 컨테이너 확인
+                CHECK_CONTAINERS=("baro-eureka" "baro-gateway" "baro-config")
+                ALL_RUNNING=true
+                
+                for container in "${CHECK_CONTAINERS[@]}"; do
+                  CONTAINER_STATUS=$(ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${container} || echo 'No container found'" 2>/dev/null || echo "Could not check container status")
+                  echo "$CONTAINER_STATUS"
+                  
+                  if ! ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${container}" 2>/dev/null; then
+                    ALL_RUNNING=false
+                    echo "⚠️ ${container} is not running."
+                    if echo "$CONTAINER_STATUS" | grep -q "${container}"; then
+                      echo "🔍 Checking ${container} logs..."
+                      ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${container} --tail 50 2>&1 || echo 'Could not fetch container logs'" || echo "Could not fetch container logs"
+                    fi
+                  fi
+                done
+                
+                echo ""
+                if [ "$ALL_RUNNING" = true ]; then
+                  echo "✅ All cloud infrastructure containers are running. Deployment appears successful!"
+                  rm -f private_key.pem
+                  exit 0
+                else
+                  echo "⚠️ Some cloud infrastructure containers are not running. Deployment may have failed."
+                fi
+              else
+                # 일반 모듈 (auth, buyer, seller, order, support)
+                CHECK_CONTAINER="baro-${MODULE_NAME}"
+                CONTAINER_STATUS=$(ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${CHECK_CONTAINER} || echo 'No container found'" 2>/dev/null || echo "Could not check container status")
+                echo "$CONTAINER_STATUS"
+                echo ""
+                
+                # 컨테이너가 실행 중인지 확인
+                if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${CHECK_CONTAINER}" 2>/dev/null; then
+                  echo "✅ Container is running. Deployment appears successful!"
+                  rm -f private_key.pem
+                  exit 0
+                else
+                  echo "⚠️ Container is not running. Deployment may have failed."
+                  if echo "$CONTAINER_STATUS" | grep -q "${CHECK_CONTAINER}"; then
+                    echo "🔍 Checking container logs..."
+                    ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 50 2>&1 || echo 'Could not fetch container logs'" || echo "Could not fetch container logs"
+                  fi
+                fi
+              fi
                 
                 echo ""
                 echo "📝 Full log location: ${DEPLOY_LOG}"
@@ -482,21 +524,48 @@ jobs:
           ssh $SSH_OPTS ${USER}@${HOST} "tail -n 50 ${DEPLOY_LOG} 2>/dev/null || echo 'Log file not found'" || echo "Could not fetch log"
           echo ""
           echo "🔍 Checking container status..."
-          # data 모듈인 경우 MySQL만 체크, 다른 모듈은 해당 모듈 컨테이너 체크
+          # 모듈별 컨테이너 확인
           if [ "${MODULE_NAME}" = "data" ]; then
             CHECK_CONTAINER="baro-mysql"
+            ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${CHECK_CONTAINER} || echo 'No container found'" || echo "Could not check container status"
+            echo ""
+            echo "🔍 Checking recent container logs (if exists)..."
+            ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 30 2>&1 || echo 'Container logs not available'" || echo "Could not fetch container logs"
+            CONTAINER_RUNNING=$(ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${CHECK_CONTAINER}" && echo "true" || echo "false")
+          elif [ "${MODULE_NAME}" = "cloud" ]; then
+            # cloud 모듈은 eureka, gateway, config 확인
+            CHECK_CONTAINERS=("baro-eureka" "baro-gateway" "baro-config")
+            for container in "${CHECK_CONTAINERS[@]}"; do
+              ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${container} || echo 'No container found'" || echo "Could not check container status"
+              echo "🔍 Checking ${container} logs..."
+              ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${container} --tail 30 2>&1 || echo 'Container logs not available'" || echo "Could not fetch container logs"
+              echo ""
+            done
+            # 모든 컨테이너가 실행 중인지 확인
+            ALL_RUNNING=true
+            for container in "${CHECK_CONTAINERS[@]}"; do
+              if ! ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${container}" 2>/dev/null; then
+                ALL_RUNNING=false
+                break
+              fi
+            done
+            CONTAINER_RUNNING=$ALL_RUNNING
           else
             CHECK_CONTAINER="baro-${MODULE_NAME}"
+            ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${CHECK_CONTAINER} || echo 'No container found'" || echo "Could not check container status"
+            echo ""
+            echo "🔍 Checking recent container logs (if exists)..."
+            ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 30 2>&1 || echo 'Container logs not available'" || echo "Could not fetch container logs"
+            CONTAINER_RUNNING=$(ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${CHECK_CONTAINER}" && echo "true" || echo "false")
           fi
           
-          ssh $SSH_OPTS ${USER}@${HOST} "docker ps -a | grep ${CHECK_CONTAINER} || echo 'No container found'" || echo "Could not check container status"
-          echo ""
-          echo "🔍 Checking recent container logs (if exists)..."
-          ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 30 2>&1 || echo 'Container logs not available'" || echo "Could not fetch container logs"
-          
           # 컨테이너 상태 확인
-          if ssh $SSH_OPTS ${USER}@${HOST} "docker ps | grep -q ${CHECK_CONTAINER}"; then
-            echo "✅ Container is running despite timeout. Deployment may have succeeded."
+          if [ "$CONTAINER_RUNNING" = "true" ]; then
+            if [ "${MODULE_NAME}" = "cloud" ]; then
+              echo "✅ All cloud infrastructure containers are running despite timeout. Deployment may have succeeded."
+            else
+              echo "✅ Container is running despite timeout. Deployment may have succeeded."
+            fi
             rm -f private_key.pem
             exit 0
           else
