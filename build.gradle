@@ -94,6 +94,10 @@ subprojects {
     checkstyle {
         toolVersion = '10.21.4'
         configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        configDirectory = rootProject.file('config/checkstyle')
+        configProperties = [
+            'suppressionFile': rootProject.file('config/checkstyle/suppressions.xml').absolutePath
+        ]
         ignoreFailures = false
         maxWarnings = 0
     }
