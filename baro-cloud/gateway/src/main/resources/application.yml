@@ -12,6 +12,7 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
+
         # Auth Service
         - id: auth-service
           uri: lb://auth-service
@@ -55,6 +56,14 @@ spring:
           filters:
             - RewritePath=/api/(?<segment>.*), /${segment}
 
+        # Auth Service API 문서 프록시
+        - id: auth-service-openapi
+          uri: lb://AUTH-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
+          predicates:
+            - Path=/openapi/auth/v3/api-docs
+          filters:
+            - RewritePath=/openapi/auth/(?<segment>.*), /${segment}
+
 eureka:
   client:
     service-url:
@@ -74,3 +83,14 @@ management:
         include: health, info, gateway
 
 
+# 이 부분 수정
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    use-root-path: false  # 여기로 이동
+    urls:
+      - name: Auth Service
+        url: /openapi/auth/v3/api-docs
+  api-docs:
+    enabled: true
+  enable-native-support: true
