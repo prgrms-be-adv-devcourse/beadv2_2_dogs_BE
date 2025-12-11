@@ -3,8 +3,9 @@ package com.barofarm.support.search.product.application;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
+import com.barofarm.support.common.response.CustomPage;
 import com.barofarm.support.search.product.application.dto.ProductIndexRequest;
-import com.barofarm.support.search.product.application.dto.ProductSearchResponse;
+import com.barofarm.support.search.product.application.dto.ProductSearchItem;
 import com.barofarm.support.search.product.domain.ProductDocument;
 import com.barofarm.support.search.product.infrastructure.elasticsearch.ProductSearchRepository;
 import java.time.Instant;
@@ -14,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +44,7 @@ public class ProductSearchService {
     }
 
     // 통합 검색용 상품 검색
-    public ProductSearchResponse searchProducts(String keyword, Pageable pageable) {
+    public CustomPage<ProductSearchItem> searchProducts(String keyword, Pageable pageable) {
         NativeQuery query =
             NativeQuery.builder()
                 .withQuery(
@@ -95,8 +95,15 @@ public class ProductSearchService {
                 .build();
 
         SearchHits<ProductDocument> hits = operations.search(query, ProductDocument.class);
-        List<ProductDocument> items = hits.getSearchHits().stream().map(SearchHit::getContent).toList();
+        List<ProductSearchItem> items = hits.getSearchHits().stream()
+            .map(h -> h.getContent())
+            .map(d -> new ProductSearchItem(
+                d.getProductId(),
+                d.getProductName(),
+                d.getProductCategory(),
+                d.getPrice()
+            )).toList();
 
-        return new ProductSearchResponse(hits.getTotalHits(), items);
+        return CustomPage.of(hits.getTotalHits(), items, pageable);
     }
 }

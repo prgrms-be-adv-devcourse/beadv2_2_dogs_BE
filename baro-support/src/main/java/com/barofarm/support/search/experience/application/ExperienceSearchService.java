@@ -2,8 +2,9 @@ package com.barofarm.support.search.experience.application;
 
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
+import com.barofarm.support.common.response.CustomPage;
 import com.barofarm.support.search.experience.application.dto.ExperienceIndexRequest;
-import com.barofarm.support.search.experience.application.dto.ExperienceSearchResponse;
+import com.barofarm.support.search.experience.application.dto.ExperienceSearchItem;
 import com.barofarm.support.search.experience.domain.ExperienceDocument;
 import com.barofarm.support.search.experience.infrastructure.elasticsearch.ExperienceSearchRepository;
 import java.time.Instant;
@@ -13,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +46,7 @@ public class ExperienceSearchService {
     }
 
     // 통합 검색용 체험 검색
-    public ExperienceSearchResponse searchExperiences(String keyword, Pageable pageable) {
+    public CustomPage<ExperienceSearchItem> searchExperiences(String keyword, Pageable pageable) {
         NativeQuery query =
             NativeQuery.builder()
                 .withQuery(
@@ -88,9 +88,16 @@ public class ExperienceSearchService {
                 .build();
 
         SearchHits<ExperienceDocument> hits = operations.search(query, ExperienceDocument.class);
-        List<ExperienceDocument> items =
-            hits.getSearchHits().stream().map(SearchHit::getContent).toList();
+        List<ExperienceSearchItem> items = hits.getSearchHits().stream()
+            .map(h -> h.getContent())
+            .map(d -> new ExperienceSearchItem(
+                d.getExperienceId(),
+                d.getExperienceName(),
+                d.getPricePerPerson(),
+                d.getCapacity(),
+                d.getDurationMinutes()
+            )).toList();
 
-        return new ExperienceSearchResponse(hits.getTotalHits(), items);
+        return CustomPage.of(hits.getTotalHits(), items, pageable);
     }
 }

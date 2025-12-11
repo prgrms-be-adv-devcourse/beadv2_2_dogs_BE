@@ -2,8 +2,9 @@ package com.barofarm.support.search.farm.application;
 
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
+import com.barofarm.support.common.response.CustomPage;
 import com.barofarm.support.search.farm.application.dto.FarmIndexRequest;
-import com.barofarm.support.search.farm.application.dto.FarmSearchResponse;
+import com.barofarm.support.search.farm.application.dto.FarmSearchItem;
 import com.barofarm.support.search.farm.domain.FarmDocument;
 import com.barofarm.support.search.farm.infrastructure.elasticsearch.FarmSearchRepository;
 import java.time.Instant;
@@ -13,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +38,7 @@ public class FarmSearchService {
     }
 
     // 통합 검색용 농장 검색
-    public FarmSearchResponse searchFarms(String keyword, Pageable pageable) {
+    public CustomPage<FarmSearchItem> searchFarms(String keyword, Pageable pageable) {
         NativeQuery query =
             NativeQuery.builder()
                 .withQuery(
@@ -80,8 +80,14 @@ public class FarmSearchService {
                 .build();
 
         SearchHits<FarmDocument> hits = operations.search(query, FarmDocument.class);
-        List<FarmDocument> items = hits.getSearchHits().stream().map(SearchHit::getContent).toList();
+        List<FarmSearchItem> items = hits.getSearchHits().stream()
+            .map(h -> h.getContent())
+            .map(d -> new FarmSearchItem(
+                d.getFarmId(),
+                d.getFarmName(),
+                d.getFarmAddress()
+            )).toList();
 
-        return new FarmSearchResponse(hits.getTotalHits(), items);
+        return CustomPage.of(hits.getTotalHits(), items, pageable);
     }
 }
