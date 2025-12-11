@@ -278,10 +278,42 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
+          path: .  # 현재 디렉토리에 아티팩트 다운로드
+      
+      - name: Build module if artifact not found
+        run: |
+          SERVICE="${{ matrix.service }}"
+          # 서비스명을 모듈 경로로 변환
+          case "$SERVICE" in
+            baro-auth) MODULE_PATH="baro-auth" ;;
+            baro-buyer) MODULE_PATH="baro-buyer" ;;
+            baro-seller) MODULE_PATH="baro-seller" ;;
+            baro-order) MODULE_PATH="baro-order" ;;
+            baro-support) MODULE_PATH="baro-support" ;;
+            eureka) MODULE_PATH="baro-cloud/eureka" ;;
+            gateway) MODULE_PATH="baro-cloud/gateway" ;;
+            config) MODULE_PATH="baro-cloud/config" ;;
+            *) MODULE_PATH="" ;;
+          esac
+          
+          # JAR 파일이 없으면 빌드
+          if [ -n "$MODULE_PATH" ]; then
+            JAR_COUNT=$(find "$MODULE_PATH/build/libs" -name "*.jar" 2>/dev/null | wc -l)
+            if [ "$JAR_COUNT" -eq 0 ]; then
+              echo "JAR file not found, building module: $MODULE_PATH"
+              GRADLE_MODULE=$(echo "$MODULE_PATH" | tr '/' ':')
+              ./gradlew :${GRADLE_MODULE}:build -x test
+            else
+              echo "JAR file found in $MODULE_PATH/build/libs"
+            fi
+          fi
       
       - name: Set service name
         id: service
