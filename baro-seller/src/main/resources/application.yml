@@ -6,7 +6,9 @@ api:
 
 spring:
   application:
-    name: support-service
+    name: seller-service
+  main:
+    allow-bean-definition-overriding: true
   datasource:
     url: jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE:}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -54,7 +56,7 @@ logging:
 # Swagger/OpenAPI 설정
 springdoc:
   api-docs:
-    path: /api-docs
+    path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
     tags-sorter: alpha
