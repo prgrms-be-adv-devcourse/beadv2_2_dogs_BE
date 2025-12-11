@@ -30,4 +30,15 @@ jwt:
   refresh-token-validity-ms: 1209600000 # 14일
 
 
-
+# Swagger/OpenAPI 설정 [gateway랑 맞추는 작업]
+springdoc:
+  api-docs:
+    path: /v3/api-docs  # 이 부분을 v3/api-docs로 변경
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: false  # 각 서비스에서는 UI 비활성화 (Gateway에서만 사용)
+    tags-sorter: alpha
+    operations-sorter: alpha
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
