@@ -174,6 +174,41 @@ check_data_infra() {
     else
         log_info "✅ Data infrastructure is already running (MySQL: $MYSQL_RUNNING, Kafka: $KAFKA_RUNNING)."
     fi
+    
+    # MySQL이 실행 중이면 데이터베이스 초기화 확인 및 실행
+    if [ "$MYSQL_RUNNING" = "yes" ]; then
+        log_step "🔍 Checking MySQL databases..."
+        # MySQL이 준비될 때까지 대기
+        if docker exec baro-mysql mysqladmin ping -h localhost --silent 2>/dev/null; then
+            # 필수 데이터베이스가 있는지 확인
+            REQUIRED_DBS=("baroauth" "baroseller" "barobuyer" "baroorder" "barosupport")
+            MISSING_DBS=()
+            
+            for db in "${REQUIRED_DBS[@]}"; do
+                if ! docker exec baro-mysql mysql -u root -p"${MYSQL_ROOT_PASSWORD:-rootpassword}" -e "USE \`$db\`;" 2>/dev/null; then
+                    MISSING_DBS+=("$db")
+                fi
+            done
+            
+            if [ ${#MISSING_DBS[@]} -gt 0 ]; then
+                log_warn "⚠️ Missing databases detected: ${MISSING_DBS[*]}"
+                log_info "Creating missing databases..."
+                
+                # SQL 스크립트 실행
+                if [ -f "scripts/init-db/01-create-databases.sql" ]; then
+                    docker exec -i baro-mysql mysql -u root -p"${MYSQL_ROOT_PASSWORD:-rootpassword}" < scripts/init-db/01-create-databases.sql 2>/dev/null && \
+                        log_info "✅ Databases created successfully" || \
+                        log_warn "⚠️ Failed to create databases, but continuing..."
+                else
+                    log_warn "⚠️ Database initialization script not found: scripts/init-db/01-create-databases.sql"
+                fi
+            else
+                log_info "✅ All required databases exist."
+            fi
+        else
+            log_warn "⚠️ MySQL is not ready yet, skipping database check."
+        fi
+    fi
 }
 
 check_cloud_infra() {
