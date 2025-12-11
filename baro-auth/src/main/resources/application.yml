@@ -6,7 +6,7 @@ api:
 
 spring:
   application:
-    name: support-service
+    name: auth-service
   datasource:
     url: jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE:}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true
     driver-class-name: com.mysql.cj.jdbc.Driver
