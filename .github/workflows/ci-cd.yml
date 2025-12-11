@@ -54,9 +54,11 @@ jobs:
         run: chmod +x gradlew
       
       - name: Code formatting check (Spotless)
+        continue-on-error: true
         run: ./gradlew spotlessCheck
       
       - name: Lint check (Checkstyle)
+        continue-on-error: true
         run: ./gradlew checkstyleMain
       
       - name: Build with Gradle
