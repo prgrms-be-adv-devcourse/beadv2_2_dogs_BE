@@ -1,5 +1,6 @@
 package com.barofarm.support.search.farm.presentation;
 
+import com.barofarm.support.common.response.ResponseDto;
 import com.barofarm.support.search.farm.application.FarmSearchService;
 import com.barofarm.support.search.farm.application.dto.FarmIndexRequest;
 import com.barofarm.support.search.farm.domain.FarmDocument;
@@ -9,7 +10,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,16 +28,16 @@ public class FarmIndexingController {
 
   @Operation(summary = "농장 인덱싱", description = "ES에 농장 문서를 저장합니다. Kafka 연결 후 삭제 예정.")
   @PostMapping
-  public ResponseEntity<FarmDocument> indexFarm(@RequestBody FarmIndexRequest request) {
+  public ResponseDto<FarmDocument> indexFarm(@RequestBody FarmIndexRequest request) {
     FarmDocument saved = farmSearchService.indexFarm(request);
-    return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    return new ResponseDto<>(HttpStatus.CREATED, saved, null);
   }
 
   @Operation(summary = "농장 삭제", description = "ES에서 농장 문서를 삭제합니다. Kafka 연결 후 삭제 예정.")
   @DeleteMapping("/{farmId}")
-  public ResponseEntity<Void> deleteFarm(
+  public ResponseDto<Void> deleteFarm(
       @Parameter(description = "농장 ID", example = "1") @PathVariable UUID farmId) {
     farmSearchService.deleteFarm(farmId);
-    return ResponseEntity.noContent().build();
+    return new ResponseDto<>(HttpStatus.NO_CONTENT, null, null);
   }
 }

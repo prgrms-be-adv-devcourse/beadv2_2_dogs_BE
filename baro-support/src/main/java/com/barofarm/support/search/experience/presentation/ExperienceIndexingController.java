@@ -1,5 +1,6 @@
 package com.barofarm.support.search.experience.presentation;
 
+import com.barofarm.support.common.response.ResponseDto;
 import com.barofarm.support.search.experience.application.ExperienceSearchService;
 import com.barofarm.support.search.experience.application.dto.ExperienceIndexRequest;
 import com.barofarm.support.search.experience.domain.ExperienceDocument;
@@ -9,7 +10,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,17 +30,17 @@ public class ExperienceIndexingController {
 
     @Operation(summary = "체험 인덱싱", description = "ES에 체험 문서를 저장합니다. Kafka 연결 후 삭제 예정.")
     @PostMapping
-    public ResponseEntity<ExperienceDocument> indexExperience(
+    public ResponseDto<ExperienceDocument> indexExperience(
         @RequestBody ExperienceIndexRequest request) {
         ExperienceDocument saved = experienceSearchService.indexExperience(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        return new ResponseDto<>(HttpStatus.CREATED, saved, null);
     }
 
     @Operation(summary = "체험 삭제", description = "ES에서 체험 문서를 삭제합니다. Kafka 연결 후 삭제 예정.")
     @DeleteMapping("/{experienceId}")
-    public ResponseEntity<Void> deleteExperience(
+    public ResponseDto<Void> deleteExperience(
         @Parameter(description = "체험 ID", example = "1") @PathVariable UUID experienceId) {
         experienceSearchService.deleteExperience(experienceId);
-        return ResponseEntity.noContent().build();
+        return new ResponseDto<>(HttpStatus.NO_CONTENT, null, null);
     }
 }
