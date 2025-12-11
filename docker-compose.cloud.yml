@@ -13,6 +13,9 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - JAVA_OPTS=-Xms256m -Xmx512m
+      # Docker 환경에서는 서비스 이름(eureka) 사용 (기본값)
+      # 로컬 개발 시 EUREKA_INSTANCE_HOSTNAME=localhost로 오버라이드 가능
+      - EUREKA_INSTANCE_HOSTNAME=${EUREKA_INSTANCE_HOSTNAME:-eureka}
     restart: unless-stopped
     networks:
       - baro-network
