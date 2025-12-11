@@ -4,6 +4,7 @@ server:
 spring:
   application:
     name: gateway-service
+
   cloud:
     gateway:
       discovery:
@@ -17,7 +18,7 @@ spring:
           predicates:
             - Path=/api/auth/**
           filters:
-            - RewritePath=/api/auth/(?<segment>.*), /${segment}
+            - RewritePath=/api/(?<segment>.*), /${segment}
 
         # Buyer Service
         - id: buyer-service
@@ -32,9 +33,9 @@ spring:
         - id: seller-service
           uri: lb://seller-service
           predicates:
-            - Path=/api/sellers/**,/api/farms/**
+            - Path=/sellers/**
           filters:
-            - RewritePath=/api/(?<segment>.*), /${segment}
+            - RewritePath=/sellers/(?<segment>.*), /${segment}
             - AuthenticationFilter
 
         # Order Service
@@ -62,7 +63,7 @@ eureka:
     prefer-ip-address: true
 
 jwt:
-  secret: barofarm-secret-key-for-jwt-authentication-must-be-256-bits-long
+  secret: "너무_짧지_않은_랜덤_시크릿_문자열_최소32바이트_나중에_env로_옮길예정"
 
 management:
   endpoints:

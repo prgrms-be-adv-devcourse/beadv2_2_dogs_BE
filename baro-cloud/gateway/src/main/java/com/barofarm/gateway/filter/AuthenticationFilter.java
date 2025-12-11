@@ -16,6 +16,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+// application.yml에서 AuthenticationFilters조건이 붙어 있는 경우에 Auth에서
+// 발급 받는 access 토큰의 유효성을 판단하고
+// userEmail, userId, userType 헤더로 내려보내는 필터!
+// X-User-Email이런식으로 한 경우도 있는 것 같은데, 일단은 배포과정에 들어간 Auth-Service에 맞춰서 camel식으로 했습니다.
+// TODO: 다른 분들이랑 논의 후 통일
+
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
 
@@ -44,8 +50,16 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             try {
                 Claims claims = validateToken(token);
 
-                ServerHttpRequest modifiedRequest = request.mutate().header("X-User-Id", claims.getSubject())
-                        .header("X-User-Role", claims.get("role", String.class)).build();
+                // Auth 서비스에 만든 토큰 구조에 맞게 변경
+                String email = claims.getSubject();
+                String userId = claims.get("uid", String.class);
+                String userType = claims.get("ut", String.class);
+
+                ServerHttpRequest modifiedRequest = request.mutate()
+                    .header("userEmail", email)
+                    .header("userId", userId)
+                    .header("userType", userType)
+                    .build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
             } catch (Exception e) {
