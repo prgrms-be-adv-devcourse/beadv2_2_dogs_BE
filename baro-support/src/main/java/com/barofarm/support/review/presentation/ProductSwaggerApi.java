@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@Tag(name = "Review-Products", description = "제품 리뷰 관련 API")
+@Tag(name = "Product Reviews", description = "제품 리뷰 관련 API")
 @RequestMapping("/api/v1/products/{productId}/reviews")
 public interface ProductSwaggerApi {
 

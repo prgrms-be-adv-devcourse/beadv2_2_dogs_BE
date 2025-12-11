@@ -30,7 +30,7 @@ subprojects {
     }
 
     ext {
-        set('springCloudVersion', "2025.0.0")
+        set('springCloudVersion', "2025.1.0")
     }
 
     dependencyManagement {
@@ -47,6 +47,8 @@ subprojects {
         // Test
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0'
     }
 
     tasks.named('test') {
