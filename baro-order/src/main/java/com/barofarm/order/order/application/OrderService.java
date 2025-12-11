@@ -27,15 +27,15 @@ public class OrderService {
 
     @Transactional
     public ResponseDto<OrderCreateInfo> createOrder(UUID mockUserId, OrderCreateCommand command){
-//        InventoryDecreaseRequest inventoryRequest = new InventoryDecreaseRequest(
-//            command.items().stream()
-//                .map(item -> new InventoryDecreaseRequest.Item(
-//                    item.productId(),
-//                    item.quantity()
-//                ))
-//                .toList()
-//        );
-//        inventoryClient.decreaseStock(inventoryRequest);
+        InventoryDecreaseRequest inventoryRequest = new InventoryDecreaseRequest(
+            command.items().stream()
+                .map(item -> new InventoryDecreaseRequest.Item(
+                    item.productId(),
+                    item.quantity()
+                ))
+                .toList()
+        );
+        inventoryClient.decreaseStock(inventoryRequest);
 
         Order order = Order.of(mockUserId, command.address());
 
