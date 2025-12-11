@@ -20,6 +20,9 @@ dependencies {
     // Spring Boot 4.0.0 호환을 위해 3.0.0 이상 필요
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0'
 
+    // kafka 연결
+    implementation 'org.springframework.kafka:spring-kafka'
+
     // Database
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'com.h2database:h2'
