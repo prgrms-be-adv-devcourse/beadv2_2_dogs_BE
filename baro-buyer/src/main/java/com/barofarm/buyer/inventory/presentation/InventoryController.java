@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("${api.v1}/inventories")
 @RequiredArgsConstructor
-public class InventoryController {
+public class InventoryController implements InventorySwaggerApi{
 
     private final InventoryService inventoryService;
 
