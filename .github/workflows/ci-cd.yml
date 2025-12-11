@@ -242,10 +242,12 @@ jobs:
   deploy:
     name: Deploy Module to AWS EC2
     runs-on: ubuntu-latest
-    needs: [build-and-test, determine-service]  # determine-service에서 모듈명 가져오기
+    # docker-build가 실행되는 경우에만 기다림 (data, infra는 제외)
+    needs: [build-and-test, determine-service, docker-build]
     if: |
       (startsWith(github.ref, 'refs/heads/main-') || startsWith(github.ref, 'refs/heads/dev-')) &&
-      needs.determine-service.outputs.module != ''
+      needs.determine-service.outputs.module != '' &&
+      always() && (needs.docker-build.result == 'success' || needs.docker-build.result == 'skipped')
     
     steps:
       - name: Checkout code
@@ -259,6 +261,53 @@ jobs:
           echo "name=$MODULE" >> $GITHUB_OUTPUT
           echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
           echo "Deploying module: $MODULE from branch: ${GITHUB_REF#refs/heads/}"
+      
+      - name: Wait for images to be available (cloud module)
+        if: needs.determine-service.outputs.module == 'cloud'
+        env:
+          REGISTRY: ghcr.io/do-develop-space
+          IMAGE_TAG: ${{ needs.determine-service.outputs.image_tag }}
+        run: |
+          echo "⏳ Waiting for cloud infrastructure images to be available..."
+          echo "Checking images: eureka, gateway, config with tag: ${IMAGE_TAG}"
+          
+          # GHCR에 로그인 (이미지 확인을 위해)
+          echo "${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u do-develop-space --password-stdin
+          
+          SERVICES=("eureka" "gateway" "config")
+          MAX_WAIT=300  # 최대 5분 대기
+          INTERVAL=10   # 10초마다 확인
+          ELAPSED=0
+          
+          for service in "${SERVICES[@]}"; do
+            IMAGE="${REGISTRY}/${service}:${IMAGE_TAG}"
+            echo "Checking ${IMAGE}..."
+            ELAPSED=0  # 각 서비스마다 대기 시간 초기화
+            
+            while [ $ELAPSED -lt $MAX_WAIT ]; do
+              if docker manifest inspect "${IMAGE}" >/dev/null 2>&1; then
+                echo "✅ ${IMAGE} is available"
+                break
+              else
+                echo "[${ELAPSED}s] Waiting for ${IMAGE}..."
+                sleep $INTERVAL
+                ELAPSED=$((ELAPSED + INTERVAL))
+              fi
+            done
+            
+            if [ $ELAPSED -ge $MAX_WAIT ]; then
+              echo "⚠️ Timeout waiting for ${IMAGE}"
+              echo "Trying latest tag as fallback..."
+              if docker manifest inspect "${REGISTRY}/${service}:latest" >/dev/null 2>&1; then
+                echo "✅ Found ${REGISTRY}/${service}:latest as fallback"
+              else
+                echo "❌ ${IMAGE} and latest tag not found"
+                echo "⚠️ Continuing deployment anyway - images may be available by the time deployment runs"
+              fi
+            fi
+          done
+          
+          echo "✅ Image availability check completed"
       
       - name: Deploy to EC2
         env:
