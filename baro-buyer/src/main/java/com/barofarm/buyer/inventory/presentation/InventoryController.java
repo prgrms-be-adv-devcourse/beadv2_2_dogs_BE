@@ -14,7 +14,7 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
 
-    @PatchMapping("/decrease")
+    @PostMapping("/decrease")
     public ResponseDto<Void> decreaseStock(@Valid @RequestBody InventoryDecreaseRequest request) {
         inventoryService.decreaseStock(request.toCommand());
         return ResponseDto.ok(null);
