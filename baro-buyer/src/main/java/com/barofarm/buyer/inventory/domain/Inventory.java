@@ -1,14 +1,15 @@
 package com.barofarm.buyer.inventory.domain;
 
+import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INSUFFICIENT_STOCK;
+import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INVALID_REQUEST;
+
 import com.barofarm.buyer.common.entity.BaseEntity;
 import com.barofarm.buyer.common.exception.CustomException;
 import jakarta.persistence.*;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.util.UUID;
-import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INSUFFICIENT_STOCK;
-import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INVALID_REQUEST;
 
 @Entity
 @Getter
