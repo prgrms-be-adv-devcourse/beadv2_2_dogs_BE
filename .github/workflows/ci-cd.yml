@@ -460,6 +460,11 @@ jobs:
                     echo "🔍 Checking container logs..."
                     ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 50 2>&1 || echo 'Could not fetch container logs'" || echo "Could not fetch container logs"
                   fi
+                  echo ""
+                  echo "📝 Full log location: ${DEPLOY_LOG}"
+                  echo "💡 To check manually: ssh ${USER}@${HOST} 'cat ${DEPLOY_LOG}'"
+                  rm -f private_key.pem
+                  exit 1
                 fi
               elif [ "${MODULE_NAME}" = "cloud" ]; then
                 # cloud 모듈은 eureka, gateway, config 3개 컨테이너 확인
@@ -487,6 +492,11 @@ jobs:
                   exit 0
                 else
                   echo "⚠️ Some cloud infrastructure containers are not running. Deployment may have failed."
+                  echo ""
+                  echo "📝 Full log location: ${DEPLOY_LOG}"
+                  echo "💡 To check manually: ssh ${USER}@${HOST} 'cat ${DEPLOY_LOG}'"
+                  rm -f private_key.pem
+                  exit 1
                 fi
               else
                 # 일반 모듈 (auth, buyer, seller, order, support)
@@ -506,14 +516,12 @@ jobs:
                     echo "🔍 Checking container logs..."
                     ssh $SSH_OPTS ${USER}@${HOST} "docker logs ${CHECK_CONTAINER} --tail 50 2>&1 || echo 'Could not fetch container logs'" || echo "Could not fetch container logs"
                   fi
+                  echo ""
+                  echo "📝 Full log location: ${DEPLOY_LOG}"
+                  echo "💡 To check manually: ssh ${USER}@${HOST} 'cat ${DEPLOY_LOG}'"
+                  rm -f private_key.pem
+                  exit 1
                 fi
-              fi
-                
-                echo ""
-                echo "📝 Full log location: ${DEPLOY_LOG}"
-                echo "💡 To check manually: ssh ${USER}@${HOST} 'cat ${DEPLOY_LOG}'"
-                rm -f private_key.pem
-                exit 1
               fi
             fi
           done

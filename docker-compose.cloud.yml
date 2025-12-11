@@ -12,7 +12,7 @@ services:
       - "8761:8761"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - JAVA_OPTS=-Xms256m -Xmx512m
+      - JAVA_OPTS=-Xms128m -Xmx256m
       # Docker 환경에서는 서비스 이름(eureka) 사용 (기본값)
       # 로컬 개발 시 EUREKA_INSTANCE_HOSTNAME=localhost로 오버라이드 가능
       - EUREKA_INSTANCE_HOSTNAME=${EUREKA_INSTANCE_HOSTNAME:-eureka}
@@ -21,7 +21,7 @@ services:
       - baro-network
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health"]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
       start_period: 40s
@@ -37,7 +37,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
-      - JAVA_OPTS=-Xms256m -Xmx512m
+      - JAVA_OPTS=-Xms128m -Xmx256m
     depends_on:
       eureka:
         condition: service_healthy
@@ -46,7 +46,7 @@ services:
       - baro-network
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8888/actuator/health"]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
       start_period: 40s
@@ -64,7 +64,7 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
       # - SPRING_DATA_REDIS_HOST=redis
       # - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
-      - JAVA_OPTS=-Xms512m -Xmx1024m
+      - JAVA_OPTS=-Xms256m -Xmx512m
     depends_on:
       eureka:
         condition: service_healthy
@@ -73,7 +73,7 @@ services:
       - baro-network
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/actuator/health"]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
       start_period: 40s
