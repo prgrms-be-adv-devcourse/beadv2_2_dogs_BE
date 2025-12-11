@@ -12,7 +12,7 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
       # - SPRING_DATA_REDIS_HOST=redis
       # - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
-      - MYSQL_DATABASE=${MYSQL_DATABASE_AUTH:-barofarm}
+      - MYSQL_DATABASE=${MYSQL_DATABASE_AUTH:-baroauth}
       - MYSQL_USER=${MYSQL_USER:-barouser}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
     restart: unless-stopped
