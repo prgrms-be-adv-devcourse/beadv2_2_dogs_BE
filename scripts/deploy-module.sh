@@ -174,6 +174,41 @@ check_data_infra() {
     else
         log_info "✅ Data infrastructure is already running (MySQL: $MYSQL_RUNNING, Kafka: $KAFKA_RUNNING)."
     fi
+    
+    # MySQL이 실행 중이면 데이터베이스 초기화 확인 및 실행
+    if [ "$MYSQL_RUNNING" = "yes" ]; then
+        log_step "🔍 Checking MySQL databases..."
+        # MySQL이 준비될 때까지 대기
+        if docker exec baro-mysql mysqladmin ping -h localhost --silent 2>/dev/null; then
+            # 필수 데이터베이스가 있는지 확인
+            REQUIRED_DBS=("baroauth" "baroseller" "barobuyer" "baroorder" "barosupport")
+            MISSING_DBS=()
+            
+            for db in "${REQUIRED_DBS[@]}"; do
+                if ! docker exec baro-mysql mysql -u root -p"${MYSQL_ROOT_PASSWORD:-rootpassword}" -e "USE \`$db\`;" 2>/dev/null; then
+                    MISSING_DBS+=("$db")
+                fi
+            done
+            
+            if [ ${#MISSING_DBS[@]} -gt 0 ]; then
+                log_warn "⚠️ Missing databases detected: ${MISSING_DBS[*]}"
+                log_info "Creating missing databases..."
+                
+                # SQL 스크립트 실행
+                if [ -f "scripts/init-db/01-create-databases.sql" ]; then
+                    docker exec -i baro-mysql mysql -u root -p"${MYSQL_ROOT_PASSWORD:-rootpassword}" < scripts/init-db/01-create-databases.sql 2>/dev/null && \
+                        log_info "✅ Databases created successfully" || \
+                        log_warn "⚠️ Failed to create databases, but continuing..."
+                else
+                    log_warn "⚠️ Database initialization script not found: scripts/init-db/01-create-databases.sql"
+                fi
+            else
+                log_info "✅ All required databases exist."
+            fi
+        else
+            log_warn "⚠️ MySQL is not ready yet, skipping database check."
+        fi
+    fi
 }
 
 check_cloud_infra() {
@@ -185,7 +220,35 @@ check_cloud_infra() {
         local cloud_image_tag="${IMAGE_TAG:-latest}"
         log_info "Using image tag for cloud infrastructure: ${cloud_image_tag}"
         export IMAGE_TAG="${cloud_image_tag}"
-        docker_compose_cmd -f docker-compose.cloud.yml pull
+        
+        # 이미지 pull 시도
+        log_info "Pulling cloud infrastructure images..."
+        local pull_output
+        pull_output=$(docker_compose_cmd -f docker-compose.cloud.yml pull 2>&1) || {
+            local pull_exit_code=$?
+            log_warn "⚠️ Image pull failed (exit code: $pull_exit_code)"
+            
+            # 이미지가 없을 때 latest 태그로 fallback 시도
+            if echo "$pull_output" | grep -q "not found\|manifest unknown"; then
+                log_warn "⚠️ Images with tag '${cloud_image_tag}' not found. Trying 'latest' tag as fallback..."
+                export IMAGE_TAG="latest"
+                if docker_compose_cmd -f docker-compose.cloud.yml pull 2>&1; then
+                    log_info "✅ Fallback to 'latest' tag successful"
+                else
+                    log_error "❌ Failed to pull images with both '${cloud_image_tag}' and 'latest' tags"
+                    log_error "Please ensure images are built and pushed to the registry:"
+                    log_error "  - ghcr.io/do-develop-space/eureka:${cloud_image_tag}"
+                    log_error "  - ghcr.io/do-develop-space/gateway:${cloud_image_tag}"
+                    log_error "  - ghcr.io/do-develop-space/config:${cloud_image_tag}"
+                    log_error "Or push the images with 'latest' tag for fallback."
+                    return 1
+                fi
+            else
+                log_error "❌ Image pull failed for unknown reason"
+                return 1
+            fi
+        }
+        
         docker_compose_cmd -f docker-compose.cloud.yml up -d
         log_info "Waiting for Spring Cloud to be ready (30 seconds)..."
         sleep 30
@@ -410,7 +473,8 @@ docker ps --filter "name=baro-" --format "table {{.Names}}\t{{.Status}}\t{{.Port
 # 6. 정리
 # ===================================
 log_step "🧹 Cleaning up unused Docker resources..."
-docker system prune -f --volumes
+# --volumes 옵션 제거 (볼륨 삭제는 위험함, 데이터 손실 가능)
+docker system prune -f
 
 log_info "🎉 Deployment completed!"
 

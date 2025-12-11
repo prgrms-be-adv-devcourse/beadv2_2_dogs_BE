@@ -22,21 +22,23 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         use_sql_comments: true
 
-# eureka:
-#   client:
-#     service-url:
-#       defaultZone: http://localhost:8761/eureka/
-#   instance:
-#     prefer-ip-address: true
-
-# Eureka 명시적 비활성화
 eureka:
   client:
-    enabled: false
-    register-with-eureka: false
-    fetch-registry: false
+    service-url:
+      # Docker 환경에서는 서비스 이름(eureka) 사용, 로컬에서는 localhost 사용
+      # 환경 변수 EUREKA_CLIENT_SERVICEURL_DEFAULTZONE으로 오버라이드 가능
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka:8761/eureka/}
   instance:
-    enabled: false
+    prefer-ip-address: true
+
+# Eureka 명시적 비활성화
+# eureka:
+#   client:
+#     enabled: false
+#     register-with-eureka: false
+#     fetch-registry: false
+#   instance:
+#     enabled: false
 
 # 로깅 설정
 logging:
@@ -52,7 +54,7 @@ logging:
 # Swagger/OpenAPI 설정
 springdoc:
   api-docs:
-    path: /api-docs
+    path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
     tags-sorter: alpha

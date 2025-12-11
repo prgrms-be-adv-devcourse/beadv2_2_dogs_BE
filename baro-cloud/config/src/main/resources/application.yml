@@ -15,7 +15,9 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/ # [5] README 포트(8761) 기반 Eureka 주소
+      # Docker 환경에서는 서비스 이름(eureka) 사용, 로컬에서는 localhost 사용
+      # 환경 변수 EUREKA_CLIENT_SERVICEURL_DEFAULTZONE으로 오버라이드 가능
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka:8761/eureka/}
   instance:
     prefer-ip-address: true # [6] 호스트명 대신 IP 노출로 DNS 미설정 환경에서 연결 실패 방지
 
