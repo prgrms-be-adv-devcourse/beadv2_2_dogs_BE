@@ -11,58 +11,59 @@ spring:
         locator:
           enabled: true
           lower-case-service-id: true
-      routes:
+      server:
+        webflux:
+          routes:
+            # Auth Service
+            - id: auth-service
+              uri: lb://auth-service
+              predicates:
+                - Path=/api/auth/**
+              filters:
+                - RewritePath=/api/(?<segment>.*), /${segment}
 
-        # Auth Service
-        - id: auth-service
-          uri: lb://auth-service
-          predicates:
-            - Path=/api/auth/**
-          filters:
-            - RewritePath=/api/(?<segment>.*), /${segment}
+            # Buyer Service
+            - id: buyer-service
+              uri: lb://buyer-service
+              predicates:
+                - Path=/api/buyers/**,/api/carts/**,/api/products/**
+              filters:
+                - RewritePath=/api/(?<segment>.*), /${segment}
+                - AuthenticationFilter
 
-        # Buyer Service
-        - id: buyer-service
-          uri: lb://buyer-service
-          predicates:
-            - Path=/api/buyers/**,/api/carts/**,/api/products/**
-          filters:
-            - RewritePath=/api/(?<segment>.*), /${segment}
-            - AuthenticationFilter
+            # Seller Service
+            - id: seller-service
+              uri: lb://seller-service
+              predicates:
+                - Path=/sellers/**
+              filters:
+                - RewritePath=/sellers/(?<segment>.*), /${segment}
+                - AuthenticationFilter
 
-        # Seller Service
-        - id: seller-service
-          uri: lb://seller-service
-          predicates:
-            - Path=/sellers/**
-          filters:
-            - RewritePath=/sellers/(?<segment>.*), /${segment}
-            - AuthenticationFilter
+            # Order Service
+            - id: order-service
+              uri: lb://order-service
+              predicates:
+                - Path=/api/orders/**,/api/payments/**
+              filters:
+                - RewritePath=/api/(?<segment>.*), /${segment}
+                - AuthenticationFilter
 
-        # Order Service
-        - id: order-service
-          uri: lb://order-service
-          predicates:
-            - Path=/api/orders/**,/api/payments/**
-          filters:
-            - RewritePath=/api/(?<segment>.*), /${segment}
-            - AuthenticationFilter
+            # Support Service
+            - id: support-service
+              uri: lb://support-service
+              predicates:
+                - Path=/api/settlements/**,/api/deliveries/**,/api/notifications/**,/api/experiences/**,/api/search/**,/api/reviews/**
+              filters:
+                - RewritePath=/api/(?<segment>.*), /${segment}
 
-        # Support Service
-        - id: support-service
-          uri: lb://support-service
-          predicates:
-            - Path=/api/settlements/**,/api/deliveries/**,/api/notifications/**,/api/experiences/**,/api/search/**,/api/reviews/**
-          filters:
-            - RewritePath=/api/(?<segment>.*), /${segment}
-
-        # Auth Service API 문서 프록시
-        - id: auth-service-openapi
-          uri: lb://AUTH-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
-          predicates:
-            - Path=/openapi/auth/v3/api-docs
-          filters:
-            - RewritePath=/openapi/auth/(?<segment>.*), /${segment}
+            # Auth Service API 문서 프록시
+            - id: auth-service-openapi
+              uri: lb://AUTH-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
+              predicates:
+                - Path=/openapi/auth/v3/api-docs
+              filters:
+                - RewritePath=/openapi/auth/(?<segment>.*), /${segment}
 
 eureka:
   client:
