@@ -1,7 +1,6 @@
 package com.barofarm.support.experience.infrastructure;
 
 import com.barofarm.support.experience.domain.Experience;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,14 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 /** 체험 프로그램 JPA Repository */
 public interface ExperienceJpaRepository extends JpaRepository<Experience, UUID> {
-
-    /**
-     * 농장 ID로 체험 프로그램 목록 조회
-     *
-     * @param farmId 농장 ID
-     * @return 체험 프로그램 목록
-     */
-    List<Experience> findByFarmId(UUID farmId);
 
     /**
      * 농장 ID로 체험 프로그램 목록 조회 (페이지네이션)

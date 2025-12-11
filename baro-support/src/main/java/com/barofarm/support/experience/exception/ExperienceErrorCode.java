@@ -9,7 +9,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ExperienceErrorCode implements BaseErrorCode {
 
-    EXPERIENCE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 체험 프로그램 정보입니다.");
+    EXPERIENCE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 체험 프로그램 정보입니다."),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 체험 프로그램에 대한 접근 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String message;

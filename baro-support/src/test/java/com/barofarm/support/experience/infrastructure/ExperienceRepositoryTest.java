@@ -18,6 +18,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 /** ExperienceRepository 유닛 테스트 */
 @ExtendWith(MockitoExtension.class)
@@ -65,7 +69,7 @@ class ExperienceRepositoryTest {
     }
 
     @Test
-    @DisplayName("농장 ID로 체험 프로그램 목록을 조회할 수 있다")
+    @DisplayName("농장 ID로 체험 프로그램 목록을 조회할 수 있다 (페이지네이션)")
     void findByFarmId() {
         // given
         UUID farmId2 = UUID.randomUUID();
@@ -74,33 +78,39 @@ class ExperienceRepositoryTest {
                 BigInteger.valueOf(10000), 30, 60, LocalDateTime.of(2025, 9, 1, 9, 0), LocalDateTime.of(2025, 11, 30, 18, 0),
                 ExperienceStatus.ON_SALE);
 
-        when(experienceRepository.findByFarmId(farmId)).thenReturn(Arrays.asList(experience1, experience2));
-        when(experienceRepository.findByFarmId(farmId2)).thenReturn(Arrays.asList(experience3));
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Experience> farm1Page = new PageImpl<>(Arrays.asList(experience1, experience2), pageable, 2);
+        Page<Experience> farm2Page = new PageImpl<>(Arrays.asList(experience3), pageable, 1);
+
+        when(experienceRepository.findByFarmId(farmId, pageable)).thenReturn(farm1Page);
+        when(experienceRepository.findByFarmId(farmId2, pageable)).thenReturn(farm2Page);
 
         // when
-        List<Experience> farm1Experiences = experienceRepository.findByFarmId(farmId);
-        List<Experience> farm2Experiences = experienceRepository.findByFarmId(farmId2);
+        Page<Experience> farm1Experiences = experienceRepository.findByFarmId(farmId, pageable);
+        Page<Experience> farm2Experiences = experienceRepository.findByFarmId(farmId2, pageable);
 
         // then
-        assertThat(farm1Experiences).hasSize(2);
-        assertThat(farm1Experiences).extracting("title").contains("딸기 수확 체험", "블루베리 수확 체험");
+        assertThat(farm1Experiences.getContent()).hasSize(2);
+        assertThat(farm1Experiences.getContent()).extracting("title").contains("딸기 수확 체험", "블루베리 수확 체험");
 
-        assertThat(farm2Experiences).hasSize(1);
-        assertThat(farm2Experiences.get(0).getTitle()).isEqualTo("감자 수확 체험");
+        assertThat(farm2Experiences.getContent()).hasSize(1);
+        assertThat(farm2Experiences.getContent().get(0).getTitle()).isEqualTo("감자 수확 체험");
     }
 
     @Test
-    @DisplayName("존재하지 않는 농장 ID로 조회하면 빈 목록을 반환한다")
+    @DisplayName("존재하지 않는 농장 ID로 조회하면 빈 페이지를 반환한다")
     void findByFarmId_NotExists() {
         // given
         UUID notExistsFarmId = UUID.randomUUID();
-        when(experienceRepository.findByFarmId(notExistsFarmId)).thenReturn(Arrays.asList());
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Experience> emptyPage = Page.empty(pageable);
+        when(experienceRepository.findByFarmId(notExistsFarmId, pageable)).thenReturn(emptyPage);
 
         // when
-        List<Experience> experiences = experienceRepository.findByFarmId(notExistsFarmId);
+        Page<Experience> experiences = experienceRepository.findByFarmId(notExistsFarmId, pageable);
 
         // then
-        assertThat(experiences).isEmpty();
+        assertThat(experiences.getContent()).isEmpty();
     }
 
     @Test
@@ -137,16 +147,18 @@ class ExperienceRepositoryTest {
     }
 
     @Test
-    @DisplayName("모든 체험 프로그램을 조회할 수 있다")
+    @DisplayName("모든 체험 프로그램을 조회할 수 있다 (페이지네이션)")
     void findAll() {
         // given
-        when(experienceRepository.findAll()).thenReturn(Arrays.asList(experience1, experience2));
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Experience> allPage = new PageImpl<>(Arrays.asList(experience1, experience2), pageable, 2);
+        when(experienceRepository.findAll(pageable)).thenReturn(allPage);
 
         // when
-        List<Experience> all = experienceRepository.findAll();
+        Page<Experience> all = experienceRepository.findAll(pageable);
 
         // then
-        assertThat(all).hasSize(2);
-        verify(experienceRepository, times(1)).findAll();
+        assertThat(all.getContent()).hasSize(2);
+        verify(experienceRepository, times(1)).findAll(pageable);
     }
 }

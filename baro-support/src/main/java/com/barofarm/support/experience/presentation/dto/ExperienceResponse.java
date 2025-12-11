@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 체험 프로그램 응답 DTO */
+/** 체험 프로그램 Response DTO */
 @Schema(description = "체험 프로그램 응답")
 @Getter
 @NoArgsConstructor
@@ -38,7 +38,7 @@ public class ExperienceResponse {
     @Schema(description = "소요 시간 (분)", example = "120")
     private Integer durationMinutes;
 
-    @Schema(description = "예약 가능 시작일", example = "2025-12-01T09:00:00")
+    @Schema(description = "예약 가능 시작일", example = "2025-12-01T12:00:00")
     private LocalDateTime availableStartDate;
 
     @Schema(description = "예약 가능 종료일", example = "2025-12-31T18:00:00")
@@ -47,10 +47,10 @@ public class ExperienceResponse {
     @Schema(description = "상태", example = "ON_SALE")
     private ExperienceStatus status;
 
-    @Schema(description = "생성 일시", example = "2025-12-09T12:00:00")
+    @Schema(description = "생성 일시", example = "2025-12-01T12:00:00")
     private LocalDateTime createdAt;
 
-    @Schema(description = "수정 일시", example = "2025-12-09T12:00:00")
+    @Schema(description = "수정 일시", example = "2025-12-10T12:00:00")
     private LocalDateTime updatedAt;
 
     /** ServiceResponse를 Presentation Response로 변환 */

@@ -39,6 +39,7 @@ class ExperienceControllerTest {
 
     private UUID farmId;
     private UUID experienceId;
+    private UUID userId;
     private ExperienceRequest request;
     private ExperienceServiceResponse serviceResponse;
 
@@ -46,6 +47,7 @@ class ExperienceControllerTest {
     void setUp() {
         farmId = UUID.randomUUID();
         experienceId = UUID.randomUUID();
+        userId = UUID.randomUUID();
 
         request = new ExperienceRequest(farmId, "딸기 수확 체험", "신선한 딸기를 직접 수확해보세요", BigInteger.valueOf(15000), 20,
                 120, LocalDateTime.of(2025, 3, 1, 9, 0), LocalDateTime.of(2025, 5, 31, 18, 0), ExperienceStatus.ON_SALE);
@@ -58,14 +60,14 @@ class ExperienceControllerTest {
     @Test
     @DisplayName("POST /api/experiences - 체험 프로그램 생성")
     void createExperience() {
-        when(experienceService.createExperience(any())).thenReturn(serviceResponse);
+        when(experienceService.createExperience(eq(userId), any())).thenReturn(serviceResponse);
 
-        ResponseDto<ExperienceResponse> result = experienceController.createExperience(request);
+        ResponseDto<ExperienceResponse> result = experienceController.createExperience(userId, request);
 
         assertThat(result).isNotNull();
         assertThat(result.data()).isNotNull();
         assertThat(result.data().getTitle()).isEqualTo("딸기 수확 체험");
-        verify(experienceService, times(1)).createExperience(any());
+        verify(experienceService, times(1)).createExperience(eq(userId), any());
     }
 
     @Test
@@ -130,6 +132,32 @@ class ExperienceControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/experiences/my-farm - 본인 농장의 체험 프로그램 목록 조회")
+    void getMyExperiences() {
+        // given
+        UUID userId = UUID.randomUUID();
+        UUID experienceId2 = UUID.randomUUID();
+        ExperienceServiceResponse serviceResponse2 = new ExperienceServiceResponse(experienceId2, farmId, "블루베리 수확 체험",
+                "달콤한 블루베리", BigInteger.valueOf(20000), 15, 90, LocalDateTime.of(2025, 6, 1, 9, 0), LocalDateTime.of(2025, 8, 31, 18, 0),
+                ExperienceStatus.ON_SALE, LocalDateTime.now(), LocalDateTime.now());
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<ExperienceServiceResponse> servicePage = new PageImpl<>(
+                java.util.Arrays.asList(serviceResponse, serviceResponse2), pageable, 2);
+        when(experienceService.getMyExperiences(eq(userId), any(Pageable.class))).thenReturn(servicePage);
+
+        // when
+        ResponseDto<CustomPage<ExperienceResponse>> result = experienceController.getMyExperiences(userId, pageable);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.data()).isNotNull();
+        assertThat(result.data().content()).hasSize(2);
+        assertThat(result.data().content()).extracting("title").contains("딸기 수확 체험", "블루베리 수확 체험");
+        verify(experienceService, times(1)).getMyExperiences(eq(userId), any(Pageable.class));
+    }
+
+    @Test
     @DisplayName("PUT /api/experiences/{id} - 체험 프로그램 수정")
     void updateExperience() {
         // given
@@ -137,30 +165,30 @@ class ExperienceControllerTest {
                 "수정된 설명", BigInteger.valueOf(25000), 30, 150, LocalDateTime.of(2025, 4, 1, 9, 0), LocalDateTime.of(2025, 6, 30, 18, 0),
                 ExperienceStatus.CLOSED, LocalDateTime.now(), LocalDateTime.now());
 
-        when(experienceService.updateExperience(eq(experienceId), any())).thenReturn(updatedServiceResponse);
+        when(experienceService.updateExperience(eq(userId), eq(experienceId), any())).thenReturn(updatedServiceResponse);
 
         // when
-        ResponseDto<ExperienceResponse> result = experienceController.updateExperience(experienceId, request);
+        ResponseDto<ExperienceResponse> result = experienceController.updateExperience(userId, experienceId, request);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.data()).isNotNull();
         assertThat(result.data().getTitle()).isEqualTo("수정된 제목");
         assertThat(result.data().getPricePerPerson()).isEqualTo(BigInteger.valueOf(25000));
-        verify(experienceService, times(1)).updateExperience(eq(experienceId), any());
+        verify(experienceService, times(1)).updateExperience(eq(userId), eq(experienceId), any());
     }
 
     @Test
     @DisplayName("DELETE /api/experiences/{id} - 체험 프로그램 삭제")
     void deleteExperience() {
         // given
-        doNothing().when(experienceService).deleteExperience(experienceId);
+        doNothing().when(experienceService).deleteExperience(userId, experienceId);
 
         // when
-        ResponseDto<Void> result = experienceController.deleteExperience(experienceId);
+        ResponseDto<Void> result = experienceController.deleteExperience(userId, experienceId);
 
         // then
         assertThat(result).isNotNull();
-        verify(experienceService, times(1)).deleteExperience(experienceId);
+        verify(experienceService, times(1)).deleteExperience(userId, experienceId);
     }
 }

@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 체험 프로그램 서비스 레이어 응답 DTO */
+/** 체험 프로그램 Response DTO */
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

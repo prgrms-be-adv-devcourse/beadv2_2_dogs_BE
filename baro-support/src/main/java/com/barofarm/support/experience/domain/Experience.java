@@ -14,17 +14,20 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.ToString;
 
-/** 체험 프로그램 엔티티 (FARM_EXPERIENCE) */
+/** 체험 프로그램 엔티티 */
 @Entity
 @Table(name = "farm_experience")
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+// Set/Map 사용 시 동일성 비교를 위해 ID만 사용 (모든 필드 포함 시 영속성 컨텍스트 이슈 발생 가능)
+@EqualsAndHashCode(callSuper = false, of = "experienceId")
+@ToString(callSuper = false)
 public class Experience extends BaseEntity {
 
     @Id
@@ -59,4 +62,27 @@ public class Experience extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ExperienceStatus status;
+
+    /**
+     * 체험 프로그램 정보 업데이트
+     */
+    public void update(
+            String title,
+            String description,
+            BigInteger pricePerPerson,
+            Integer capacity,
+            Integer durationMinutes,
+            LocalDateTime availableStartDate,
+            LocalDateTime availableEndDate,
+            ExperienceStatus status
+    ) {
+        this.title = title;
+        this.description = description;
+        this.pricePerPerson = pricePerPerson;
+        this.capacity = capacity;
+        this.durationMinutes = durationMinutes;
+        this.availableStartDate = availableStartDate;
+        this.availableEndDate = availableEndDate;
+        this.status = status;
+    }
 }

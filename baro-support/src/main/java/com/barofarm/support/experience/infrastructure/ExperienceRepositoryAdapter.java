@@ -2,7 +2,6 @@ package com.barofarm.support.experience.infrastructure;
 
 import com.barofarm.support.experience.domain.Experience;
 import com.barofarm.support.experience.domain.ExperienceRepository;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,21 +23,7 @@ public class ExperienceRepositoryAdapter implements ExperienceRepository {
 
     @Override
     public Optional<Experience> findById(UUID experienceId) {
-        System.out.println("=== ExperienceRepositoryAdapter.findById called with UUID: " + experienceId + " ===");
-        Optional<Experience> result = jpaRepository.findById(experienceId);
-        System.out.println("=== findById result: " + (result.isPresent() ? "FOUND - " + result.get().getTitle()
-            : "NOT FOUND") + " ===");
-        return result;
-    }
-
-    @Override
-    public List<Experience> findByFarmId(UUID farmId) {
-        return jpaRepository.findByFarmId(farmId);
-    }
-
-    @Override
-    public List<Experience> findAll() {
-        return jpaRepository.findAll();
+        return jpaRepository.findById(experienceId);
     }
 
     @Override

@@ -13,14 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Experience", description = "체험 프로그램 관리 API")
 @RequestMapping("${api.v1}/experiences")
@@ -40,7 +33,10 @@ public interface ExperienceSwaggerApi {
         )
     })
     @PostMapping
-    ResponseDto<ExperienceResponse> createExperience(@Valid @RequestBody ExperienceRequest request);
+    ResponseDto<ExperienceResponse> createExperience(
+        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
+        @Valid @RequestBody ExperienceRequest request
+    );
 
     @Operation(summary = "체험 프로그램 상세 조회", description = "체험 ID로 체험 프로그램 상세 정보를 조회합니다.")
     @ApiResponses({
@@ -74,6 +70,20 @@ public interface ExperienceSwaggerApi {
         Pageable pageable
     );
 
+    @Operation(summary = "내 체험 프로그램 목록 조회", description = "로그인한 판매자의 본인 농장 체험 프로그램 목록을 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(mediaType = "application/json")
+        )
+    })
+    @GetMapping("/my-farm")
+    ResponseDto<CustomPage<ExperienceResponse>> getMyExperiences(
+        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
+        Pageable pageable
+    );
+
     @Operation(summary = "체험 프로그램 수정", description = "기존 체험 프로그램 정보를 수정합니다.")
     @ApiResponses({
         @ApiResponse(
@@ -94,6 +104,7 @@ public interface ExperienceSwaggerApi {
     })
     @PutMapping("/{id}")
     ResponseDto<ExperienceResponse> updateExperience(
+        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
         @Parameter(description = "체험 프로그램 ID", required = true) @PathVariable("id") UUID id,
         @Valid @RequestBody ExperienceRequest request
     );
@@ -113,6 +124,7 @@ public interface ExperienceSwaggerApi {
     })
     @DeleteMapping("/{id}")
     ResponseDto<Void> deleteExperience(
+        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
         @Parameter(description = "체험 프로그램 ID", required = true) @PathVariable("id") UUID id
     );
 }
