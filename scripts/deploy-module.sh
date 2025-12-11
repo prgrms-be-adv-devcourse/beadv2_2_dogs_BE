@@ -220,7 +220,35 @@ check_cloud_infra() {
         local cloud_image_tag="${IMAGE_TAG:-latest}"
         log_info "Using image tag for cloud infrastructure: ${cloud_image_tag}"
         export IMAGE_TAG="${cloud_image_tag}"
-        docker_compose_cmd -f docker-compose.cloud.yml pull
+        
+        # 이미지 pull 시도
+        log_info "Pulling cloud infrastructure images..."
+        local pull_output
+        pull_output=$(docker_compose_cmd -f docker-compose.cloud.yml pull 2>&1) || {
+            local pull_exit_code=$?
+            log_warn "⚠️ Image pull failed (exit code: $pull_exit_code)"
+            
+            # 이미지가 없을 때 latest 태그로 fallback 시도
+            if echo "$pull_output" | grep -q "not found\|manifest unknown"; then
+                log_warn "⚠️ Images with tag '${cloud_image_tag}' not found. Trying 'latest' tag as fallback..."
+                export IMAGE_TAG="latest"
+                if docker_compose_cmd -f docker-compose.cloud.yml pull 2>&1; then
+                    log_info "✅ Fallback to 'latest' tag successful"
+                else
+                    log_error "❌ Failed to pull images with both '${cloud_image_tag}' and 'latest' tags"
+                    log_error "Please ensure images are built and pushed to the registry:"
+                    log_error "  - ghcr.io/do-develop-space/eureka:${cloud_image_tag}"
+                    log_error "  - ghcr.io/do-develop-space/gateway:${cloud_image_tag}"
+                    log_error "  - ghcr.io/do-develop-space/config:${cloud_image_tag}"
+                    log_error "Or push the images with 'latest' tag for fallback."
+                    return 1
+                fi
+            else
+                log_error "❌ Image pull failed for unknown reason"
+                return 1
+            fi
+        }
+        
         docker_compose_cmd -f docker-compose.cloud.yml up -d
         log_info "Waiting for Spring Cloud to be ready (30 seconds)..."
         sleep 30
