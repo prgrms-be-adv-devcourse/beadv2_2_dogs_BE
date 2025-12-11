@@ -148,14 +148,31 @@ fi
 # ===================================
 check_data_infra() {
     log_step "🔍 Checking data infrastructure..."
-    if ! docker ps | grep -q baro-redis; then
+    # MySQL, Kafka가 모두 실행 중인지 확인
+    MYSQL_RUNNING=$(docker ps --format '{{.Names}}' | grep -q "^baro-mysql$" && echo "yes" || echo "no")
+    KAFKA_RUNNING=$(docker ps --format '{{.Names}}' | grep -q "^baro-kafka$" && echo "yes" || echo "no")
+    
+    if [ "$MYSQL_RUNNING" = "no" ] || [ "$KAFKA_RUNNING" = "no" ]; then
         log_warn "Data infrastructure not running. Starting data infrastructure first..."
-        docker_compose_cmd -f docker-compose.data.yml pull
-        docker_compose_cmd -f docker-compose.data.yml up -d
+        # Elasticsearch는 build가 필요하므로 build 먼저 시도
+        if [ -f "docker/baro-es/Dockerfile" ]; then
+            log_info "Building Elasticsearch image..."
+            if docker_compose_cmd -f docker-compose.data.yml build elasticsearch 2>&1; then
+                log_info "✅ Elasticsearch image built successfully"
+            else
+                log_warn "⚠️ Elasticsearch build failed, will try to use existing image or skip"
+            fi
+        fi
+        # pull은 build가 필요한 이미지는 제외하고 실행
+        docker_compose_cmd -f docker-compose.data.yml pull mysql kafka 2>/dev/null || true
+        # Elasticsearch가 없어도 MySQL, Kafka는 시작
+        docker_compose_cmd -f docker-compose.data.yml up -d mysql kafka
+        # Elasticsearch는 별도로 시도 (실패해도 계속 진행)
+        docker_compose_cmd -f docker-compose.data.yml up -d elasticsearch 2>/dev/null || log_warn "⚠️ Elasticsearch start failed, continuing without it"
         log_info "Waiting for data infrastructure to be ready (20 seconds)..."
         sleep 20
     else
-        log_info "Data infrastructure is already running."
+        log_info "✅ Data infrastructure is already running (MySQL: $MYSQL_RUNNING, Kafka: $KAFKA_RUNNING)."
     fi
 }
 
