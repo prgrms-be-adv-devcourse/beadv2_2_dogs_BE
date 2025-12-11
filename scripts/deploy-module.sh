@@ -473,7 +473,8 @@ docker ps --filter "name=baro-" --format "table {{.Names}}\t{{.Status}}\t{{.Port
 # 6. 정리
 # ===================================
 log_step "🧹 Cleaning up unused Docker resources..."
-docker system prune -f --volumes
+# --volumes 옵션 제거 (볼륨 삭제는 위험함, 데이터 손실 가능)
+docker system prune -f
 
 log_info "🎉 Deployment completed!"
 

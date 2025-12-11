@@ -15,6 +15,7 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE_AUTH:-baroauth}
       - MYSQL_USER=${MYSQL_USER:-barouser}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+      - JAVA_OPTS=-Xms256m -Xmx384m
     restart: unless-stopped
     networks:
       - baro-network
