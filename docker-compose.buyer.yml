@@ -13,9 +13,10 @@ services:
       # - SPRING_DATA_REDIS_HOST=redis
       # - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - MYSQL_DATABASE=${MYSQL_DATABASE_BUYER:-barofarm}
+      - MYSQL_DATABASE=${MYSQL_DATABASE_BUYER:-barobuyer}
       - MYSQL_USER=${MYSQL_USER:-barouser}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+      - JAVA_OPTS=-Xms256m -Xmx384m
     restart: unless-stopped
     networks:
       - baro-network

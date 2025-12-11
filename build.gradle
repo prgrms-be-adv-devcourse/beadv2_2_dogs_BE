@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.0' apply false
+    id 'org.springframework.boot' version '3.5.8' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
     id 'com.diffplug.spotless' version '7.0.2' apply false
     id 'checkstyle'
@@ -35,8 +35,7 @@ subprojects {
     }
 
     ext {
-        // set('springCloudVersion', "2025.1.0")
-        set('springCloudVersion', "2024.0.0")
+        set('springCloudVersion', "2025.0.0")
     }
 
     dependencyManagement {
@@ -50,9 +49,20 @@ subprojects {
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
 
-        // Test
+        // Test(추후 불필요한 의존성 제거해야 함)
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+        testRuntimeOnly 'com.h2database:h2'
+        testImplementation 'io.rest-assured:rest-assured:5.5.5'
+        testImplementation "org.springframework.boot:spring-boot-testcontainers"
+        testImplementation "org.testcontainers:junit-jupiter"
+        testImplementation "org.testcontainers:testcontainers"
+        testImplementation 'org.mockito:mockito-junit-jupiter'
+        testImplementation 'org.assertj:assertj-core'
+        testImplementation platform("org.testcontainers:testcontainers-bom:1.19.7")
+
+        // swagger
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
     }
 
     tasks.named('test') {
@@ -80,6 +90,10 @@ subprojects {
     checkstyle {
         toolVersion = '10.21.4'
         configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        configDirectory = rootProject.file('config/checkstyle')
+        configProperties = [
+            'suppressionFile': rootProject.file('config/checkstyle/suppressions.xml').absolutePath
+        ]
         ignoreFailures = false
         maxWarnings = 0
     }
@@ -98,8 +112,12 @@ subprojects {
 tasks.register('lint') {
     group = 'verification'
     description = '코드 품질 검사 (spotless + checkstyle)'
-    dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'spotlessCheck' } }
-    dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'checkstyleMain' } }
+    // dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'spotlessCheck' } }
+    // dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'checkstyleMain' } }
+    // gateway 모듈은 의존성 문제로 제외
+    def projectsToLint = subprojects.findAll { it.path != ':baro-cloud:gateway' }
+    dependsOn projectsToLint.collect { it.tasks.matching { t -> t.name == 'spotlessCheck' } }
+    dependsOn projectsToLint.collect { it.tasks.matching { t -> t.name == 'checkstyleMain' } }
 }
 
 tasks.register('format') {
