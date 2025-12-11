@@ -3,7 +3,7 @@ package com.barofarm.order.order.client;
 import com.barofarm.order.order.config.InventoryFeignConfig;
 import com.barofarm.order.order.presentation.dto.InventoryDecreaseRequest;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(
@@ -13,6 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 )
 public interface InventoryClient {
 
-    @PostMapping("/decrease")
+    @PatchMapping("/decrease")
     void decreaseStock(@RequestBody InventoryDecreaseRequest request);
 }
