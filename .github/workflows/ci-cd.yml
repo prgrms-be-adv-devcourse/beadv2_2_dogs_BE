@@ -33,6 +33,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      - name: Extract module name from branch
+        id: module
+        run: |
+          if [[ "$GITHUB_REF" == refs/heads/main-* ]]; then
+            MODULE=$(echo ${GITHUB_REF#refs/heads/main-} | tr '[:upper:]' '[:lower:]')
+          elif [[ "$GITHUB_REF" == refs/heads/dev-* ]]; then
+            MODULE=$(echo ${GITHUB_REF#refs/heads/dev-} | tr '[:upper:]' '[:lower:]')
+          else
+            MODULE=""
+          fi
+          
+          # 빌드할 모듈 결정
+          case "$MODULE" in
+            auth) BUILD_MODULE=":baro-auth" ;;
+            buyer) BUILD_MODULE=":baro-buyer" ;;
+            seller) BUILD_MODULE=":baro-seller" ;;
+            order) BUILD_MODULE=":baro-order" ;;
+            support) BUILD_MODULE=":baro-support" ;;
+            eureka) BUILD_MODULE=":baro-cloud:eureka" ;;
+            gateway) BUILD_MODULE=":baro-cloud:gateway" ;;
+            config) BUILD_MODULE=":baro-cloud:config" ;;
+            cloud) BUILD_MODULE=":baro-cloud:eureka :baro-cloud:gateway :baro-cloud:config" ;;
+            data|infra) BUILD_MODULE="" ;;  # data/infra는 빌드 불필요
+            *) BUILD_MODULE="" ;;  # 알 수 없는 브랜치는 전체 빌드
+          esac
+          
+          echo "module=$MODULE" >> $GITHUB_OUTPUT
+          echo "build_module=$BUILD_MODULE" >> $GITHUB_OUTPUT
+          echo "Extracted module: $MODULE -> Build: $BUILD_MODULE"
+      
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -55,18 +85,42 @@ jobs:
       
       - name: Code formatting check (Spotless)
         continue-on-error: true
-        run: ./gradlew spotlessCheck
+        run: |
+          BUILD_MODULE="${{ steps.module.outputs.build_module }}"
+          if [ -n "$BUILD_MODULE" ]; then
+            ./gradlew $BUILD_MODULE:spotlessCheck
+          else
+            ./gradlew spotlessCheck
+          fi
       
       - name: Lint check (Checkstyle)
         continue-on-error: true
-        run: ./gradlew checkstyleMain
+        run: |
+          BUILD_MODULE="${{ steps.module.outputs.build_module }}"
+          if [ -n "$BUILD_MODULE" ]; then
+            ./gradlew $BUILD_MODULE:checkstyleMain
+          else
+            ./gradlew checkstyleMain
+          fi
       
       - name: Build with Gradle
-        run: ./gradlew build -x test
+        run: |
+          BUILD_MODULE="${{ steps.module.outputs.build_module }}"
+          if [ -n "$BUILD_MODULE" ]; then
+            ./gradlew $BUILD_MODULE:build -x test
+          else
+            ./gradlew build -x test
+          fi
       
       - name: Run tests
         continue-on-error: true
-        run: ./gradlew test
+        run: |
+          BUILD_MODULE="${{ steps.module.outputs.build_module }}"
+          if [ -n "$BUILD_MODULE" ]; then
+            ./gradlew $BUILD_MODULE:test
+          else
+            ./gradlew test
+          fi
       
       - name: Upload test results
         if: always()
@@ -76,17 +130,50 @@ jobs:
           path: '**/build/test-results/test/'
           if-no-files-found: ignore  # 파일이 없어도 에러 발생하지 않음
       
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
-            baro-auth/build/libs/*.jar
+      - name: Determine artifact paths
+        id: artifacts
+        run: |
+          MODULE="${{ steps.module.outputs.module }}"
+          BUILD_MODULE="${{ steps.module.outputs.build_module }}"
+          
+          if [ -z "$BUILD_MODULE" ]; then
+            # 전체 빌드
+            ARTIFACT_PATHS="baro-auth/build/libs/*.jar
             baro-buyer/build/libs/*.jar
             baro-seller/build/libs/*.jar
             baro-order/build/libs/*.jar
             baro-support/build/libs/*.jar
-            baro-cloud/*/build/libs/*.jar
+            baro-cloud/*/build/libs/*.jar"
+          else
+            # 특정 모듈만
+            case "$MODULE" in
+              auth) ARTIFACT_PATHS="baro-auth/build/libs/*.jar" ;;
+              buyer) ARTIFACT_PATHS="baro-buyer/build/libs/*.jar" ;;
+              seller) ARTIFACT_PATHS="baro-seller/build/libs/*.jar" ;;
+              order) ARTIFACT_PATHS="baro-order/build/libs/*.jar" ;;
+              support) ARTIFACT_PATHS="baro-support/build/libs/*.jar" ;;
+              eureka) ARTIFACT_PATHS="baro-cloud/eureka/build/libs/*.jar" ;;
+              gateway) ARTIFACT_PATHS="baro-cloud/gateway/build/libs/*.jar" ;;
+              config) ARTIFACT_PATHS="baro-cloud/config/build/libs/*.jar" ;;
+              cloud) ARTIFACT_PATHS="baro-cloud/eureka/build/libs/*.jar
+            baro-cloud/gateway/build/libs/*.jar
+            baro-cloud/config/build/libs/*.jar" ;;
+              *) ARTIFACT_PATHS="" ;;
+            esac
+          fi
+          
+          echo "paths<<EOF" >> $GITHUB_OUTPUT
+          echo "$ARTIFACT_PATHS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Upload build artifacts
+        if: steps.artifacts.outputs.paths != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            ${{ steps.artifacts.outputs.paths }}
+          if-no-files-found: ignore
 
   # ==================================================
   # Docker: Build and Push Images
