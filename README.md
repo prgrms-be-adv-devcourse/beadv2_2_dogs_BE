@@ -55,7 +55,7 @@ baro-farm/
 
 ## 🚀 기술 스택
 
-- **Framework**: Spring Boot 4.0.0
+- **Framework**: Spring Boot 3.5.8
 - **Java**: JetBrains JDK 21
 - **Build Tool**: Gradle 8.14
 - **Spring Cloud**: 2025.0.0
