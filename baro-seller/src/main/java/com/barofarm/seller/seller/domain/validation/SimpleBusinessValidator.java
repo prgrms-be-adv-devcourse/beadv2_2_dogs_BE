@@ -5,37 +5,43 @@ import static com.barofarm.seller.seller.exception.ValidationErrorCode.INVALID_B
 import static com.barofarm.seller.seller.exception.ValidationErrorCode.REQUIRED_FIELD_MISSING;
 
 import com.barofarm.seller.common.exception.CustomException;
-import com.barofarm.seller.seller.infrastructure.SellerJpaRepository;
+import com.barofarm.seller.seller.exception.SellerErrorCode;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-// 실제 국세청 API 연동 전 -> 형식이랑 중복 정도만 검증
+/**
+ * 사업자 등록번호/대표자명 검증 + 중복 검증(포트 사용).
+ * DB 의존은 SellerDuplicationChecker 포트를 통해 위임한다.
+ */
 @Component
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@RequiredArgsConstructor
 public class SimpleBusinessValidator implements BusinessValidator {
-    private final SellerJpaRepository sellerJpaRepository;
+
+    private final SellerDuplicationChecker duplicationChecker;
 
     @Override
-    public void validate(String businessRegNo, String businessOwnerName) {
+    public void validate(UUID userId, String businessRegNo, String businessOwnerName) {
 
-        // 1. 빈 값 체크
+        // 1. 필수 값 확인
         if (!StringUtils.hasText(businessRegNo) || !StringUtils.hasText(businessOwnerName)) {
             throw new CustomException(REQUIRED_FIELD_MISSING);
         }
 
-        // 2. 형식(길이) 간단 검증 - 예시로 10자 검증
+        // 2. 사업자번호 길이 검증(기본 10자리)
         if (businessRegNo.length() != 10) {
             throw new CustomException(INVALID_BUSINESS_NO_FORMAT);
         }
 
-        // 3. 이미 등록된건지 중복 체크
-        if (sellerJpaRepository.existsByBusinessRegNo(businessRegNo)) {
+        // 3. 사업자번호 중복 검증 (DB 의존 → 포트 사용)
+        if (duplicationChecker.existsByBusinessRegNo(businessRegNo)) {
             throw new CustomException(DUPLICATE_BUSINESS_NO);
         }
 
-
+        // 4. 유저 기준 중복 셀러 검증 (DB 의존 → 포트 사용)
+        if (duplicationChecker.existsByUserId(userId)) {
+            throw new CustomException(SellerErrorCode.SELLER_ALREADY_EXISTS);
+        }
     }
-
 }

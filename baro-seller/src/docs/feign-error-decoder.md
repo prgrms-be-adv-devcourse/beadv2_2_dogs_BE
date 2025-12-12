@@ -19,6 +19,14 @@
 2. 다른 서비스에 대한 에러 코드를 추가할 때는 `FeignErrorCode`에 항목을 추가하고, `FeignErrorDecoder`의 매핑 조건을 함께 보강한다.
 3. 상태 코드 외에 본문까지 해석해야 할 경우, `Response`의 body를 읽어 메시지를 구성한 뒤 `CustomException`을 생성하도록 확장한다(본문 스트림은 한 번만 읽을 수 있으므로 주의).
 
+## SellerService 후처리 Feign 실패 대응
+- `SellerService.applyForSeller`는 트랜잭션 커밋 이후 Auth 서비스로 `grantSeller`를 Feign 호출한다.
+- 커밋 이후에는 롤백이 불가능하므로, 호출 실패 시 바로 튕기기보다는 **재시도 + 상세 로그**를 남긴 뒤 최종 실패 시 `CustomException(FeignErrorCode.AUTH_SERVICE_UNAVAILABLE)`을 던진다.
+- 적용 로직
+  - 3회까지 재시도(기본 500ms 증가형 백오프) 후 성공 시점에 종료.
+  - 각 시도 실패마다 warn 로그, 최종 실패 시 error 로그로 남김.
+  - 호출 직후/성공 후 info 로그로 호출 흐름을 확인할 수 있게 함.
+
 ## 기대 효과
 - Feign 호출 실패 처리 로직을 한 곳에 모아 서비스 레이어가 단순해진다.
 - 공통 `CustomException`으로 변환되므로 기존 `GlobalExceptionHandler`만으로 일관된 HTTP 응답을 내려줄 수 있다.
