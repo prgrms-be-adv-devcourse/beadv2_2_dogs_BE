@@ -1,6 +1,7 @@
 package com.barofarm.order.payment.domain;
 
 import com.barofarm.order.common.entity.BaseEntity;
+import com.barofarm.order.payment.client.dto.TossPaymentResponse;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -42,16 +43,38 @@ public class Payment extends BaseEntity {
     @Column(name = "fail_reason")
     private String failReason;
 
-    private Payment(String paymentKey, String orderId, Long amount) {
+    private Payment(String paymentKey,
+                    String orderId,
+                    Long amount,
+                    String method,
+                    LocalDateTime requstedAt,
+                    LocalDateTime approvedAt
+    ) {
         this.id = UUID.randomUUID();
         this.paymentKey = paymentKey;
         this.orderId = orderId;
         this.amount = amount;
-        this.status = PaymentStatus.READY;
+        this.method = method;
+        this.requestedAt = requstedAt;
+        this.approvedAt = approvedAt;
+        this.status = PaymentStatus.CONFIRMED;
+        this.failReason = null;
     }
 
-    public static Payment of(String paymentKey, String orderId, Long amount) {
-        return new Payment(paymentKey, orderId, amount);
+
+    public static Payment of(TossPaymentResponse response) {
+        return new Payment(
+            response.paymentKey(),
+            response.orderId(),
+            response.totalAmount(),
+            response.method(),
+            response.requestedAt() != null
+                ? response.requestedAt().toLocalDateTime()
+                : null,
+            response.approvedAt() != null
+                ? response.approvedAt().toLocalDateTime()
+                : null
+        );
     }
 
     public void markConfirmed(String method, LocalDateTime approvedAt, LocalDateTime requestedAt) {
@@ -62,8 +85,7 @@ public class Payment extends BaseEntity {
         this.failReason = null;
     }
 
-    public void markFailed(String failReason) {
-        this.status = PaymentStatus.FAILED;
-        this.failReason = failReason;
+    public void refund() {
+        this.status = PaymentStatus.REFUNDED;
     }
 }

@@ -4,6 +4,7 @@ import com.barofarm.order.payment.domain.Payment;
 import com.barofarm.order.payment.domain.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -14,5 +15,10 @@ public class PaymentRepositoryAdapter implements PaymentRepository {
     @Override
     public Payment save(Payment payment) {
         return paymentJpaRepository.save(payment);
+    }
+
+    @Override
+    public Optional<Payment> findByPaymentKey(String paymentKey) {
+        return paymentJpaRepository.findByPaymentKey(paymentKey);
     }
 }

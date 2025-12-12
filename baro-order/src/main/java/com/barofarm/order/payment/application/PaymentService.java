@@ -1,5 +1,6 @@
 package com.barofarm.order.payment.application;
 
+import com.barofarm.order.common.exception.CustomException;
 import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.order.application.OrderService;
 import com.barofarm.order.payment.application.dto.request.TossPaymentRefundCommand;
@@ -13,9 +14,8 @@ import com.barofarm.order.payment.domain.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 import java.util.UUID;
+import static com.barofarm.order.payment.exception.PaymentErrorCode.PAYMENT_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -30,18 +30,10 @@ public class PaymentService {
         TossPaymentResponse tossPayment = tossPaymentClient.confirm(command);
 
         UUID orderId = UUID.fromString(tossPayment.orderId());
-        Payment payment = Payment.of(
-            tossPayment.paymentKey(),
-            tossPayment.orderId(),
-            tossPayment.totalAmount()
-        );
-        LocalDateTime approvedAt = tossPayment.approvedAt() != null ? tossPayment.approvedAt().toLocalDateTime() : null;
-        LocalDateTime requestedAt = tossPayment.requestedAt() != null ? tossPayment.requestedAt().toLocalDateTime() : null;
-        payment.markConfirmed(tossPayment.method(), approvedAt, requestedAt);
-
-        Payment saved = paymentRepository.save(payment);
-
         orderService.markOrderPaid(orderId);
+
+        Payment payment = Payment.of(tossPayment);
+        Payment saved = paymentRepository.save(payment);
 
         // TODO: 정산 서비스 호출 & 알람 서비스 호출
         return ResponseDto.ok(TossPaymentConfirmInfo.from(saved));
@@ -54,7 +46,9 @@ public class PaymentService {
         UUID orderId = UUID.fromString(tossResponse.orderId());
         orderService.cancelOrder(orderId);
 
-        TossPaymentRefundInfo info = TossPaymentRefundInfo.from(tossResponse);
-        return ResponseDto.ok(info);
+        Payment payment = paymentRepository.findByPaymentKey(command.paymentKey())
+                .orElseThrow(() -> new CustomException(PAYMENT_NOT_FOUND));
+        payment.refund();
+        return ResponseDto.ok(TossPaymentRefundInfo.from(tossResponse));
     }
 }

@@ -4,14 +4,12 @@ import com.barofarm.order.payment.application.dto.request.TossPaymentRefundComma
 
 public record TossPaymentRefundRequest(
     String paymentKey,
-    String cancelReason,
-    Long cancelAmount
+    String cancelReason
 ) {
     public TossPaymentRefundCommand toCommand() {
         return new TossPaymentRefundCommand(
             paymentKey,
-            cancelReason,
-            cancelAmount
+            cancelReason
         );
     }
 }

@@ -79,9 +79,6 @@ public class TossPaymentClient {
 
         Map<String, Object> body = new HashMap<>();
         body.put("cancelReason", command.cancelReason());
-        if (command.cancelAmount() != null) {
-            body.put("cancelAmount", command.cancelAmount());
-        }
 
         String url = String.format(CANCEL_URL, command.paymentKey());
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
