@@ -3,53 +3,66 @@ version: '3.8'
 services:
   kafka:
     image: confluentinc/cp-kafka:7.6.0
-    container_name: barofarm-kafka
+    container_name: baro-kafka
     ports:
       - "9092:9092"
     environment:
-      # Cluster ID 생성 (고정값 가능) - base64 UUID 형식
-      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qg"
-
-      # KRaft 모드 활성화
-      KAFKA_PROCESS_ROLES: "broker,controller"
+      # KRaft 모드 설정
+      KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      # CLUSTER_ID는 기존 볼륨에 저장된 값을 사용 (변경 시 데이터 손실)
+      # 새로 초기화하려면 .env에서 다른 값으로 설정
+      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qg}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qg}
 
-      # Controller Listener
-      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://localhost:9092"
+      # Listeners 설정
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
 
-      # Listener → 프로토콜 매핑
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
-
-      # Controller 전용 포트
-      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
-
-      # Controller Quorum 설정
-      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@localhost:29093"
-
-      # 로그 관련 기본 설정
+      # 토픽 설정
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-
-      # 토픽 자동 생성
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
-      # 로그 디렉토리
-      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+      # 로그 설정
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      # 메모리 제한
+      KAFKA_HEAP_OPTS: -Xmx384m -Xms256m
 
+    # init: true - tini를 PID 1로 실행하여 zombie 프로세스 방지
+    # tini가 모든 자식 프로세스의 종료 상태를 수집(wait)하여 zombie 발생 방지
+    init: true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
     volumes:
       - kafka-data:/var/lib/kafka/data
-
+    restart: unless-stopped
+    networks:
+      - baro-network
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
-      interval: 10s
+      # init: true로 tini가 PID 1로 실행되어 모든 자식 프로세스의 종료 상태를 수집
+      # CMD 사용으로 shell 없이 직접 실행 (추가 안전장치)
+      # interval을 30s로 늘려 healthcheck 빈도 감소
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 60s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 40s
 
 networks:
-  default:
-    name: kafka-network
+  baro-network:
+    # Docker Compose가 프로젝트 이름을 접두사로 붙이므로 be_baro-network 사용
+    name: be_baro-network  # 네트워크 이름 명시적으로 지정
+    external: true
 
 volumes:
   kafka-data:
