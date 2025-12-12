@@ -6,9 +6,30 @@ import java.util.UUID;
 
 public record OrderCancelInfo(
     UUID orderId,
-    OrderStatus status
+    Long totalAmount,
+    OrderStatus status,
+    String receiverName,
+    String phone,
+    String email,
+    String zipCode,
+    String address,
+    String addressDetail,
+    String deliveryMemo,
+    int itemCount
 ) {
     public static OrderCancelInfo from(Order order) {
-        return new OrderCancelInfo(order.getId(), order.getStatus());
+        return new OrderCancelInfo(
+            order.getId(),
+            order.getTotalAmount(),
+            order.getStatus(),
+            order.getReceiverName(),
+            order.getPhone(),
+            order.getEmail(),
+            order.getZipCode(),
+            order.getAddress(),
+            order.getAddressDetail(),
+            order.getDeliveryMemo(),
+            order.getOrderItems().size()
+        );
     }
 }

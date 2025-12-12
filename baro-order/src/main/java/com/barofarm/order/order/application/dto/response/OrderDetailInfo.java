@@ -8,15 +8,27 @@ import java.util.UUID;
 public record OrderDetailInfo(
     UUID orderId,
     long totalAmount,
+    String receiverName,
+    String phone,
+    String email,
+    String zipCode,
     String address,
+    String addressDetail,
+    String deliveryMemo,
     OrderStatus status,
     LocalDateTime createdAt
 ) {
     public static OrderDetailInfo from(Order order) {
         return new OrderDetailInfo(
             order.getId(),
-            order.getTotalAmount(), // 엔티티에 맞게 필드 이름 조정
+            order.getTotalAmount(),
+            order.getReceiverName(),
+            order.getPhone(),
+            order.getEmail(),
+            order.getZipCode(),
             order.getAddress(),
+            order.getAddressDetail(),
+            order.getDeliveryMemo(),
             order.getStatus(),
             order.getCreatedAt()
         );

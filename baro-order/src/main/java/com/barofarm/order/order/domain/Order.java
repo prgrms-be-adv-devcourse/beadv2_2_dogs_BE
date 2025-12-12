@@ -1,6 +1,7 @@
 package com.barofarm.order.order.domain;
 
 import com.barofarm.order.common.entity.BaseEntity;
+import com.barofarm.order.order.application.dto.request.OrderCreateCommand;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,22 +30,66 @@ public class Order extends BaseEntity {
     @Column(name = "user_id", columnDefinition = "BINARY(16)")
     private UUID userId;
 
+    @Column(name = "receiver_name", nullable = false)
+    private String receiverName;
+
+    @Column(name = "phone", nullable = false)
+    private String phone;
+
+    @Column(name = "email", nullable = false)
+    private String email;
+
+    @Column(name = "zip_code", nullable = false)
+    private String zipCode;
+
     @Column(name = "address", nullable = false)
     private String address;
+
+    @Column(name = "address_detail", nullable = false)
+    private String addressDetail;
+
+    @Column(name = "delivery_memo")
+    private String deliveryMemo;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    private Order(UUID id, UUID userId, String address) {
+    private Order(
+            UUID id,
+            UUID userId,
+            String receiverName,
+            String phone,
+            String email,
+            String zipCode,
+            String address,
+            String addressDetail,
+            String deliveryMemo
+    ) {
         this.id = id;
         this.userId = userId;
+        this.receiverName = receiverName;
+        this.phone = phone;
+        this.email = email;
+        this.zipCode = zipCode;
         this.address = address;
+        this.addressDetail = addressDetail;
+        this.deliveryMemo = deliveryMemo;
         this.totalAmount = 0L;
         this.status = OrderStatus.PENDING;
     }
 
-    public static Order of(UUID userId, String address) {
-        return new Order(UUID.randomUUID(), userId, address);
+    public static Order of(UUID userId, OrderCreateCommand command) {
+        return new Order(
+                UUID.randomUUID(),
+                userId,
+                command.receiverName(),
+                command.phone(),
+                command.email(),
+                command.zipCode(),
+                command.address(),
+                command.addressDetail(),
+                command.deliveryMemo()
+        );
     }
 
     public void addOrderItem(UUID productId, int quantity, Long unitPrice) {
@@ -64,7 +109,4 @@ public class Order extends BaseEntity {
     public boolean isFinished() {
         return this.status == OrderStatus.PAID || this.status == OrderStatus.CANCELED;
     }
-
-
-
 }

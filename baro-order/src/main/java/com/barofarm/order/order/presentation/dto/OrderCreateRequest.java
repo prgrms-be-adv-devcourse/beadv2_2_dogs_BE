@@ -2,17 +2,32 @@ package com.barofarm.order.order.presentation.dto;
 
 import com.barofarm.order.order.application.dto.request.OrderCreateCommand;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import java.util.List;
 import java.util.UUID;
 
 public record OrderCreateRequest(
 
-    @NotBlank(message = "배송지 주소는 필수입니다.")
+    @NotBlank(message = "받는 분 이름은 필수입니다.")
+    String receiverName,
+
+    @NotBlank(message = "휴대폰 번호는 필수입니다.")
+    String phone,
+
+    @NotBlank(message = "이메일은 필수입니다.")
+    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    String email,
+
+    @NotBlank(message = "우편번호는 필수입니다.")
+    String zipCode,
+
+    @NotBlank(message = "주소는 필수입니다.")
     String address,
+
+    @NotBlank(message = "상세주소는 필수입니다.")
+    String addressDetail,
+
+    String deliveryMemo,  // 선택값 → 검증 없음
 
     @NotEmpty(message = "주문 상품은 최소 1개 이상이어야 합니다.")
     @Valid
@@ -21,16 +36,22 @@ public record OrderCreateRequest(
 ) {
     public OrderCreateCommand toCommand() {
         List<OrderCreateCommand.OrderItemCreateCommand> itemCommands = items.stream()
-            .map(i -> new OrderCreateCommand.OrderItemCreateCommand(
-                i.productId(),
-                i.quantity(),
-                i.unitPrice()
-            ))
-            .toList();
+                .map(i -> new OrderCreateCommand.OrderItemCreateCommand(
+                        i.productId(),
+                        i.quantity(),
+                        i.unitPrice()
+                ))
+                .toList();
 
         return new OrderCreateCommand(
-            address,
-            itemCommands
+                receiverName,
+                phone,
+                email,
+                zipCode,
+                address,
+                addressDetail,
+                deliveryMemo,
+                itemCommands
         );
     }
 

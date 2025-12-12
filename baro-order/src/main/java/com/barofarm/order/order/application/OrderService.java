@@ -38,9 +38,9 @@ public class OrderService {
                 ))
                 .toList()
         );
-        //inventoryClient.decreaseStock(inventoryRequest);
+        inventoryClient.decreaseStock(inventoryRequest);
 
-        Order order = Order.of(mockUserId, command.address());
+        Order order = Order.of(mockUserId, command);
 
         for (OrderCreateCommand.OrderItemCreateCommand item : command.items()) {
             order.addOrderItem(
@@ -72,7 +72,7 @@ public class OrderService {
                         ))
                         .toList()
         );
-        //inventoryClient.increaseStock(inventoryRequest);
+        inventoryClient.increaseStock(inventoryRequest);
 
         order.cancel();
         return ResponseDto.ok(OrderCancelInfo.from(order));
