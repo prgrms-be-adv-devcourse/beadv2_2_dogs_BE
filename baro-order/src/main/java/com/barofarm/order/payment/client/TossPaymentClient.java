@@ -40,8 +40,6 @@ public class TossPaymentClient {
 
         Map<String, Object> body = new HashMap<>();
         body.put("paymentKey", command.paymentKey());
-        body.put("orderId", command.orderId());
-        body.put("amount", command.amount());
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
