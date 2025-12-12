@@ -35,7 +35,7 @@ spring:
           starttls:
             enable: true
   elasticsearch:
-    uris: http://localhost:9200
+    uris: ${SPRING_ELASTICSEARCH_URIS:http://elasticsearch:9200}
 
 eureka:
   client:
