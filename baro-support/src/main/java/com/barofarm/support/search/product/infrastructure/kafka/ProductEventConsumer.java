@@ -1,6 +1,6 @@
 package com.barofarm.support.search.product.infrastructure.kafka;
 
-import com.barofarm.support.events.search.ProductEvent;
+import com.barofarm.support.event.ProductEvent;
 import com.barofarm.support.search.product.application.ProductSearchService;
 import com.barofarm.support.search.product.application.dto.ProductIndexRequest;
 import lombok.RequiredArgsConstructor;

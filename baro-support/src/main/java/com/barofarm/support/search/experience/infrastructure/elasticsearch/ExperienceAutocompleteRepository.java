@@ -12,14 +12,12 @@ public interface ExperienceAutocompleteRepository
     // "토마"가 입력되면 experienceName이 "토마"로 시작하는 문서만 반환
     @Query("""
         {
-          "query": {
-            "match_phrase_prefix": {
-              "experienceName": {
-                "query": "?0"
-              }
-            }
-          }
-        }
+                   "match_phrase_prefix": {
+                     "experienceName": {
+                       "query": "?0"
+                     }
+                   }
+                 }
         """)
     List<ExperienceAutocompleteDocument> findByPrefix(String prefix);
 }

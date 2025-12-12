@@ -1,13 +1,18 @@
-package com.barofarm.support.events.search;
+package com.barofarm.support.event;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ExperienceEvent {
 
     private ExperienceEventType type;
@@ -21,6 +26,8 @@ public class ExperienceEvent {
 
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ExperienceEventData {
         private UUID experienceId;
         private String experienceName;

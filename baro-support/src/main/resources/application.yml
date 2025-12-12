@@ -5,17 +5,19 @@ api:
   v1: /api/v1
 
 spring:
-  application:
-    name: support-service
+  config:
+    activate:
+      on-profile: prod
   datasource:
-    url: jdbc:h2:mem:supportdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:mysql://3.34.14.73:3306/barosupport?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useSSL=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${MYSQL_USER:barouser}
+    password: ${MYSQL_PASSWORD:baroUser123!!123!!}
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
+    database-platform: org.hibernate.dialect.MySQL8Dialect
   mail:
     host: smtp.gmail.com
     port: 587
@@ -31,9 +33,13 @@ spring:
     uris: http://localhost:9200
   kafka:
     bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: support-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+      auto-offset-reset: earliest
 
 eureka:
   client:

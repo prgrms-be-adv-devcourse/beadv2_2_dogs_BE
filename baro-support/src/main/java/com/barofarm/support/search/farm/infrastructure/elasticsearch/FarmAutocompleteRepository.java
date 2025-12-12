@@ -12,14 +12,12 @@ public interface FarmAutocompleteRepository
     // "토마"가 입력되면 farmName이 "토마"로 시작하는 문서만 반환
     @Query("""
         {
-          "query": {
-            "match_phrase_prefix": {
-              "farmName": {
-                "query": "?0"
-              }
-            }
-          }
-        }
+                    "match_phrase_prefix": {
+                      "farmName": {
+                        "query": "?0"
+                      }
+                    }
+                  }
         """)
     List<FarmAutocompleteDocument> findByPrefix(String prefix);
 }
