@@ -3,9 +3,9 @@ package com.barofarm.order.payment.presentation;
 import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.payment.application.PaymentService;
 import com.barofarm.order.payment.application.dto.response.TossPaymentConfirmInfo;
-import com.barofarm.order.payment.application.dto.response.TossPaymentCancelInfo;
+import com.barofarm.order.payment.application.dto.response.TossPaymentRefundInfo;
 import com.barofarm.order.payment.presentation.dto.TossPaymentConfirmRequest;
-import com.barofarm.order.payment.presentation.dto.TossPaymentCancelRequest;
+import com.barofarm.order.payment.presentation.dto.TossPaymentRefundRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +23,7 @@ public class PaymentController implements PaymentSwaggerApi{
     }
 
     @PostMapping("/toss/refund")
-    public ResponseDto<TossPaymentCancelInfo> refundPayment(@RequestBody TossPaymentCancelRequest refundRequest){
-        return paymentService.cancelPayment(refundRequest.toCommand());
+    public ResponseDto<TossPaymentRefundInfo> refundPayment(@RequestBody TossPaymentRefundRequest refundRequest){
+        return paymentService.refundPayment(refundRequest.toCommand());
     }
 }

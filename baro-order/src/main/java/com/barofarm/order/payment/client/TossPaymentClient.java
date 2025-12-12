@@ -1,7 +1,7 @@
 package com.barofarm.order.payment.client;
 
 import com.barofarm.order.common.exception.CustomException;
-import com.barofarm.order.payment.application.dto.request.TossPaymentCancelCommand;
+import com.barofarm.order.payment.application.dto.request.TossPaymentRefundCommand;
 import com.barofarm.order.payment.application.dto.request.TossPaymentConfirmCommand;
 import com.barofarm.order.payment.client.dto.TossPaymentResponse;
 import org.springframework.http.HttpEntity;
@@ -70,7 +70,7 @@ public class TossPaymentClient {
         }
     }
 
-    public TossPaymentResponse cancel(TossPaymentCancelCommand command) {
+    public TossPaymentResponse refund(TossPaymentRefundCommand command) {
         if (properties.getSecretKey() == null || properties.getSecretKey().isBlank()) {
             throw new CustomException(INVALID_SECRET_KEY);
         }

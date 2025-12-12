@@ -1,14 +1,14 @@
 package com.barofarm.order.payment.presentation.dto;
 
-import com.barofarm.order.payment.application.dto.request.TossPaymentCancelCommand;
+import com.barofarm.order.payment.application.dto.request.TossPaymentRefundCommand;
 
-public record TossPaymentCancelRequest(
+public record TossPaymentRefundRequest(
     String paymentKey,
     String cancelReason,
     Long cancelAmount
 ) {
-    public TossPaymentCancelCommand toCommand() {
-        return new TossPaymentCancelCommand(
+    public TossPaymentRefundCommand toCommand() {
+        return new TossPaymentRefundCommand(
             paymentKey,
             cancelReason,
             cancelAmount

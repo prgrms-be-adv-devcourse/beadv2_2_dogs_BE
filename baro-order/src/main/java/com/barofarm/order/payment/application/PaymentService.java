@@ -2,9 +2,9 @@ package com.barofarm.order.payment.application;
 
 import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.order.application.OrderService;
-import com.barofarm.order.payment.application.dto.request.TossPaymentCancelCommand;
+import com.barofarm.order.payment.application.dto.request.TossPaymentRefundCommand;
 import com.barofarm.order.payment.application.dto.request.TossPaymentConfirmCommand;
-import com.barofarm.order.payment.application.dto.response.TossPaymentCancelInfo;
+import com.barofarm.order.payment.application.dto.response.TossPaymentRefundInfo;
 import com.barofarm.order.payment.application.dto.response.TossPaymentConfirmInfo;
 import com.barofarm.order.payment.client.TossPaymentClient;
 import com.barofarm.order.payment.client.dto.TossPaymentResponse;
@@ -12,6 +12,8 @@ import com.barofarm.order.payment.domain.Payment;
 import com.barofarm.order.payment.domain.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -23,6 +25,7 @@ public class PaymentService {
     private final TossPaymentClient tossPaymentClient;
     private final OrderService orderService;
 
+    @Transactional
     public ResponseDto<TossPaymentConfirmInfo> confirmPayment(TossPaymentConfirmCommand command) {
         TossPaymentResponse tossPayment = tossPaymentClient.confirm(command);
 
@@ -44,14 +47,14 @@ public class PaymentService {
         return ResponseDto.ok(TossPaymentConfirmInfo.from(saved));
     }
 
-    // 결제 취소 후 주문 취소(주문 데이터 canceld로 변경 재고 복구)
-    public ResponseDto<TossPaymentCancelInfo> cancelPayment(TossPaymentCancelCommand command) {
-        TossPaymentResponse tossResponse = tossPaymentClient.cancel(command);
+    @Transactional
+    public ResponseDto<TossPaymentRefundInfo> refundPayment(TossPaymentRefundCommand command) {
+        TossPaymentResponse tossResponse = tossPaymentClient.refund(command);
 
         UUID orderId = UUID.fromString(tossResponse.orderId());
         orderService.cancelOrder(orderId);
 
-        TossPaymentCancelInfo info = TossPaymentCancelInfo.from(tossResponse);
+        TossPaymentRefundInfo info = TossPaymentRefundInfo.from(tossResponse);
         return ResponseDto.ok(info);
     }
 }
