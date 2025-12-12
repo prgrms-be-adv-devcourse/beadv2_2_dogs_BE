@@ -65,6 +65,38 @@ spring:
               filters:
                 - RewritePath=/openapi/auth/(?<segment>.*), /${segment}
 
+            # Buyer Service API 문서 프록시
+            - id: buyer-service-openapi
+              uri: lb://BUYER-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
+              predicates:
+                - Path=/openapi/buyer/v3/api-docs
+              filters:
+                - RewritePath=/openapi/buyer/(?<segment>.*), /${segment}
+
+            # Seller Service API 문서 프록시
+            - id: seller-service-openapi
+              uri: lb://SELLER-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
+              predicates:
+                - Path=/openapi/seller/v3/api-docs
+              filters:
+                - RewritePath=/openapi/seller/(?<segment>.*), /${segment}
+
+            # Order Service API 문서 프록시
+            - id: order-service-openapi
+              uri: lb://ORDER-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
+              predicates:
+                - Path=/openapi/order/v3/api-docs
+              filters:
+                - RewritePath=/openapi/order/(?<segment>.*), /${segment}
+
+            # Support Service API 문서 프록시
+            - id: support-service-openapi
+              uri: lb://SUPPORT-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
+              predicates:
+                - Path=/openapi/support/v3/api-docs
+              filters:
+                - RewritePath=/openapi/support/(?<segment>.*), /${segment}
+
 eureka:
   client:
     service-url:
@@ -84,14 +116,22 @@ management:
         include: health, info, gateway
 
 
-# 이 부분 수정
+# Swagger/OpenAPI 통합 설정 - 모든 서비스의 Swagger를 Gateway에서 통합 제공
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
-    use-root-path: false  # 여기로 이동
+    use-root-path: false
     urls:
       - name: Auth Service
         url: /openapi/auth/v3/api-docs
+      - name: Buyer Service
+        url: /openapi/buyer/v3/api-docs
+      - name: Seller Service
+        url: /openapi/seller/v3/api-docs
+      - name: Order Service
+        url: /openapi/order/v3/api-docs
+      - name: Support Service
+        url: /openapi/support/v3/api-docs
   api-docs:
     enabled: true
   enable-native-support: true
