@@ -26,14 +26,20 @@ public class OrderController implements OrderSwaggerApi {
         return orderService.createOrder(mockUserId, request.toCommand());
     }
 
-    @PutMapping("/{orderId}/cancel")
-    public ResponseDto<OrderCancelInfo> cancelOrder(@PathVariable UUID orderId) {
-        return orderService.cancelOrder(orderId);
+    @GetMapping("/{orderId}")
+    public ResponseDto<OrderDetailInfo> findOrderDetail(@PathVariable UUID orderId) {
+        UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+        return orderService.findOrderDetail(mockUserId, orderId);
     }
 
     @GetMapping
     public ResponseDto<CustomPage<OrderDetailInfo>> findOrderList(Pageable pageable) {
         UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
         return orderService.findOrderList(mockUserId, pageable);
+    }
+
+    @PutMapping("/{orderId}/cancel")
+    public ResponseDto<OrderCancelInfo> cancelOrder(@PathVariable UUID orderId) {
+        return orderService.cancelOrder(orderId);
     }
 }

@@ -54,7 +54,25 @@ public class OrderService {
         return ResponseDto.ok(OrderCreateInfo.from(saved));
     }
 
-    // 결제창에서 취소하기 혹은 x 버튼 클릭(아직 송금 안됨), 배치로 주문안된 것들 처리하는 작업 필요할듯
+    @Transactional(readOnly = true)
+    public ResponseDto<OrderDetailInfo> findOrderDetail(UUID mockUserId, UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
+
+        if (!order.getUserId().equals(mockUserId)) {
+            throw new CustomException(ORDER_NOT_FOUND);
+        }
+        return ResponseDto.ok(OrderDetailInfo.from(order));
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseDto<CustomPage<OrderDetailInfo>> findOrderList(UUID mockUserId, Pageable pageable){
+        Page<OrderDetailInfo> page = orderRepository
+                .findByUserIdOrderByCreatedAtDesc(mockUserId, pageable)
+                .map(OrderDetailInfo::from);
+        return ResponseDto.ok(CustomPage.from(page));
+    }
+
     @Transactional
     public ResponseDto<OrderCancelInfo> cancelOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
@@ -86,13 +104,5 @@ public class OrderService {
         if (order.getStatus() == OrderStatus.PENDING) {
             order.markPaid();
         }
-    }
-
-    @Transactional(readOnly = true)
-    public ResponseDto<CustomPage<OrderDetailInfo>> findOrderList(UUID mockUserId, Pageable pageable){
-        Page<OrderDetailInfo> page = orderRepository
-            .findByUserIdOrderByCreatedAtDesc(mockUserId, pageable)
-            .map(OrderDetailInfo::from);
-        return ResponseDto.ok(CustomPage.from(page));
     }
 }
