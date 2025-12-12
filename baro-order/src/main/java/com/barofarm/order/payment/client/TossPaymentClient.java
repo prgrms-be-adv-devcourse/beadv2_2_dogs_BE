@@ -4,6 +4,7 @@ import com.barofarm.order.common.exception.CustomException;
 import com.barofarm.order.payment.application.dto.request.TossPaymentRefundCommand;
 import com.barofarm.order.payment.application.dto.request.TossPaymentConfirmCommand;
 import com.barofarm.order.payment.client.dto.TossPaymentResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
@@ -19,6 +20,7 @@ import java.util.Map;
 import static com.barofarm.order.payment.exception.PaymentErrorCode.*;
 
 @Component
+@Slf4j
 public class TossPaymentClient {
 
     private static final String CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm";
@@ -40,6 +42,8 @@ public class TossPaymentClient {
 
         Map<String, Object> body = new HashMap<>();
         body.put("paymentKey", command.paymentKey());
+        body.put("orderId", command.orderId());
+        body.put("amount", command.amount());
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
@@ -50,7 +54,7 @@ public class TossPaymentClient {
             String responseBody = ex.getResponseBodyAsString();
 
             // TODO: log 남기기 (선택)
-            // log.error("Toss confirm failed. status={}, body={}", statusCode, responseBody, ex);
+            log.error("Toss confirm failed. status={}, body={}", statusCode, responseBody, ex);
 
             int status = statusCode.value();
             if (status == 400) {
