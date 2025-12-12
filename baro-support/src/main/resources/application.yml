@@ -1,6 +1,9 @@
 server:
   port: 8089
 
+api:
+  v1: /api/v1
+
 spring:
   application:
     name: support-service

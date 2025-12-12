@@ -8,8 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "통합 검색")
 @RestController
-@RequestMapping("/api/v1/search")
+@RequestMapping("${api.v1}/search")
 @RequiredArgsConstructor
 public class UnifiedSearchController {
     private final UnifiedSearchService unifiedSearchService;
@@ -26,7 +26,9 @@ public class UnifiedSearchController {
     @GetMapping
     public ResponseDto<UnifiedSearchResponse> search(
         @Parameter(description = "검색어", example = "토마토") @RequestParam String q,
-        @PageableDefault(size = 10) Pageable pageable) {
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
         UnifiedSearchResponse response = unifiedSearchService.search(q, pageable);
         return ResponseDto.ok(response);
     }

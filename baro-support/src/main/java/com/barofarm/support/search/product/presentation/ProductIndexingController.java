@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 /** 테스트용 상품 인덱싱 API - Kafka 연결 전까지 임시로 사용 - Kafka Consumer 구현 후 삭제 예정 */
 @Tag(name = "상품 인덱싱 (테스트용)", description = "Kafka 연결 전까지 임시 사용")
 @RestController
-@RequestMapping("/api/v1/admin/search/products")
+@RequestMapping("${api.v1}/admin/search/products")
 @RequiredArgsConstructor
 public class ProductIndexingController {
 

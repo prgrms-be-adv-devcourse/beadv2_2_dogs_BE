@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Tag(name = "체험 인덱싱 (테스트용)", description = "Kafka 연결 전까지 임시 사용")
 @RestController
-@RequestMapping("/api/v1/admin/search/experiences")
+@RequestMapping("${api.v1}/admin/search/experiences")
 @RequiredArgsConstructor
 public class ExperienceIndexingController {
 
