@@ -3,6 +3,7 @@ package com.barofarm.buyer.inventory.presentation;
 import com.barofarm.buyer.common.response.ResponseDto;
 import com.barofarm.buyer.inventory.application.InventoryService;
 import com.barofarm.buyer.inventory.presentation.dto.InventoryDecreaseRequest;
+import com.barofarm.buyer.inventory.presentation.dto.InventoryIncreaseRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,12 @@ public class InventoryController implements InventorySwaggerApi{
     @PostMapping("/decrease")
     public ResponseDto<Void> decreaseStock(@Valid @RequestBody InventoryDecreaseRequest request) {
         inventoryService.decreaseStock(request.toCommand());
+        return ResponseDto.ok(null);
+    }
+
+    @PostMapping("/increase")
+    public ResponseDto<Void> increaseStock(@Valid @RequestBody InventoryIncreaseRequest request) {
+        inventoryService.increaseStock(request.toCommand());
         return ResponseDto.ok(null);
     }
 }
