@@ -7,13 +7,19 @@ spring:
 
 eureka:
   instance:
-    hostname: localhost
+    # Docker 환경에서는 IP 주소로 등록하거나 서비스 이름 사용
+    # 환경 변수로 오버라이드 가능 (로컬 개발 시 localhost 사용)
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:eureka}
+    # IP 주소로 등록하여 Docker 환경에서 안정적으로 동작
+    prefer-ip-address: true
   client:
     register-with-eureka: false
     fetch-registry: false
     service-url:
+      # Docker 환경에서는 서비스 이름(eureka) 사용, 로컬에서는 localhost 사용
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
   server:
     enable-self-preservation: false
     eviction-interval-timer-in-ms: 5000
+
 

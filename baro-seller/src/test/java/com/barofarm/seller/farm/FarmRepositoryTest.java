@@ -10,7 +10,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -66,7 +66,7 @@ class FarmRepositoryTest extends BaseRepositoryTest {
 
         @Test
         @DisplayName("존재하지 않는 ID 조회 시 빈 Optional을 반환한다.")
-        void fail_not_found() {
+        void failNotFound() {
             // given
             UUID randomId = UUID.randomUUID();
 

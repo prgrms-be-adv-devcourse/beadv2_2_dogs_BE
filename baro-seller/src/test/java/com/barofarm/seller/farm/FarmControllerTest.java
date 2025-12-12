@@ -4,8 +4,13 @@ import static com.barofarm.seller.farm.domain.Status.ACTIVE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.barofarm.seller.common.response.CustomPage;
 import com.barofarm.seller.common.response.ResponseDto;
@@ -79,7 +84,7 @@ class FarmControllerTest extends BaseControllerSupport {
         @ParameterizedTest(name = "{index}: name={0}, description={1}, address={2}, phone={3}")
         @MethodSource("invalidFarmCreateRequests")
         @DisplayName("유효하지 않은 농장 생성 요청은 400 Bad Request를 반환한다")
-        void fail_invalid_inputs(String name,
+        void failInvalidInputs(String name,
                                  String description,
                                  String address,
                                  String phone) throws Exception {
@@ -172,7 +177,7 @@ class FarmControllerTest extends BaseControllerSupport {
         @ParameterizedTest(name = "{index}: name={0}, description={1}, address={2}, phone={3}")
         @MethodSource("invalidFarmUpdateRequests")
         @DisplayName("유효하지 않은 농장 수정 요청은 400 Bad Request를 반환한다")
-        void fail_invalid_inputs(String name,
+        void failInvalidInputs(String name,
                                  String description,
                                  String address,
                                  String phone) throws Exception {

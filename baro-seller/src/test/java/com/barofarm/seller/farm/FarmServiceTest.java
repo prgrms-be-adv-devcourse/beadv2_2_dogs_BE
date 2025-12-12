@@ -60,7 +60,7 @@ class FarmServiceTest extends BaseServiceTest {
 
         @Test
         @DisplayName("존재하지 않는 판매자 ID로 요청하면 SellerException을 발생시킨다")
-        void fail_seller_not_found() {
+        void failSellerNotFound() {
             // given
             UUID notExistSellerId = UUID.randomUUID();
 
@@ -112,7 +112,7 @@ class FarmServiceTest extends BaseServiceTest {
 
         @Test
         @DisplayName("존재하지 않는 농장 ID로 요청하면 FarmException을 발생시킨다")
-        void fail_farm_not_found() {
+        void failFarmNotFound() {
             // given
             Seller seller = saveSeller();
             UUID notExistFarmId = UUID.randomUUID();
@@ -132,7 +132,7 @@ class FarmServiceTest extends BaseServiceTest {
 
         @Test
         @DisplayName("다른 판매자의 농장을 수정하면 FARM_FORBIDDEN 예외를 발생시킨다")
-        void fail_farm_forbidden() {
+        void failFarmForbidden() {
             // given
             Seller owner = saveSeller();
             Seller otherSeller = saveSeller();
@@ -179,7 +179,7 @@ class FarmServiceTest extends BaseServiceTest {
 
         @Test
         @DisplayName("존재하지 않는 농장 ID로 요청하면 FarmException을 발생시킨다")
-        void fail_farm_not_found() {
+        void failFarmNotFound() {
             // given
             UUID notExistFarmId = UUID.randomUUID();
 
@@ -210,7 +210,7 @@ class FarmServiceTest extends BaseServiceTest {
 
         @Test
         @DisplayName("존재하지 않는 농장 ID로 요청하면 FarmException을 발생시킨다")
-        void fail_farm_not_found() {
+        void failFarmNotFound() {
             // given
             Seller seller = saveSeller();
             UUID notExistFarmId = UUID.randomUUID();
@@ -223,7 +223,7 @@ class FarmServiceTest extends BaseServiceTest {
 
         @Test
         @DisplayName("다른 판매자의 농장을 삭제하면 FARM_FORBIDDEN 예외를 발생시킨다")
-        void fail_farm_forbidden() {
+        void failFarmForbidden() {
             // given
             Seller owner = saveSeller();
             Seller otherSeller = saveSeller(); // 권한 없는 판매자
