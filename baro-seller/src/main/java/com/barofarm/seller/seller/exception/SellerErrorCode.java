@@ -9,7 +9,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum SellerErrorCode implements BaseErrorCode {
 
-    SELLER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 판매자 정보입니다.");
+    SELLER_NOT_FOUND(HttpStatus.NOT_FOUND, "Seller not found."),
+    SELLER_ALREADY_EXISTS(HttpStatus.CONFLICT, "Seller profile already exists.");
 
     private final HttpStatus status;
     private final String message;

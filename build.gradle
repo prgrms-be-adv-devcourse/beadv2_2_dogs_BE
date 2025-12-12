@@ -49,14 +49,16 @@ subprojects {
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
 
-        // Test(추후 불필요한 의존성 제거해야 함)
+        // Test
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
-        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
         testRuntimeOnly 'com.h2database:h2'
         testImplementation 'io.rest-assured:rest-assured:5.5.5'
         testImplementation "org.springframework.boot:spring-boot-testcontainers"
         testImplementation "org.testcontainers:junit-jupiter"
         testImplementation "org.testcontainers:testcontainers"
+        testImplementation platform("org.testcontainers:testcontainers-bom:1.19.7")
+
+        // Mockito, AssertJ
         testImplementation 'org.mockito:mockito-junit-jupiter'
         testImplementation 'org.assertj:assertj-core'
         testImplementation platform("org.testcontainers:testcontainers-bom:1.19.7")
