@@ -5,4 +5,5 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SellerJpaRepository extends JpaRepository<Seller, UUID> {
+    boolean existsByBusinessRegNo(String businessRegNo);
 }
