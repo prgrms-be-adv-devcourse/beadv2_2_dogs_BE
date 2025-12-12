@@ -111,7 +111,7 @@ public class Order extends BaseEntity {
         this.canceledAt = LocalDateTime.now();
     }
 
-    public boolean isFinished() {
-        return this.status == OrderStatus.PAID || this.status == OrderStatus.CANCELED;
+    public boolean isCanceled() {
+        return this.status == OrderStatus.CANCELED;
     }
 }

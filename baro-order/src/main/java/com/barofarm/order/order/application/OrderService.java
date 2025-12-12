@@ -78,7 +78,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
 
-        if (order.isFinished()) {
+        if (order.isCanceled()) {
             return ResponseDto.ok(OrderCancelInfo.from(order));
         }
 
