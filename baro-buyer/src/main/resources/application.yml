@@ -10,10 +10,10 @@ spring:
   main:
     allow-bean-definition-overriding: true
   datasource:
-    url: jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE:}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true
+    url: jdbc:mysql://3.34.14.73:3306/barobuyer?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${MYSQL_USER:}
-    password: ${MYSQL_PASSWORD:}
+    username: ${MYSQL_USER:barouser}
+    password: ${MYSQL_PASSWORD:baroUser123!!123!!}
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -38,7 +38,7 @@ eureka:
   instance:
     prefer-ip-address: true
 
-# Eureka 명시적 비활성화
+# Eureka 명시적 비활성화 (로컬 개발용)
 # eureka:
 #   client:
 #     enabled: false
@@ -51,7 +51,7 @@ eureka:
 logging:
   level:
     root: INFO
-    com.barofarm.support: DEBUG
+    com.barofarm.buyer: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.hibernate.orm.jdbc.bind: TRACE
@@ -68,4 +68,3 @@ springdoc:
     operations-sorter: alpha
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
-
