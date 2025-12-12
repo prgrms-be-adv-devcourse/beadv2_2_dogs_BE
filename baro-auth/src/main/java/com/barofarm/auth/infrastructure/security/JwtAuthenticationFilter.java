@@ -32,16 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String requestURI = request.getRequestURI();
 
-        // 0-1) Swagger & 공개 URL은 아예 필터에서 건너뛰기 [개발과정에선]
-        if (requestURI.startsWith("/swagger-ui") || requestURI.startsWith("/v3/api-docs")
-                || requestURI.startsWith("/auth/login") || requestURI.startsWith("/auth/signup")
-                || requestURI.startsWith("/auth/refresh") || requestURI.startsWith("/auth/logout")
-                || requestURI.startsWith("/auth/verification")|| requestURI.startsWith("/actuator")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 0-2) Authorization 헤더가 없으면 그냥 통과 (익명 사용자)
+        // 0) Authorization 헤더가 없으면 그냥 통과 (익명 사용자)
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
