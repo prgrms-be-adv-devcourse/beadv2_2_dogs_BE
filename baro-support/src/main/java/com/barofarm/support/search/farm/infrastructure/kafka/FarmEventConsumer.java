@@ -1,6 +1,6 @@
 package com.barofarm.support.search.farm.infrastructure.kafka;
 
-import com.barofarm.support.events.search.FarmEvent;
+import com.barofarm.support.event.FarmEvent;
 import com.barofarm.support.search.farm.application.FarmSearchService;
 import com.barofarm.support.search.farm.application.dto.FarmIndexRequest;
 import lombok.RequiredArgsConstructor;

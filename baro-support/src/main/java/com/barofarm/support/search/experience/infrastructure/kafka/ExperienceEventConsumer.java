@@ -1,6 +1,6 @@
 package com.barofarm.support.search.experience.infrastructure.kafka;
 
-import com.barofarm.support.events.search.ExperienceEvent;
+import com.barofarm.support.event.ExperienceEvent;
 import com.barofarm.support.search.experience.application.ExperienceSearchService;
 import com.barofarm.support.search.experience.application.dto.ExperienceIndexRequest;
 import lombok.RequiredArgsConstructor;

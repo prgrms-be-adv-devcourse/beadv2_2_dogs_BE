@@ -1,12 +1,17 @@
-package com.barofarm.support.events.search;
+package com.barofarm.support.event;
 
 import java.time.Instant;
 import java.util.UUID;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductEvent {
 
     private ProductEventType type;
@@ -20,6 +25,8 @@ public class ProductEvent {
 
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ProductEventData {
         private UUID productId;
         private String productName;

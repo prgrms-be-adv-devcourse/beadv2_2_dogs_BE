@@ -12,14 +12,12 @@ public interface ProductAutocompleteRepository
     // "토마"가 입력되면 productNam이 "토마"로 시작하는 문서만 찾아서 반환
     @Query("""
         {
-          "query": {
-            "match_phrase_prefix": {
-              "productName": {
-                "query": "?0"
-              }
-            }
-          }
-        }
+                   "match_phrase_prefix": {
+                     "productName": {
+                       "query": "?0"
+                     }
+                   }
+                 }
         """)
     List<ProductAutocompleteDocument> findByPrefix(String prefix);
 }

@@ -1,12 +1,17 @@
-package com.barofarm.support.events.search;
+package com.barofarm.support.event;
 
 import java.time.Instant;
 import java.util.UUID;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FarmEvent {
 
     private FarmEventType type;
@@ -20,6 +25,8 @@ public class FarmEvent {
 
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class FarmEventData {
         private UUID farmId;
         private String farmName;
