@@ -5,12 +5,10 @@ import com.barofarm.seller.farm.domain.FarmRepository;
 import com.barofarm.seller.seller.domain.SellerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @SpringBootTest
-@Import(TestSupportConfig.class)
 public abstract class BaseServiceTest {
 
     @Autowired
