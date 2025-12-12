@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Toss Payment Demo</title>
-    <!-- ✅ v1/payment 사용 -->
+    <!-- ✅ Toss Payments v1/payment -->
     <script src="https://js.tosspayments.com/v1/payment"></script>
     <style>
         body {
@@ -54,15 +54,65 @@
 <button id="pay-button">주문하기</button>
 
 <script>
-    document.addEventListener('DOMContentLoaded', async function () {
+    document.addEventListener('DOMContentLoaded', function () {
         try {
+            // TossPayments 로드 여부 확인
             if (typeof window.TossPayments !== 'function') {
                 throw new Error('TossPayments is not defined. 스크립트가 로드되었는지 확인하세요.');
             }
 
-            const clientKey = 'test_ck_ma60RZblrqReBBKpoZ7E8wzYWBn1'; // 네 테스트 키로 교체
+            const clientKey = 'test_ck_ma60RZblrqReBBKpoZ7E8wzYWBn1'; // 테스트 키
             const tossPayments = window.TossPayments(clientKey);
 
+            // 주문 생성 API 호출 (백엔드: POST /api/v1/orders)
+            async function createOrder() {
+                const productId = document.getElementById('product-id').value;
+                const quantity = Number(document.getElementById('quantity').value);
+                const unitPrice = Number(document.getElementById('unit-price').value);
+                const address = document.getElementById('address').value;
+
+                if (!productId || !address) {
+                    alert('상품 ID와 배송지 주소를 입력하세요.');
+                    return null;
+                }
+
+                // ✅ OrderCreateRequest DTO 구조에 맞게 body 구성
+                // OrderCreateRequest(
+                //   String address,
+                //   List<OrderItemRequest> items
+                // )
+                const body = {
+                    address,
+                    items: [
+                        {
+                            productId,
+                            quantity,
+                            unitPrice
+                        }
+                    ]
+                };
+
+                const response = await fetch('/api/v1/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) {
+                    console.error('주문 생성 실패:', response.status);
+                    alert('주문 생성 실패');
+                    return null;
+                }
+
+                const resJson = await response.json();
+                // ✅ ResponseDto<OrderCreateInfo>에서 data만 꺼내서 반환
+                // resJson 구조 예: { code: "...", message: "...", data: { orderId, totalAmount, ... } }
+                return resJson.data;
+            }
+
+            // 버튼 클릭 시: 주문 생성 → 결제창 호출
             document.getElementById('pay-button').addEventListener('click', async function () {
                 const orderData = await createOrder();
                 if (!orderData) {
@@ -83,41 +133,6 @@
                 });
             });
 
-            async function createOrder() {
-                const productId = document.getElementById('product-id').value;
-                const quantity = Number(document.getElementById('quantity').value);
-                const unitPrice = Number(document.getElementById('unit-price').value);
-                const address = document.getElementById('address').value;
-
-                if (!productId || !address) {
-                    alert('상품 ID와 배송지 주소를 입력하세요.');
-                    return null;
-                }
-
-                const body = {
-                    productId,
-                    quantity,
-                    unitPrice,
-                    address
-                };
-
-                const response = await fetch('/api/v1/orders/direct', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                });
-
-                if (!response.ok) {
-                    console.error('주문 생성 실패:', response.status);
-                    alert('주문 생성 실패');
-                    return null;
-                }
-
-                // { orderId, totalAmount } 형태라고 가정
-                return await response.json();
-            }
         } catch (error) {
             console.error('Toss 위젯 초기화 실패:', error);
             alert('Toss 위젯을 불러오지 못했습니다. 콘솔을 확인하세요.');

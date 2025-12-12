@@ -3,6 +3,7 @@ package com.barofarm.order.order.presentation;
 import com.barofarm.order.common.response.CustomPage;
 import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.order.application.OrderService;
+import com.barofarm.order.order.application.dto.response.OrderCancelInfo;
 import com.barofarm.order.order.application.dto.response.OrderCreateInfo;
 import com.barofarm.order.order.application.dto.response.OrderDetailInfo;
 import com.barofarm.order.order.presentation.dto.OrderCreateRequest;
@@ -23,6 +24,11 @@ public class OrderController implements OrderSwaggerApi {
     public ResponseDto<OrderCreateInfo> createOrder(@RequestBody OrderCreateRequest request) {
         UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
         return orderService.createOrder(mockUserId, request.toCommand());
+    }
+
+    @PutMapping("/{orderId}/cancel")
+    public ResponseDto<OrderCancelInfo> cancelOrder(@PathVariable UUID orderId) {
+        return orderService.cancelOrder(orderId);
     }
 
     @GetMapping

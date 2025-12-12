@@ -21,7 +21,7 @@ public class Order extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private OrderStatus status = OrderStatus.CREATED;
+    private OrderStatus status;
 
     @Column(name = "total_amount", nullable = false)
     private Long totalAmount;
@@ -40,7 +40,7 @@ public class Order extends BaseEntity {
         this.userId = userId;
         this.address = address;
         this.totalAmount = 0L;
-        this.status = OrderStatus.CREATED;
+        this.status = OrderStatus.PENDING;
     }
 
     public static Order of(UUID userId, String address) {
@@ -56,5 +56,15 @@ public class Order extends BaseEntity {
     public void markPaid() {
         this.status = OrderStatus.PAID;
     }
+
+    public void cancel() {
+        this.status = OrderStatus.CANCELED;
+    }
+
+    public boolean isFinished() {
+        return this.status == OrderStatus.PAID || this.status == OrderStatus.CANCELED;
+    }
+
+
 
 }
