@@ -3,6 +3,7 @@ package com.barofarm.order.order.domain;
 import com.barofarm.order.common.entity.BaseEntity;
 import com.barofarm.order.order.application.dto.request.OrderCreateCommand;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -54,6 +55,9 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
 
+    @Column(name = "canceled_at")
+    private LocalDateTime canceledAt;
+
     private Order(
             UUID id,
             UUID userId,
@@ -104,6 +108,7 @@ public class Order extends BaseEntity {
 
     public void cancel() {
         this.status = OrderStatus.CANCELED;
+        this.canceledAt = LocalDateTime.now();
     }
 
     public boolean isFinished() {
