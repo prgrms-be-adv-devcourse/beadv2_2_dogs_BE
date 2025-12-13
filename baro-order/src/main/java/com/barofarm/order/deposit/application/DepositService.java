@@ -66,7 +66,7 @@ public class DepositService {
     }
 
     @Transactional
-    public ResponseDto<DepositPaymentInfo> payWithDeposit(UUID userId, DepositPaymentCommand command) {
+    public ResponseDto<DepositPaymentInfo> payDeposit(UUID userId, DepositPaymentCommand command) {
 
         Deposit deposit = depositRepository.findByUserId(userId)
             .orElseThrow(() -> new CustomException(DepositErrorCode.DEPOSIT_NOT_FOUND));

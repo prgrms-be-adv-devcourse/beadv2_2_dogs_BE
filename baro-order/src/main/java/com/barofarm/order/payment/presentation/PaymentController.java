@@ -10,24 +10,24 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("${api.v1}/payments")
+@RequestMapping("${api.v1}/payments/toss")
 @RequiredArgsConstructor
 // TODO: 나중에 인증/인가 붙이면 @RequestHeader("userId") UUID sellerId 사용
 public class PaymentController implements PaymentSwaggerApi{
 
     private final PaymentService paymentService;
 
-    @PostMapping("/toss/confirm")
+    @PostMapping("/confirm")
     public ResponseDto<TossPaymentConfirmInfo> confirmPayment(@RequestBody TossPaymentConfirmRequest confirmRequest){
         return paymentService.confirmPayment(confirmRequest.toCommand());
     }
 
-    @PostMapping("/toss/refund")
+    @PostMapping("/refund")
     public ResponseDto<TossPaymentRefundInfo> refundPayment(@RequestBody TossPaymentRefundRequest refundRequest){
         return paymentService.refundPayment(refundRequest.toCommand());
     }
 
-    @PostMapping("/toss/confirm-deposit")
+    @PostMapping("/confirm/deposit")
     public ResponseDto<TossPaymentConfirmInfo> confirmDeposit(@RequestBody TossPaymentConfirmRequest request) {
         return paymentService.confirmDeposit(request.toCommand());
     }

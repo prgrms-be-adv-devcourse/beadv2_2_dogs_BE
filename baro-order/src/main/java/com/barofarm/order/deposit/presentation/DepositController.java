@@ -35,9 +35,9 @@ public class DepositController {
     }
 
     @PostMapping("/pay")
-    public ResponseDto<DepositPaymentInfo> payWithDeposit(@RequestBody DepositPaymentRequest request) {
+    public ResponseDto<DepositPaymentInfo> payDeposit(@RequestBody DepositPaymentRequest request) {
         UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return depositService.payWithDeposit(mockUserId, request.toCommand());
+        return depositService.payDeposit(mockUserId, request.toCommand());
     }
 
     @PostMapping("/refund")
