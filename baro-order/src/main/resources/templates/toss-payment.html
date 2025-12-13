@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>Toss Payment Demo</title>
+
+    <!-- ✅ Toss Payments v1/payment -->
+    <script src="https://js.tosspayments.com/v1/payment"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; }
+        label { display: block; margin-top: 0.5rem; }
+        input { margin-left: 0.5rem; }
+        button {
+          margin-top: 1.5rem;
+          padding: 0.75rem 1.5rem;
+          background-color: #3182f6;
+          color: white;
+          border: none;
+          cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+<h1>바로팜 상품 주문 & 결제</h1>
+
+<h3>주문자/수령자 정보</h3>
+<label>
+    받는 분 이름:
+    <input type="text" id="receiver-name" value="테스트 수령자" />
+</label>
+
+<label>
+    휴대폰 번호:
+    <input type="text" id="phone" value="01012345678" />
+</label>
+
+<label>
+    이메일:
+    <input type="email" id="email" value="test@example.com" />
+</label>
+
+<h3>배송지 정보</h3>
+<label>
+    우편번호:
+    <input type="text" id="zip-code" value="06236" />
+</label>
+
+<label>
+    주소:
+    <input type="text" id="address" value="서울시 강남구 어디…" />
+</label>
+
+<label>
+    상세주소:
+    <input type="text" id="address-detail" value="101동 1001호" />
+</label>
+
+<label>
+    배송 메모(선택):
+    <input type="text" id="delivery-memo" value="문 앞에 놔주세요" />
+</label>
+
+<h3>주문 상품</h3>
+<label>
+    상품 ID:
+    <input
+        type="text"
+        id="product-id"
+        placeholder="상품 UUID"
+        value="550e8400-e29b-41d4-a716-446655440001"
+    />
+</label>
+
+<label>
+    수량:
+    <input type="number" id="quantity" value="1" min="1" />
+</label>
+
+<label>
+    단가(원):
+    <input type="number" id="unit-price" value="10000" min="1" />
+</label>
+
+<button id="pay-button">주문하기</button>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      try {
+        if (typeof window.TossPayments !== "function") {
+          throw new Error("TossPayments is not defined. 스크립트 로드 여부를 확인하세요.");
+        }
+
+        const clientKey = "test_ck_ma60RZblrqReBBKpoZ7E8wzYWBn1"; // 테스트 키
+        const tossPayments = window.TossPayments(clientKey);
+
+        // 주문 생성 API 호출 (백엔드: POST /api/v1/orders)
+        async function createOrder() {
+          // ✅ OrderCreateRequest 필드들
+          const receiverName = document.getElementById("receiver-name").value.trim();
+          const phone = document.getElementById("phone").value.trim();
+          const email = document.getElementById("email").value.trim();
+          const zipCode = document.getElementById("zip-code").value.trim();
+          const address = document.getElementById("address").value.trim();
+          const addressDetail = document.getElementById("address-detail").value.trim();
+          const deliveryMemo = document.getElementById("delivery-memo").value.trim();
+
+          // ✅ items
+          const productId = document.getElementById("product-id").value.trim();
+          const quantity = Number(document.getElementById("quantity").value);
+          const unitPrice = Number(document.getElementById("unit-price").value);
+
+          // 간단 프론트 검증(백엔드 검증이 메인)
+          if (!receiverName || !phone || !email || !zipCode || !address || !addressDetail) {
+            alert("필수 배송/수령 정보를 모두 입력하세요.");
+            return null;
+          }
+          if (!productId) {
+            alert("상품 ID는 필수입니다.");
+            return null;
+          }
+          if (!Number.isFinite(quantity) || quantity <= 0) {
+            alert("수량은 1 이상이어야 합니다.");
+            return null;
+          }
+          if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+            alert("단가는 0보다 커야 합니다.");
+            return null;
+          }
+
+          // ✅ OrderCreateRequest DTO 구조에 맞게 body 구성
+          const body = {
+            receiverName,
+            phone,
+            email,
+            zipCode,
+            address,
+            addressDetail,
+            // 선택값: 빈 문자열이면 null로 보내도 됨(원하면 그대로 보내도 OK)
+            deliveryMemo: deliveryMemo === "" ? null : deliveryMemo,
+            items: [
+              {
+                // 백엔드: UUID로 받으니 문자열 UUID 전송
+                productId,
+                quantity,
+                unitPrice
+              }
+            ]
+          };
+
+          const response = await fetch("/api/v1/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+          });
+
+          if (!response.ok) {
+            const errText = await response.text().catch(() => "");
+            console.error("주문 생성 실패:", response.status, errText);
+            alert("주문 생성 실패");
+            return null;
+          }
+
+          const resJson = await response.json();
+          // resJson 예: { code, message, data: { orderId, totalAmount, ... } }
+          return resJson.data;
+        }
+
+        document.getElementById("pay-button").addEventListener("click", async function () {
+          const orderData = await createOrder();
+          if (!orderData) return;
+
+          const { orderId, totalAmount } = orderData;
+
+          await tossPayments.requestPayment("카드", {
+            amount: totalAmount,
+            orderId: orderId,
+            orderName: "바로팜 상품 주문",
+            successUrl: window.location.origin + "/api/v1/payments/success",
+            failUrl: window.location.origin + "/api/v1/payments/fail",
+
+            // 결제창 고객 정보(주문 정보랑 맞춰줌)
+            customerName: document.getElementById("receiver-name").value.trim(),
+            customerEmail: document.getElementById("email").value.trim(),
+            customerMobilePhone: document.getElementById("phone").value.trim()
+          });
+        });
+
+      } catch (error) {
+        console.error("Toss 위젯 초기화 실패:", error);
+        alert("Toss 위젯을 불러오지 못했습니다. 콘솔을 확인하세요.");
+      }
+    });
+</script>
+</body>
+</html>
