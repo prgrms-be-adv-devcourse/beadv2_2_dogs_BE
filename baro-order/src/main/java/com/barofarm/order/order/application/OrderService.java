@@ -19,6 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
+
+import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_ACCESS_DENIED;
 import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 
 @Service
@@ -29,7 +31,7 @@ public class OrderService {
     private final InventoryClient inventoryClient;
 
     @Transactional
-    public ResponseDto<OrderCreateInfo> createOrder(UUID mockUserId, OrderCreateCommand command){
+    public ResponseDto<OrderCreateInfo> createOrder(UUID userId, OrderCreateCommand command){
         InventoryDecreaseRequest inventoryRequest = new InventoryDecreaseRequest(
             command.items().stream()
                 .map(item -> new InventoryDecreaseRequest.Item(
@@ -40,7 +42,7 @@ public class OrderService {
         );
         inventoryClient.decreaseStock(inventoryRequest);
 
-        Order order = Order.of(mockUserId, command);
+        Order order = Order.of(userId, command);
 
         for (OrderCreateCommand.OrderItemCreateCommand item : command.items()) {
             order.addOrderItem(
@@ -55,28 +57,32 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseDto<OrderDetailInfo> findOrderDetail(UUID mockUserId, UUID orderId) {
+    public ResponseDto<OrderDetailInfo> findOrderDetail(UUID userId, UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
 
-        if (!order.getUserId().equals(mockUserId)) {
+        if (!order.getUserId().equals(userId)) {
             throw new CustomException(ORDER_NOT_FOUND);
         }
         return ResponseDto.ok(OrderDetailInfo.from(order));
     }
 
     @Transactional(readOnly = true)
-    public ResponseDto<CustomPage<OrderDetailInfo>> findOrderList(UUID mockUserId, Pageable pageable){
+    public ResponseDto<CustomPage<OrderDetailInfo>> findOrderList(UUID userId, Pageable pageable){
         Page<OrderDetailInfo> page = orderRepository
-                .findByUserIdOrderByCreatedAtDesc(mockUserId, pageable)
+                .findByUserIdOrderByCreatedAtDesc(userId, pageable)
                 .map(OrderDetailInfo::from);
         return ResponseDto.ok(CustomPage.from(page));
     }
 
     @Transactional
-    public ResponseDto<OrderCancelInfo> cancelOrder(UUID orderId) {
+    public ResponseDto<OrderCancelInfo> cancelOrder(UUID userId, UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
+
+        if (!order.getUserId().equals(userId)) {
+            throw new CustomException(ORDER_ACCESS_DENIED);
+        }
 
         if (order.isCanceled()) {
             return ResponseDto.ok(OrderCancelInfo.from(order));
@@ -97,9 +103,13 @@ public class OrderService {
     }
 
     @Transactional
-    public void markOrderPaid(UUID orderId) {
+    public void markOrderPaid(UUID userId, UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
+
+        if (!order.getUserId().equals(userId)) {
+            throw new CustomException(ORDER_ACCESS_DENIED);
+        }
 
         if (order.getStatus() == OrderStatus.PENDING) {
             order.markPaid();

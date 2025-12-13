@@ -16,6 +16,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @Tag(name = "Deposit", description = "예치금 관련 API")
 @RequestMapping("${api.v1}/deposits")
 public interface DepositSwaggerApi {
@@ -43,6 +45,7 @@ public interface DepositSwaggerApi {
     })
     @PostMapping("/charges")
     ResponseDto<DepositChargeCreateInfo> createCharge(
+        @RequestHeader("X-User-Id") UUID userId,
         @Valid @RequestBody DepositChargeCreateRequest request
     );
 
@@ -63,7 +66,9 @@ public interface DepositSwaggerApi {
         )
     })
     @GetMapping
-    ResponseDto<DepositInfo> findDeposit();
+    ResponseDto<DepositInfo> findDeposit(
+        @RequestHeader("X-User-Id") UUID userId
+    );
 
     @Operation(
         summary = "예치금으로 주문 결제",
@@ -88,6 +93,7 @@ public interface DepositSwaggerApi {
     })
     @PostMapping("/pay")
     ResponseDto<DepositPaymentInfo> payDeposit(
+        @RequestHeader("X-User-Id") UUID userId,
         @RequestBody DepositPaymentRequest request
     );
 
@@ -119,6 +125,7 @@ public interface DepositSwaggerApi {
     })
     @PostMapping("/refund")
     ResponseDto<DepositRefundInfo> refundDeposit(
+        @RequestHeader("X-User-Id") UUID userId,
         @Valid @RequestBody DepositRefundRequest request
     );
 }

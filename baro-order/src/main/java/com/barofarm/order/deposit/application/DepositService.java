@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 import static com.barofarm.order.deposit.exception.DepositErrorCode.*;
+import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_ACCESS_DENIED;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +47,7 @@ public class DepositService {
     }
 
     @Transactional
-    public void markDepositCharge(UUID chargeId) {
+    public void markDepositCharge(UUID userId, UUID chargeId) {
         DepositCharge charge = depositChargeRepository.findById(chargeId)
             .orElseThrow(() -> new CustomException(DEPOSIT_CHARGE_NOT_FOUND));
 
@@ -54,6 +55,10 @@ public class DepositService {
             throw new CustomException(DEPOSIT_CHARGE_INVALID_STATUS);
         }
         Deposit deposit = charge.getDeposit();
+        if (!deposit.getUserId().equals(userId)) {
+            throw new CustomException(DEPOSIT_ACCESS_DENIED);
+        }
+
         deposit.increase(charge.getAmount());
         charge.success();
     }
@@ -79,7 +84,7 @@ public class DepositService {
 
         deposit.decrease(command.amount());
 
-        orderService.markOrderPaid(command.orderId());
+        orderService.markOrderPaid(userId, command.orderId());
 
         Payment payment = Payment.of(command.orderId(), command.amount());
         paymentRepository.save(payment);
@@ -113,7 +118,7 @@ public class DepositService {
         // 예치금 복구
         deposit.increase(command.amount());
 
-        orderService.cancelOrder(command.orderId());
+        orderService.cancelOrder(userId, command.orderId());
 
         // 결제 상태 환불 처리
         payment.refund();

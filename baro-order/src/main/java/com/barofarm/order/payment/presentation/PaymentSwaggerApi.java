@@ -13,7 +13,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.UUID;
 
 @Tag(name = "Payment", description = "결제 관련 API")
 @RequestMapping("${api.v1}/payments/toss")
@@ -47,6 +50,7 @@ public interface PaymentSwaggerApi {
     })
     @PostMapping("/confirm")
     ResponseDto<TossPaymentConfirmInfo> confirmPayment(
+        @RequestHeader("X-User-Id") UUID userId,
         @Valid @RequestBody TossPaymentConfirmRequest confirmRequest
     );
 
@@ -88,6 +92,7 @@ public interface PaymentSwaggerApi {
     })
     @PostMapping("/refund")
     ResponseDto<TossPaymentRefundInfo> refundPayment(
+            @RequestHeader("X-User-Id") UUID userId,
             @Valid @RequestBody TossPaymentRefundRequest refundRequest
     );
 
@@ -129,6 +134,7 @@ public interface PaymentSwaggerApi {
     })
     @PostMapping("/confirm/deposit")
     ResponseDto<TossPaymentConfirmInfo> confirmDeposit(
+        @RequestHeader("X-User-Id") UUID userId,
         @Valid @RequestBody TossPaymentConfirmRequest request
     );
 }

@@ -9,6 +9,8 @@ import com.barofarm.order.payment.presentation.dto.TossPaymentRefundRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("${api.v1}/payments/toss")
 @RequiredArgsConstructor
@@ -18,17 +20,17 @@ public class PaymentController implements PaymentSwaggerApi{
     private final PaymentService paymentService;
 
     @PostMapping("/confirm")
-    public ResponseDto<TossPaymentConfirmInfo> confirmPayment(@RequestBody TossPaymentConfirmRequest confirmRequest){
-        return paymentService.confirmPayment(confirmRequest.toCommand());
+    public ResponseDto<TossPaymentConfirmInfo> confirmPayment(@RequestHeader("X-User-Id") UUID userId, @RequestBody TossPaymentConfirmRequest confirmRequest){
+        return paymentService.confirmPayment(userId, confirmRequest.toCommand());
     }
 
     @PostMapping("/refund")
-    public ResponseDto<TossPaymentRefundInfo> refundPayment(@RequestBody TossPaymentRefundRequest refundRequest){
-        return paymentService.refundPayment(refundRequest.toCommand());
+    public ResponseDto<TossPaymentRefundInfo> refundPayment(@RequestHeader("X-User-Id") UUID userId, @RequestBody TossPaymentRefundRequest refundRequest){
+        return paymentService.refundPayment(userId, refundRequest.toCommand());
     }
 
     @PostMapping("/confirm/deposit")
-    public ResponseDto<TossPaymentConfirmInfo> confirmDeposit(@RequestBody TossPaymentConfirmRequest request) {
-        return paymentService.confirmDeposit(request.toCommand());
+    public ResponseDto<TossPaymentConfirmInfo> confirmDeposit(@RequestHeader("X-User-Id") UUID userId, @RequestBody TossPaymentConfirmRequest request) {
+        return paymentService.confirmDeposit(userId, request.toCommand());
     }
 }

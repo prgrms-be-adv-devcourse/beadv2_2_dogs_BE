@@ -51,7 +51,7 @@ public interface OrderSwaggerApi {
         )
     })
     @PostMapping
-    ResponseDto<OrderCreateInfo> createOrder(@Valid @RequestBody OrderCreateRequest request);
+    ResponseDto<OrderCreateInfo> createOrder(@RequestHeader("X-User-Id") UUID userId, @Valid @RequestBody OrderCreateRequest request);
 
     @Operation(summary = "주문 상세 조회", description = "특정 주문 ID에 대한 상세 정보를 조회한다.")
     @ApiResponses({
@@ -68,7 +68,7 @@ public interface OrderSwaggerApi {
             )
     })
     @GetMapping("/{orderId}")
-    ResponseDto<OrderDetailInfo> findOrderDetail(@PathVariable UUID orderId);
+    ResponseDto<OrderDetailInfo> findOrderDetail(@RequestHeader("X-User-Id") UUID userId, @PathVariable UUID orderId);
 
     @Operation(summary = "주문 목록 조회", description = "사용자의 주문 내역을 페이지 단위로 조회한다.")
     @ApiResponses({
@@ -79,7 +79,7 @@ public interface OrderSwaggerApi {
         )
     })
     @GetMapping
-    ResponseDto<CustomPage<OrderDetailInfo>> findOrderList(Pageable pageable);
+    ResponseDto<CustomPage<OrderDetailInfo>> findOrderList(@RequestHeader("X-User-Id") UUID userId, Pageable pageable);
 
     @Operation(summary = "주문 취소", description = "사용자의 주문을 취소한다. 재고 복구 및 주문 상태 변경을 수행한다.")
     @ApiResponses({
@@ -100,5 +100,5 @@ public interface OrderSwaggerApi {
             )
     })
     @PutMapping("/{orderId}/cancel")
-    ResponseDto<OrderCancelInfo> cancelOrder(@PathVariable UUID orderId);
+    ResponseDto<OrderCancelInfo> cancelOrder(@RequestHeader("X-User-Id") UUID userId, @PathVariable UUID orderId);
 }

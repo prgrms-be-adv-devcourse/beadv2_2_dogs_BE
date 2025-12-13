@@ -15,31 +15,27 @@ import java.util.UUID;
 @RestController
 @RequestMapping("${api.v1}/orders")
 @RequiredArgsConstructor
-// TODO: 나중에 인증/인가 붙이면 @RequestHeader("userId") UUID sellerId 사용
 public class OrderController implements OrderSwaggerApi {
 
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseDto<OrderCreateInfo> createOrder(@RequestBody OrderCreateRequest request) {
-        UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return orderService.createOrder(mockUserId, request.toCommand());
+    public ResponseDto<OrderCreateInfo> createOrder(@RequestHeader("X-User-Id") UUID userId, @RequestBody OrderCreateRequest request) {
+        return orderService.createOrder(userId, request.toCommand());
     }
 
     @GetMapping("/{orderId}")
-    public ResponseDto<OrderDetailInfo> findOrderDetail(@PathVariable UUID orderId) {
-        UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return orderService.findOrderDetail(mockUserId, orderId);
+    public ResponseDto<OrderDetailInfo> findOrderDetail(@RequestHeader("X-User-Id") UUID userId, @PathVariable UUID orderId) {
+        return orderService.findOrderDetail(userId, orderId);
     }
 
     @GetMapping
-    public ResponseDto<CustomPage<OrderDetailInfo>> findOrderList(Pageable pageable) {
-        UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return orderService.findOrderList(mockUserId, pageable);
+    public ResponseDto<CustomPage<OrderDetailInfo>> findOrderList(@RequestHeader("X-User-Id") UUID userId, Pageable pageable) {
+        return orderService.findOrderList(userId, pageable);
     }
 
     @PutMapping("/{orderId}/cancel")
-    public ResponseDto<OrderCancelInfo> cancelOrder(@PathVariable UUID orderId) {
-        return orderService.cancelOrder(orderId);
+    public ResponseDto<OrderCancelInfo> cancelOrder(@RequestHeader("X-User-Id") UUID userId, @PathVariable UUID orderId) {
+        return orderService.cancelOrder(userId, orderId);
     }
 }

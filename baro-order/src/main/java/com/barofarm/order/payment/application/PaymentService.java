@@ -31,11 +31,11 @@ public class PaymentService {
     private final DepositService depositService;
 
     @Transactional
-    public ResponseDto<TossPaymentConfirmInfo> confirmPayment(TossPaymentConfirmCommand command) {
+    public ResponseDto<TossPaymentConfirmInfo> confirmPayment(UUID userId, TossPaymentConfirmCommand command) {
         TossPaymentResponse tossPayment = tossPaymentClient.confirm(command);
 
         UUID orderId = UUID.fromString(tossPayment.orderId());
-        orderService.markOrderPaid(orderId);
+        orderService.markOrderPaid(userId, orderId);
 
         Payment payment = Payment.of(tossPayment, ORDER_PAYMENT);
         Payment saved = paymentRepository.save(payment);
@@ -45,11 +45,11 @@ public class PaymentService {
     }
 
     @Transactional
-    public ResponseDto<TossPaymentRefundInfo> refundPayment(TossPaymentRefundCommand command) {
+    public ResponseDto<TossPaymentRefundInfo> refundPayment(UUID userId, TossPaymentRefundCommand command) {
         TossPaymentResponse tossResponse = tossPaymentClient.refund(command);
 
         UUID orderId = UUID.fromString(tossResponse.orderId());
-        orderService.cancelOrder(orderId);
+        orderService.cancelOrder(userId, orderId);
 
         Payment payment = paymentRepository.findByPaymentKey(command.paymentKey())
                 .orElseThrow(() -> new CustomException(PAYMENT_NOT_FOUND));
@@ -58,11 +58,11 @@ public class PaymentService {
     }
 
     @Transactional
-    public ResponseDto<TossPaymentConfirmInfo> confirmDeposit(TossPaymentConfirmCommand command) {
+    public ResponseDto<TossPaymentConfirmInfo> confirmDeposit(UUID userId, TossPaymentConfirmCommand command) {
         TossPaymentResponse tossPayment = tossPaymentClient.confirm(command);
 
         UUID chargeId = UUID.fromString(tossPayment.orderId());
-        depositService.markDepositCharge(chargeId);
+        depositService.markDepositCharge(userId, chargeId);
 
         Payment payment = Payment.of(tossPayment, DEPOSIT_CHARGE);
         Payment saved = paymentRepository.save(payment);

@@ -18,31 +18,27 @@ import java.util.UUID;
 @RequestMapping("${api.v1}/deposits")
 @RequiredArgsConstructor
 // TODO: 나중에 인증/인가 붙이면 @RequestHeader("userId") UUID sellerId 사용
-public class DepositController {
+public class DepositController implements DepositSwaggerApi{
 
     private final DepositService depositService;
 
     @PostMapping("/charges")
-    public ResponseDto<DepositChargeCreateInfo> createCharge(@Valid @RequestBody DepositChargeCreateRequest request) {
-        UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return depositService.createCharge(mockUserId, request.toCommand());
+    public ResponseDto<DepositChargeCreateInfo> createCharge(@RequestHeader("X-User-Id") UUID userId, @Valid @RequestBody DepositChargeCreateRequest request) {
+        return depositService.createCharge(userId, request.toCommand());
     }
 
     @GetMapping
-    public ResponseDto<DepositInfo> findDeposit() {
-        UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return depositService.findDeposit(mockUserId);
+    public ResponseDto<DepositInfo> findDeposit(@RequestHeader("X-User-Id") UUID userId) {
+        return depositService.findDeposit(userId);
     }
 
     @PostMapping("/pay")
-    public ResponseDto<DepositPaymentInfo> payDeposit(@RequestBody DepositPaymentRequest request) {
-        UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return depositService.payDeposit(mockUserId, request.toCommand());
+    public ResponseDto<DepositPaymentInfo> payDeposit(@RequestHeader("X-User-Id") UUID userId, @RequestBody DepositPaymentRequest request) {
+        return depositService.payDeposit(userId, request.toCommand());
     }
 
     @PostMapping("/refund")
-    public ResponseDto<DepositRefundInfo> refundDeposit(@Valid @RequestBody DepositRefundRequest request) {
-        UUID mockUserId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return depositService.refundDeposit(mockUserId, request.toCommand());
+    public ResponseDto<DepositRefundInfo> refundDeposit(@RequestHeader("X-User-Id") UUID userId, @Valid @RequestBody DepositRefundRequest request) {
+        return depositService.refundDeposit(userId, request.toCommand());
     }
 }
