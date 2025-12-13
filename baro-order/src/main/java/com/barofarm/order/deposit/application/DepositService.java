@@ -15,6 +15,7 @@ import com.barofarm.order.deposit.domain.DepositChargeRepository;
 import com.barofarm.order.deposit.domain.DepositRepository;
 import com.barofarm.order.deposit.exception.DepositErrorCode;
 import com.barofarm.order.order.application.OrderService;
+import com.barofarm.order.order.presentation.dto.InventoryIncreaseRequest;
 import com.barofarm.order.payment.domain.Payment;
 import com.barofarm.order.payment.domain.PaymentRepository;
 import com.barofarm.order.payment.domain.PaymentStatus;
@@ -111,6 +112,8 @@ public class DepositService {
 
         // 예치금 복구
         deposit.increase(command.amount());
+
+        orderService.cancelOrder(command.orderId());
 
         // 결제 상태 환불 처리
         payment.refund();
