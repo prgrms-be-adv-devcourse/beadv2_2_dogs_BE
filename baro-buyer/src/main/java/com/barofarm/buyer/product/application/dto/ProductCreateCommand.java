@@ -1,0 +1,14 @@
+package com.barofarm.buyer.product.application.dto;
+
+import com.barofarm.buyer.product.domain.ProductCategory;
+import java.math.BigDecimal;
+import java.util.UUID;
+
+public record ProductCreateCommand(
+    UUID sellerId,
+    String role,
+    String productName,
+    String description,
+    ProductCategory productCategory,
+    BigDecimal price,
+    Integer stockQuantity) {}
