@@ -1,8 +1,6 @@
 package com.barofarm.buyer.cart.domain;
 
-import com.barofarm.buyer.cart.exception.CartErrorCode;
 import com.barofarm.buyer.common.entity.BaseEntity;
-import com.barofarm.buyer.common.exception.CustomException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -14,6 +12,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.Getter;
 
@@ -31,14 +30,14 @@ public class Cart extends BaseEntity {
   @Column(name = "buyer_id")
   private UUID buyerId;
 
-    @Schema(description = "session key (비로그인 사용자)")
-    @Column(name = "session_key")
-    private String sessionKey;
+  @Schema(description = "session key (비로그인 사용자)")
+  @Column(name = "session_key")
+  private String sessionKey;
 
-    @Schema(description = "장바구니 상태 관리")
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CartStatus status; // ACTIVE, MERGED, EXPIRED
+  @Schema(description = "장바구니 상태 관리")
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private CartStatus status; // ACTIVE, MERGED, EXPIRED
 
   @Schema(description = "장바구니 안의 개별 상품")
   @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -90,22 +89,33 @@ public class Cart extends BaseEntity {
   }
 
   /** CartItem 수량 변경 */
-  public void updateQuantity(UUID cartItemId, int newQty) {
-    CartItem item = findItem(cartItemId);
-    item.changeQuantity(newQty);
+  public boolean updateQuantity(UUID cartItemId, int newQty) {
+    Optional<CartItem> opt = findItem(cartItemId);
+
+    if (opt.isEmpty()) {
+        return false;
+    }
+    opt.get().changeQuantity(newQty);
     touch();
+
+    return true;
   }
 
   /** CartItem 옵션 변경 */
-  public void updateOption(UUID cartItemId, String newOptionJson) {
-    CartItem item = findItem(cartItemId);
+  public boolean updateOption(UUID cartItemId, String newOptionJson) {
+    Optional<CartItem> opt = findItem(cartItemId);
 
-    item.changeOption(newOptionJson);
+    if (opt.isEmpty()) {
+        return false;
+    }
 
+    CartItem item = opt.get();
     // 옵션을 변경했는데 이미 같은 옵션의 다른 항목이 있다면 병합
+    item.changeOption(newOptionJson);
     mergeAfterOptionChange(item);
-
     touch();
+
+    return true;
   }
 
   /** 전체 금액 계산 */
@@ -121,11 +131,10 @@ public class Cart extends BaseEntity {
 
   /* ====== 내부 유틸 메소드 ====== */
 
-  private CartItem findItem(UUID itemId) {
+  private Optional<CartItem> findItem(UUID itemId) {
     return items.stream()
         .filter(i -> i.getId().equals(itemId))
-        .findFirst()
-        .orElseThrow(() -> new CustomException(CartErrorCode.CART_ITEM_NOT_FOUND));
+        .findFirst();
   }
 
   private CartItem findSameItem(CartItem newItem) {

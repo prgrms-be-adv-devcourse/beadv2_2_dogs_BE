@@ -52,13 +52,23 @@ public class CartItem extends BaseEntity {
 
   /** 새 장바구니 항목 생성 */
   public static CartItem create(UUID productId, Integer quantity, Long unitPrice, String optionInfoJson) {
-    CartItem item = new CartItem();
-    item.id = UUID.randomUUID();
-    item.productId = productId;
-    item.quantity = quantity;
-    item.unitPrice = unitPrice;
-    item.optionInfoJson = optionInfoJson;
-    return item;
+      if (productId == null) {
+          throw new CustomException(CartErrorCode.PRODUCT_ID_NULL);
+      }
+      if (quantity == null || quantity <= 0) {
+          throw new CustomException(CartErrorCode.QUANTITY_MUST_BE_POSITIVE);
+      }
+      if (unitPrice == null || unitPrice <= 0) {
+          throw new CustomException(CartErrorCode.UNIT_PRICE_MUST_BE_POSITIVE);
+      }
+
+      CartItem item = new CartItem();
+      item.id = UUID.randomUUID();
+      item.productId = productId;
+      item.quantity = quantity;
+      item.unitPrice = unitPrice;
+      item.optionInfoJson = optionInfoJson;
+      return item;
   }
 
   /* ====== 비즈니스 메소드 ====== */

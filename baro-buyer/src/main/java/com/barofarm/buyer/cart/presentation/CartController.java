@@ -2,7 +2,6 @@ package com.barofarm.buyer.cart.presentation;
 
 import com.barofarm.buyer.cart.application.CartService;
 import com.barofarm.buyer.cart.application.dto.CartInfo;
-import com.barofarm.buyer.cart.application.dto.CartValidationInfo;
 import com.barofarm.buyer.cart.presentation.dto.AddItemRequest;
 import com.barofarm.buyer.cart.presentation.dto.UpdateOptionRequest;
 import com.barofarm.buyer.cart.presentation.dto.UpdateQuantityRequest;
@@ -102,15 +101,5 @@ public class CartController {
   ) {
     CartInfo cartInfo = cartService.mergeCart(buyerId, sessionKey);
     return ResponseDto.ok(cartInfo);
-  }
-
-  @Operation(summary = "결제 직전 장바구니 검증")
-  @PostMapping("/validate")
-  public ResponseDto<CartValidationInfo> validateForCheckout(
-      @RequestHeader(value = "X-User-Id", required = false) UUID buyerId,
-      @RequestHeader(value = "X-Session-Key", required = false) String sessionKey
-  ) {
-    CartValidationInfo validationInfo = cartService.validateForCheckout(buyerId, sessionKey);
-    return ResponseDto.ok(validationInfo);
   }
 }
