@@ -7,6 +7,14 @@ spring:
 
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]': # 모든 경로에 대해 CORS 허용
+            allowedOrigins: "http://localhost:3000" # 프론트 로컬 도메인(추가 도메인은 콤마로 추가)
+            allowedMethods: "*"   # 허용 HTTP 메서드 (GET/POST/PUT/DELETE 등)
+            allowedHeaders: "*"   # 허용 요청 헤더 (Authorization 등)
+            allowCredentials: true # 쿠키/인증 헤더 전달 허용 시 true
+            maxAge: 3600          # 프리플라이트(OPTIONS) 결과를 캐시할 시간(초)
       discovery:
         locator:
           enabled: true
