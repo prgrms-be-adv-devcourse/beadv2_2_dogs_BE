@@ -1,25 +1,25 @@
 package com.barofarm.order.payment.application;
 
+import static com.barofarm.order.payment.domain.Purpose.DEPOSIT_CHARGE;
+import static com.barofarm.order.payment.domain.Purpose.ORDER_PAYMENT;
+import static com.barofarm.order.payment.exception.PaymentErrorCode.PAYMENT_NOT_FOUND;
+
 import com.barofarm.order.common.exception.CustomException;
 import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.deposit.application.DepositService;
 import com.barofarm.order.order.application.OrderService;
-import com.barofarm.order.payment.application.dto.request.TossPaymentRefundCommand;
 import com.barofarm.order.payment.application.dto.request.TossPaymentConfirmCommand;
-import com.barofarm.order.payment.application.dto.response.TossPaymentRefundInfo;
+import com.barofarm.order.payment.application.dto.request.TossPaymentRefundCommand;
 import com.barofarm.order.payment.application.dto.response.TossPaymentConfirmInfo;
+import com.barofarm.order.payment.application.dto.response.TossPaymentRefundInfo;
 import com.barofarm.order.payment.client.TossPaymentClient;
 import com.barofarm.order.payment.client.dto.TossPaymentResponse;
 import com.barofarm.order.payment.domain.Payment;
 import com.barofarm.order.payment.domain.PaymentRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.UUID;
-
-import static com.barofarm.order.payment.domain.Purpose.DEPOSIT_CHARGE;
-import static com.barofarm.order.payment.domain.Purpose.ORDER_PAYMENT;
-import static com.barofarm.order.payment.exception.PaymentErrorCode.PAYMENT_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor

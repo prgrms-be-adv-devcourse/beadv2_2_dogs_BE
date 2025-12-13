@@ -3,7 +3,6 @@ package com.barofarm.order.deposit.presentation.dto;
 import com.barofarm.order.deposit.application.dto.request.DepositRefundCommand;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-
 import java.util.UUID;
 
 public record DepositRefundRequest(

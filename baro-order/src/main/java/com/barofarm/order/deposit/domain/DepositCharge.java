@@ -1,10 +1,10 @@
 package com.barofarm.order.deposit.domain;
 
 import jakarta.persistence.*;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.util.UUID;
 
 @Entity
 @Getter

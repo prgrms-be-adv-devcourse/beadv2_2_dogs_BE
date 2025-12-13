@@ -1,14 +1,14 @@
 package com.barofarm.order.deposit.domain;
 
 import com.barofarm.order.common.entity.BaseEntity;
-import com.barofarm.order.payment.client.dto.TossPaymentResponse;
-import com.barofarm.order.payment.domain.PaymentStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Getter

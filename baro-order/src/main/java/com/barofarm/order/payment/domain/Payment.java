@@ -3,11 +3,11 @@ package com.barofarm.order.payment.domain;
 import com.barofarm.order.common.entity.BaseEntity;
 import com.barofarm.order.payment.client.dto.TossPaymentResponse;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Getter

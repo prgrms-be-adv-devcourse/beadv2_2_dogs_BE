@@ -6,10 +6,9 @@ import com.barofarm.order.payment.application.dto.response.TossPaymentConfirmInf
 import com.barofarm.order.payment.application.dto.response.TossPaymentRefundInfo;
 import com.barofarm.order.payment.presentation.dto.TossPaymentConfirmRequest;
 import com.barofarm.order.payment.presentation.dto.TossPaymentRefundRequest;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("${api.v1}/payments/toss")

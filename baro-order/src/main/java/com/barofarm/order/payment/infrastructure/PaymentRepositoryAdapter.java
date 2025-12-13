@@ -2,9 +2,9 @@ package com.barofarm.order.payment.infrastructure;
 
 import com.barofarm.order.payment.domain.Payment;
 import com.barofarm.order.payment.domain.PaymentRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor

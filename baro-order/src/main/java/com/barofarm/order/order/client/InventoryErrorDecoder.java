@@ -1,9 +1,10 @@
 package com.barofarm.order.order.client;
 
+import static com.barofarm.order.order.exception.OrderErrorCode.*;
+
 import com.barofarm.order.common.exception.CustomException;
 import feign.Response;
 import feign.codec.ErrorDecoder;
-import static com.barofarm.order.order.exception.OrderErrorCode.*;
 
 public class InventoryErrorDecoder implements ErrorDecoder {
 

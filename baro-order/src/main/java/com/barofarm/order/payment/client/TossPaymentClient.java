@@ -1,9 +1,15 @@
 package com.barofarm.order.payment.client;
 
+import static com.barofarm.order.payment.exception.PaymentErrorCode.*;
+
 import com.barofarm.order.common.exception.CustomException;
-import com.barofarm.order.payment.application.dto.request.TossPaymentRefundCommand;
 import com.barofarm.order.payment.application.dto.request.TossPaymentConfirmCommand;
+import com.barofarm.order.payment.application.dto.request.TossPaymentRefundCommand;
 import com.barofarm.order.payment.client.dto.TossPaymentResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -12,12 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.barofarm.order.payment.exception.PaymentErrorCode.*;
 
 @Component
 @Slf4j

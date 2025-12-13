@@ -2,11 +2,10 @@ package com.barofarm.order.deposit.infrastructure;
 
 import com.barofarm.order.deposit.domain.Deposit;
 import com.barofarm.order.deposit.domain.DepositRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
-
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor

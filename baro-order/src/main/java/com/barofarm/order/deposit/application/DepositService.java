@@ -1,5 +1,7 @@
 package com.barofarm.order.deposit.application;
 
+import static com.barofarm.order.deposit.exception.DepositErrorCode.*;
+
 import com.barofarm.order.common.exception.CustomException;
 import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.deposit.application.dto.request.DepositChargeCreateCommand;
@@ -15,16 +17,13 @@ import com.barofarm.order.deposit.domain.DepositChargeRepository;
 import com.barofarm.order.deposit.domain.DepositRepository;
 import com.barofarm.order.deposit.exception.DepositErrorCode;
 import com.barofarm.order.order.application.OrderService;
-import com.barofarm.order.order.presentation.dto.InventoryIncreaseRequest;
 import com.barofarm.order.payment.domain.Payment;
 import com.barofarm.order.payment.domain.PaymentRepository;
 import com.barofarm.order.payment.domain.PaymentStatus;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.UUID;
-import static com.barofarm.order.deposit.exception.DepositErrorCode.*;
-import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_ACCESS_DENIED;
 
 @Service
 @RequiredArgsConstructor
