@@ -17,10 +17,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 @Tag(name = "Product Reviews", description = "제품 리뷰 관련 API")
-@RequestMapping("/api/v1/products/{productId}/reviews")
 public interface ProductSwaggerApi {
 
     @Operation(
@@ -62,7 +60,7 @@ public interface ProductSwaggerApi {
     @PostMapping
     ResponseDto<ReviewDetailInfo> createReview(
         @PathVariable UUID productId,
-        @RequestHeader("X-Member-Id") UUID userId,
+        @RequestHeader("X-User-Id") UUID userId,
         @Valid @RequestBody ReviewCreateRequest request
     );
 

@@ -12,10 +12,8 @@ import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 @Tag(name = "My Reviews", description = "나의 리뷰 관련 API")
-@RequestMapping("/api/v1/me/reviews")
 public interface MyReviewSwaggerApi {
 
     @Operation(
@@ -41,7 +39,7 @@ public interface MyReviewSwaggerApi {
     })
     @GetMapping
     ResponseDto<CustomPage<ReviewDetailInfo>> getMyReviews(
-        @RequestHeader("X-Member-Id") UUID userId,
+        @RequestHeader("X-User-Id") UUID userId,
         Pageable pageable
     );
 }

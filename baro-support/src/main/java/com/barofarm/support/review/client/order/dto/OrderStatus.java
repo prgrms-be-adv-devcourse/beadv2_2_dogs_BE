@@ -1,7 +1,6 @@
 package com.barofarm.support.review.client.order.dto;
 
-import com.barofarm.support.common.exception.CustomException;
-import com.barofarm.support.review.exception.ReviewErrorCode;
+import java.util.Optional;
 
 public enum OrderStatus {
     PENDING(false),
@@ -21,11 +20,11 @@ public enum OrderStatus {
         return !reviewable;
     }
 
-    public static OrderStatus from(String status) {
+    public static Optional<OrderStatus> from(String status) {
         try {
-            return OrderStatus.valueOf(status);
+            return Optional.of(OrderStatus.valueOf(status));
         } catch (Exception e) {
-            throw new CustomException(ReviewErrorCode.INVALID_ORDER_STATUS);
+            return Optional.empty();
         }
     }
 }

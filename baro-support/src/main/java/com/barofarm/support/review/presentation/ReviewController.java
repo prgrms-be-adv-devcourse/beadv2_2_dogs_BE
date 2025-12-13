@@ -13,17 +13,19 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("${api.v1}/reviews")
 public class ReviewController implements ReviewSwaggerApi {
 
     private final ReviewService reviewService;
 
     @GetMapping("/{reviewId}")
     public ResponseDto<ReviewDetailInfo> getReviewDetail(
-        @RequestHeader("X-Member-Id") UUID userId,
+        @RequestHeader("X-User-Id") UUID userId,
         @PathVariable UUID reviewId
     ) {
         return ResponseDto.ok(reviewService.getReviewDetail(userId, reviewId));
@@ -31,7 +33,7 @@ public class ReviewController implements ReviewSwaggerApi {
 
     @PutMapping("/{reviewId}")
     public ResponseDto<ReviewDetailInfo> updateReview(
-        @RequestHeader("X-Member-Id") UUID userId,
+        @RequestHeader("X-User-Id") UUID userId,
         @PathVariable UUID reviewId,
         @Valid @RequestBody ReviewUpdateRequest request
     ) {
@@ -40,7 +42,7 @@ public class ReviewController implements ReviewSwaggerApi {
 
     @DeleteMapping("/{reviewId}")
     public ResponseDto<Void> deleteReview(
-        @RequestHeader("X-Member-Id") UUID userId,
+        @RequestHeader("X-User-Id") UUID userId,
         @PathVariable UUID reviewId
     ) {
         reviewService.deleteReview(userId, reviewId);

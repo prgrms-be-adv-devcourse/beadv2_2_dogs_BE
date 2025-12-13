@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("${api.v1}/products/{productId}/reviews")
 public class ProductReviewController implements ProductSwaggerApi{
 
     private final ReviewService reviewService;
@@ -26,7 +28,7 @@ public class ProductReviewController implements ProductSwaggerApi{
     @PostMapping
     public ResponseDto<ReviewDetailInfo> createReview(
         @PathVariable UUID productId,
-        @RequestHeader("X-Member-Id") UUID userId,
+        @RequestHeader("X-User-Id") UUID userId,
         @Valid @RequestBody ReviewCreateRequest request
     ) {
         ReviewCreateCommand command =

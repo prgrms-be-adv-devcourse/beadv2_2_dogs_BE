@@ -13,14 +13,13 @@ public enum ReviewStatus {
     HIDDEN(false),     //관리자 숨김
     DELETED(false);    //삭제
 
-    public static final ReviewStatus DEFAULT = PUBLIC;
     private static final EnumSet<ReviewStatus> VISIBLE_TO_OWNER = EnumSet.of(PUBLIC, PRIVATE);
     private static final EnumSet<ReviewStatus> VISIBLE_TO_PUBLIC = EnumSet.of(PUBLIC);
 
     private final boolean userEditable;
 
-    public boolean isNotUserEditable() {
-        return !userEditable;
+    public boolean isUserEditable() {
+        return userEditable;
     }
 
     public boolean isVisibleToOwner() {
@@ -41,8 +40,8 @@ public enum ReviewStatus {
 
     public static ReviewStatus fromVisibility(ReviewVisibility visibility) {
         return switch (visibility) {
-            case PUBLIC -> PUBLIC;
-            case PRIVATE -> PRIVATE;
+            case PUBLIC -> ReviewStatus.PUBLIC;
+            case PRIVATE -> ReviewStatus.PRIVATE;
         };
     }
 }

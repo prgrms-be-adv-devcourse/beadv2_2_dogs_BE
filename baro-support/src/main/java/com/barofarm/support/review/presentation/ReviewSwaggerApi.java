@@ -16,10 +16,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 @Tag(name = "Reviews", description = "리뷰 단건 조회 / 수정 / 삭제 API")
-@RequestMapping("/api/v1/reviews")
 public interface ReviewSwaggerApi {
 
     // ===================== 리뷰 상세 조회 =====================
@@ -48,7 +46,7 @@ public interface ReviewSwaggerApi {
     })
     @GetMapping("/{reviewId}")
     ResponseDto<ReviewDetailInfo> getReviewDetail(
-        @RequestHeader("X-Member-Id") UUID userId,
+        @RequestHeader("X-User-Id") UUID userId,
         @PathVariable UUID reviewId
     );
 
@@ -91,7 +89,7 @@ public interface ReviewSwaggerApi {
     })
     @PutMapping("/{reviewId}")
     ResponseDto<ReviewDetailInfo> updateReview(
-        @RequestHeader("X-Member-Id") UUID userId,
+        @RequestHeader("X-User-Id") UUID userId,
         @PathVariable UUID reviewId,
         @Valid @RequestBody ReviewUpdateRequest request
     );
@@ -126,7 +124,7 @@ public interface ReviewSwaggerApi {
     })
     @DeleteMapping("/{reviewId}")
     ResponseDto<Void> deleteReview(
-        @RequestHeader("X-Member-Id") UUID userId,
+        @RequestHeader("X-User-Id") UUID userId,
         @PathVariable UUID reviewId
     );
 }

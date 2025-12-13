@@ -1,7 +1,6 @@
 package com.barofarm.support.review.client.product.dto;
 
-import com.barofarm.support.common.exception.CustomException;
-import com.barofarm.support.review.exception.ReviewErrorCode;
+import java.util.Optional;
 
 public enum ProductStatus {
     ON_SALE(true),
@@ -19,11 +18,11 @@ public enum ProductStatus {
         return !reviewable;
     }
 
-    public static ProductStatus from(String status) {
+    public static Optional<ProductStatus> from(String status) {
         try {
-            return ProductStatus.valueOf(status);
+            return Optional.of(ProductStatus.valueOf(status));
         } catch (Exception e) {
-            throw new CustomException(ReviewErrorCode.INVALID_PRODUCT_STATUS);
+            return Optional.empty();
         }
     }
 }

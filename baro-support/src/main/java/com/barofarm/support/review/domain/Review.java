@@ -1,8 +1,6 @@
 package com.barofarm.support.review.domain;
 
 import com.barofarm.support.common.entity.BaseEntity;
-import com.barofarm.support.common.exception.CustomException;
-import com.barofarm.support.review.exception.ReviewErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,7 +9,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.UUID;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -44,29 +41,31 @@ public class Review extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Builder
     private Review(UUID orderItemId,
                   UUID buyerId,
                   UUID productId,
                   Integer rating,
                   ReviewStatus status,
                   String content) {
-        if (orderItemId == null) {
-            throw new CustomException(ReviewErrorCode.ORDER_ITEM_ID_NULL);
+        if (orderItemId == null){
+            throw new IllegalArgumentException("orderItemId는 필수 값입니다.");
         }
+
         if (buyerId == null) {
-            throw new CustomException(ReviewErrorCode.BUYER_ID_NULL);
+            throw new IllegalArgumentException("buyerId는 필수 값입니다.");
         }
         if (productId == null) {
-            throw new CustomException(ReviewErrorCode.PRODUCT_ID_NULL);
+            throw new IllegalArgumentException("productId는 필수 값입니다.");
         }
         if (rating == null) {
-            throw new CustomException(ReviewErrorCode.RATING_NULL);
+            throw new IllegalArgumentException("rating은 필수 값입니다.");
         }
         if (status == null) {
-            throw new CustomException(ReviewErrorCode.STATUS_NULL);
+            throw new IllegalArgumentException("status는 필수 값입니다.");
         }
-        validateRating(rating);
+        if (!isValidRating(rating)) {
+            throw new IllegalArgumentException("rating은 1~5 사이여야 합니다.");
+        }
 
         this.id = UUID.randomUUID();
         this.orderItemId = orderItemId;
@@ -83,72 +82,63 @@ public class Review extends BaseEntity {
                                 Integer rating,
                                 ReviewStatus status,
                                 String content) {
-        return Review.builder()
-            .orderItemId(orderItemId)
-            .buyerId(buyerId)
-            .productId(productId)
-            .rating(rating)
-            .status(status != null ? status : ReviewStatus.DEFAULT)
-            .content(content)
-            .build();
+
+        return new Review(
+            orderItemId,
+            buyerId,
+            productId,
+            rating,
+            status,
+            content
+        );
     }
 
-    public void update(Integer rating,
-                       ReviewStatus status,
-                       String content) {
-        if (rating == null) {
-            throw new CustomException(ReviewErrorCode.RATING_NULL);
+    public void update(Integer rating, ReviewStatus status, String content) {
+        if (rating == null){
+            throw new IllegalArgumentException("rating은 필수 값입니다.");
         }
         if (status == null) {
-            throw new CustomException(ReviewErrorCode.STATUS_NULL);
+            throw new IllegalArgumentException("status는 필수 값입니다.");
         }
-        validateRating(rating);
+        if (!isValidRating(rating)) {
+            throw new IllegalArgumentException("rating은 1~5 사이여야 합니다.");
+        }
 
         this.rating = rating;
         this.status = status;
         this.content = content;
     }
 
-    private void validateRating(int rating) {
-        if (rating < 1 || rating > 5) {
-            throw new CustomException(ReviewErrorCode.INVALID_RATING_VALUE);
-        }
-    }
-
-    public void validateReviewOwner(UUID requesterId) {
-        if (!this.buyerId.equals(requesterId)) {
-            throw new CustomException(ReviewErrorCode.REVIEW_FORBIDDEN);
-        }
-    }
-
-    public void validateUserUpdatable() {
-        if (this.status.isNotUserEditable()) {
-            throw new CustomException(ReviewErrorCode.REVIEW_NOT_UPDATABLE);
-        }
-    }
-
-    public void validateReadableBy(UUID requesterId) {
-        boolean isOwner = this.isOwner(requesterId);
-
-        // 소유자인 경우
-        if (isOwner && !this.status.isVisibleToOwner()) {
-            throw new CustomException(ReviewErrorCode.REVIEW_NOT_READABLE);
-        }
-
-        // 소유자가 아닌 경우
-        if (!isOwner && !this.status.isVisibleToPublic()) {
-            throw new CustomException(ReviewErrorCode.REVIEW_FORBIDDEN);
-        }
-    }
-
-    public boolean isOwner(UUID requesterId) {
-        return buyerId.equals(requesterId);
+    public boolean isValidRating(int rating) {
+        return rating >= 1 && rating <=5;
     }
 
     public void delete() {
         if (this.status == ReviewStatus.DELETED) {
-            throw new CustomException(ReviewErrorCode.REVIEW_ALREADY_DELETED);
+            throw new IllegalArgumentException("이미 삭제된 리뷰입니다.");
         }
         this.status = ReviewStatus.DELETED;
+    }
+
+    public boolean isValidReviewOwner(UUID requesterId) {
+        return this.buyerId.equals(requesterId);
+    }
+
+    public boolean isValidUserUpdatable() {
+        return this.status.isUserEditable();
+    }
+
+    public boolean canRead(UUID requesterId) {
+        boolean owner = isOwner(requesterId);
+
+        if (owner) {
+            return this.status.isVisibleToOwner();
+        }
+
+        return this.status.isVisibleToPublic();
+    }
+
+    private boolean isOwner(UUID requesterId) {
+        return buyerId.equals(requesterId);
     }
 }
