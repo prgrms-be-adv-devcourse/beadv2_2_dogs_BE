@@ -5,8 +5,11 @@ import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INVALID_
 
 import com.barofarm.buyer.common.entity.BaseEntity;
 import com.barofarm.buyer.common.exception.CustomException;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import java.util.UUID;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
