@@ -26,4 +26,9 @@ public class PaymentController implements PaymentSwaggerApi{
     public ResponseDto<TossPaymentRefundInfo> refundPayment(@RequestBody TossPaymentRefundRequest refundRequest){
         return paymentService.refundPayment(refundRequest.toCommand());
     }
+
+    @PostMapping("/toss/confirm-deposit")
+    public ResponseDto<TossPaymentConfirmInfo> confirmDeposit(@RequestBody TossPaymentConfirmRequest request) {
+        return paymentService.confirmDeposit(request.toCommand());
+    }
 }

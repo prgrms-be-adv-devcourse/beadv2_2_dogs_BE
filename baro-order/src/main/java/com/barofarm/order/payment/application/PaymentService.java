@@ -2,6 +2,7 @@ package com.barofarm.order.payment.application;
 
 import com.barofarm.order.common.exception.CustomException;
 import com.barofarm.order.common.response.ResponseDto;
+import com.barofarm.order.deposit.application.DepositService;
 import com.barofarm.order.order.application.OrderService;
 import com.barofarm.order.payment.application.dto.request.TossPaymentRefundCommand;
 import com.barofarm.order.payment.application.dto.request.TossPaymentConfirmCommand;
@@ -15,6 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
+
+import static com.barofarm.order.payment.domain.Purpose.DEPOSIT_CHARGE;
+import static com.barofarm.order.payment.domain.Purpose.ORDER_PAYMENT;
 import static com.barofarm.order.payment.exception.PaymentErrorCode.PAYMENT_NOT_FOUND;
 
 @Service
@@ -24,6 +28,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final TossPaymentClient tossPaymentClient;
     private final OrderService orderService;
+    private final DepositService depositService;
 
     @Transactional
     public ResponseDto<TossPaymentConfirmInfo> confirmPayment(TossPaymentConfirmCommand command) {
@@ -32,7 +37,7 @@ public class PaymentService {
         UUID orderId = UUID.fromString(tossPayment.orderId());
         orderService.markOrderPaid(orderId);
 
-        Payment payment = Payment.of(tossPayment);
+        Payment payment = Payment.of(tossPayment, ORDER_PAYMENT);
         Payment saved = paymentRepository.save(payment);
 
         // TODO: 정산 서비스 호출 & 알람 서비스 호출
@@ -51,4 +56,20 @@ public class PaymentService {
         payment.refund();
         return ResponseDto.ok(TossPaymentRefundInfo.from(tossResponse));
     }
+
+    @Transactional
+    public ResponseDto<TossPaymentConfirmInfo> confirmDeposit(TossPaymentConfirmCommand command) {
+        TossPaymentResponse tossPayment = tossPaymentClient.confirm(command);
+
+        UUID depositId = UUID.fromString(tossPayment.orderId());
+        depositService.markDepositCharge(depositId);
+
+        Payment payment = Payment.of(tossPayment, DEPOSIT_CHARGE);
+        Payment saved = paymentRepository.save(payment);
+
+        // TODO: 정산 서비스 호출 & 알람 서비스 호출
+        return ResponseDto.ok(TossPaymentConfirmInfo.from(saved));
+    }
+
+
 }

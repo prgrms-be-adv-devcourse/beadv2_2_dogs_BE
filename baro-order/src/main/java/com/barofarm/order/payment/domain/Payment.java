@@ -34,6 +34,10 @@ public class Payment extends BaseEntity {
     @Column(nullable = false, length = 20)
     private PaymentStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Purpose purpose;
+
     @Column(name = "requested_at")
     private LocalDateTime requestedAt;
 
@@ -47,6 +51,7 @@ public class Payment extends BaseEntity {
                     String orderId,
                     Long amount,
                     String method,
+                    Purpose purpose,
                     LocalDateTime requstedAt,
                     LocalDateTime approvedAt
     ) {
@@ -55,6 +60,7 @@ public class Payment extends BaseEntity {
         this.orderId = orderId;
         this.amount = amount;
         this.method = method;
+        this.purpose = purpose;
         this.requestedAt = requstedAt;
         this.approvedAt = approvedAt;
         this.status = PaymentStatus.CONFIRMED;
@@ -62,18 +68,32 @@ public class Payment extends BaseEntity {
     }
 
 
-    public static Payment of(TossPaymentResponse response) {
+    public static Payment of(TossPaymentResponse response, Purpose purpose) {
         return new Payment(
             response.paymentKey(),
             response.orderId(),
             response.totalAmount(),
             response.method(),
+            purpose,
             response.requestedAt() != null
                 ? response.requestedAt().toLocalDateTime()
                 : null,
             response.approvedAt() != null
                 ? response.approvedAt().toLocalDateTime()
                 : null
+        );
+    }
+
+    public static Payment of(UUID orderId, Long amount) {
+        LocalDateTime now = LocalDateTime.now();
+        return new Payment(
+            "DEPOSIT:" + orderId,
+            orderId.toString(),
+            amount,
+            "DEPOSIT",
+            Purpose.ORDER_PAYMENT,
+            now,
+            now
         );
     }
 
