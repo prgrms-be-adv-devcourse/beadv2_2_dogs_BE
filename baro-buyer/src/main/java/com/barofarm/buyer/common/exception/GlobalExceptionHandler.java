@@ -24,11 +24,11 @@ public class GlobalExceptionHandler {
             .body(body);
     }
 
-  @ExceptionHandler(CustomException.class)
-  public ResponseEntity<ResponseDto<Void>> handleCustomException(CustomException e) {
-    HttpStatus status = e.getErrorCode().getStatus();
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ResponseDto<Void>> handleCustomException(CustomException e) {
+        HttpStatus status = e.getErrorCode().getStatus();
 
-    return ResponseEntity.status(status)
-        .body(ResponseDto.error(status, e.getErrorCode().getMessage()));
-  }
+        return ResponseEntity.status(status)
+            .body(ResponseDto.error(status, e.getErrorCode().getMessage()));
+    }
 }

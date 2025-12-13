@@ -55,7 +55,7 @@ baro-farm/
 
 ## 🚀 기술 스택
 
-- **Framework**: Spring Boot 4.0.0
+- **Framework**: Spring Boot 3.5.8
 - **Java**: JetBrains JDK 21
 - **Build Tool**: Gradle 8.14
 - **Spring Cloud**: 2025.0.0
@@ -216,6 +216,8 @@ java -jar baro-support/build/libs/baro-support-0.0.1-SNAPSHOT.jar
 |------|------|------|------------|
 | **인프라** | redis | 6379 | Cache Server |
 | | kafka | 9092, 9093 | Message Broker (KRaft 모드) |
+| | mysql | 3306 | Database |
+| | elasticsearch | 9200 | Search Engine |
 | **Spring Cloud** | eureka | 8761 | Service Registry |
 | | config | 8888 | Config Server |
 | | gateway | 8080 | API Gateway |
@@ -224,6 +226,167 @@ java -jar baro-support/build/libs/baro-support-0.0.1-SNAPSHOT.jar
 | | baro-seller | 8085 | seller, farm |
 | | baro-order | 8087 | order, payment |
 | | baro-support | 8089 | settlement, delivery, notification, experience, search, review |
+
+## 💾 리소스 제한 사항
+
+> **t3.large (8GB RAM) 환경 최적화 설정**  
+> 모든 서비스의 메모리 사용량을 제한하여 안정적인 운영을 보장합니다.
+
+### Spring Cloud 인프라 모듈
+
+| 서비스 | 메모리 제한 (JVM) | Healthcheck | 비고 |
+|--------|------------------|-------------|------|
+| **eureka** | `-Xms128m -Xmx256m` | 60s 간격 | Service Registry |
+| **config** | `-Xms128m -Xmx256m` | 60s 간격 | Config Server |
+| **gateway** | `-Xms256m -Xmx512m` | 60s 간격 | API Gateway |
+
+**설정 파일:** `docker-compose.cloud.yml`
+
+### 비즈니스 서비스 모듈
+
+| 서비스 | 메모리 제한 (JVM) | 의존성 | 비고 |
+|--------|------------------|--------|------|
+| **baro-auth** | `-Xms256m -Xmx384m` | MySQL | 인증/인가 서비스 |
+| **baro-buyer** | `-Xms256m -Xmx384m` | MySQL, Kafka | 구매자, 장바구니, 상품 관리 |
+| **baro-seller** | `-Xms256m -Xmx384m` | MySQL, Kafka | 판매자, 농장 관리 |
+| **baro-order** | `-Xms256m -Xmx384m` | MySQL, Kafka | 주문, 결제 관리 |
+| **baro-support** | `-Xms256m -Xmx384m` | MySQL, Kafka | 정산, 배송, 알림, 체험, 검색, 리뷰 |
+
+**설정 파일:**
+- `docker-compose.auth.yml`
+- `docker-compose.buyer.yml`
+- `docker-compose.seller.yml`
+- `docker-compose.order.yml`
+- `docker-compose.support.yml`
+
+### 데이터 인프라 모듈
+
+#### MySQL
+
+| 설정 | 값 | 비고 |
+|------|-----|------|
+| **컨테이너 메모리 제한** | 512M | Docker 리소스 제한 |
+| **컨테이너 메모리 예약** | 256M | 최소 보장 메모리 |
+| **InnoDB 버퍼 풀** | 256M | `innodb-buffer-pool-size` |
+| **최대 연결 수** | 100 | `max-connections` |
+
+**설정 위치:** `docker-compose.data.yml`
+
+```yaml
+deploy:
+  resources:
+    limits:
+      memory: 512M
+    reservations:
+      memory: 256M
+command: --innodb-buffer-pool-size=256M --max-connections=100
+```
+
+#### Kafka
+
+| 설정 | 값 | 비고 |
+|------|-----|------|
+| **JVM 힙 메모리** | `-Xms256m -Xmx384m` | Kafka 프로세스 메모리 |
+| **컨테이너 메모리 제한** | 512M | Docker 리소스 제한 |
+| **컨테이너 메모리 예약** | 256M | 최소 보장 메모리 |
+| **Healthcheck 간격** | 60s | CPU 사용량 최적화 |
+| **모드** | KRaft | Zookeeper 불필요 |
+
+**설정 위치:** `docker-compose.data.yml`
+
+```yaml
+environment:
+  KAFKA_HEAP_OPTS: -Xmx384m -Xms256m
+deploy:
+  resources:
+    limits:
+      memory: 512M
+    reservations:
+      memory: 256M
+init: true  # 좀비 프로세스 방지
+```
+
+#### Elasticsearch
+
+| 설정 | 값 | 비고 |
+|------|-----|------|
+| **JVM 힙 메모리** | `-Xms256m -Xmx512m` | Elasticsearch 프로세스 메모리 |
+| **Healthcheck 간격** | 30s | 상태 확인 주기 |
+| **Healthcheck 방식** | CMD (직접 실행) | 좀비 프로세스 방지 |
+| **엔드포인트** | `/_cluster/health` | 클러스터 상태 확인 |
+
+**설정 위치:** `docker-compose.data.yml`
+
+```yaml
+environment:
+  ES_JAVA_OPTS: -Xms256m -Xmx512m
+init: true  # 좀비 프로세스 방지
+healthcheck:
+  test: ["CMD", "curl", "-sSf", "http://localhost:9200/_cluster/health"]
+  interval: 30s
+```
+
+### 전체 메모리 사용량 요약
+
+| 카테고리 | 서비스 | 메모리 (최대) |
+|----------|--------|--------------|
+| **Spring Cloud** | eureka | 256MB |
+| | config | 256MB |
+| | gateway | 512MB |
+| | **소계** | **1,024MB** |
+| **비즈니스 서비스** | baro-auth | 384MB |
+| | baro-buyer | 384MB |
+| | baro-seller | 384MB |
+| | baro-order | 384MB |
+| | baro-support | 384MB |
+| | **소계** | **1,920MB** |
+| **데이터 인프라** | mysql | 512MB |
+| | kafka | 512MB |
+| | elasticsearch | 512MB |
+| | **소계** | **1,536MB** |
+| **총합** | | **~4.5GB** |
+
+> **참고:**
+> - OS 및 Docker 데몬: ~1GB
+> - 시스템 버퍼: ~1GB
+> - **실제 사용 가능 메모리: ~6GB** (t3.large 기준)
+> - 모든 서비스 동시 실행 시 약 4.5GB 사용으로 여유 공간 확보
+
+### 리소스 모니터링
+
+```bash
+# 실시간 리소스 사용량 확인
+docker stats
+
+# 특정 컨테이너 메모리 사용량 확인
+docker stats baro-auth baro-buyer baro-seller
+
+# 전체 메모리 사용량 확인
+free -h
+```
+
+### 리소스 조정 가이드
+
+메모리 부족 시 다음 순서로 조정을 고려하세요:
+
+1. **Healthcheck 간격 증가** (CPU 사용량 감소)
+   ```yaml
+   healthcheck:
+     interval: 60s  # 30s → 60s
+   ```
+
+2. **JVM GC 튜닝** (메모리 효율 향상)
+   ```yaml
+   JAVA_OPTS=-Xms256m -Xmx384m -XX:+UseG1GC -XX:MaxGCPauseMillis=200
+   ```
+
+3. **비활성 서비스 중지** (일시적)
+   ```bash
+   docker-compose -f docker-compose.order.yml stop
+   ```
+
+4. **인스턴스 타입 업그레이드** (장기적)
+   - t3.large (8GB) → t3.xlarge (16GB)
 
 ## 🔗 주요 URL
 

@@ -11,9 +11,11 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - MYSQL_DATABASE=${MYSQL_DATABASE_SUPPORT:-barofarm}
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+      - MYSQL_DATABASE=${MYSQL_DATABASE_SUPPORT:-barosupport}
       - MYSQL_USER=${MYSQL_USER:-barouser}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+      - JAVA_OPTS=-Xms256m -Xmx384m
     restart: unless-stopped
     networks:
       - baro-network
