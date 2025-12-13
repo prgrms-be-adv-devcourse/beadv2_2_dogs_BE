@@ -5,7 +5,7 @@ services:
     image: confluentinc/cp-kafka:7.6.0
     container_name: baro-kafka
     ports:
-      - "9092:9092"
+      - "29092:9092"
     environment:
       # KRaft 모드 설정
       KAFKA_PROCESS_ROLES: broker,controller

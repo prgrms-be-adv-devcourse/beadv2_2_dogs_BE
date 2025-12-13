@@ -15,7 +15,7 @@ spring:
     username: ${MYSQL_USER:barouser}
     password: ${MYSQL_PASSWORD:baroUser123!!123!!}
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:29092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -29,23 +29,14 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         use_sql_comments: true
 
+# Eureka 명시적 비활성화 (로컬 개발용)
 eureka:
   client:
-    service-url:
-      # Docker 환경에서는 서비스 이름(eureka) 사용, 로컬에서는 localhost 사용
-      # 환경 변수 EUREKA_CLIENT_SERVICEURL_DEFAULTZONE으로 오버라이드 가능
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka:8761/eureka/}
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
   instance:
-    prefer-ip-address: true
-
-# Eureka 명시적 비활성화
-# eureka:
-#   client:
-#     enabled: false
-#     register-with-eureka: false
-#     fetch-registry: false
-#   instance:
-#     enabled: false
+    enabled: false
 
 # 로깅 설정
 logging:
@@ -57,6 +48,9 @@ logging:
     org.hibernate.orm.jdbc.bind: TRACE
     org.springframework.web: DEBUG
     org.springframework.web.servlet.DispatcherServlet: DEBUG
+    # Kafka 로깅
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
 
 # Swagger/OpenAPI 설정
 springdoc:

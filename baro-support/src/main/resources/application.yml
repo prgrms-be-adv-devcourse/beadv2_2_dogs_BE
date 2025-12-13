@@ -35,9 +35,9 @@ spring:
           starttls:
             enable: true
   elasticsearch:
-    uris: ${SPRING_ELASTICSEARCH_URIS:http://elasticsearch:9200}
+    uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:29092
     consumer:
       group-id: support-service
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -46,23 +46,14 @@ spring:
         spring.json.trusted.packages: "*"
       auto-offset-reset: earliest
 
+# Eureka 명시적 비활성화 (로컬 개발용)
 eureka:
   client:
-    service-url:
-      # Docker 환경에서는 서비스 이름(eureka) 사용, 로컬에서는 localhost 사용
-      # 환경 변수 EUREKA_CLIENT_SERVICEURL_DEFAULTZONE으로 오버라이드 가능
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka:8761/eureka/}
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
   instance:
-    prefer-ip-address: true
-
-# Eureka 명시적 비활성화 (local 프로파일)
-# eureka:
-#   client:
-#     enabled: false
-#     register-with-eureka: false
-#     fetch-registry: false
-#   instance:
-#     enabled: false
+    enabled: false
 
 # 로깅 설정
 logging:
@@ -74,6 +65,9 @@ logging:
     org.hibernate.orm.jdbc.bind: TRACE
     org.springframework.web: DEBUG
     org.springframework.web.servlet.DispatcherServlet: DEBUG
+    # Kafka 로깅
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
 
 # Swagger/OpenAPI 설정
 springdoc:
