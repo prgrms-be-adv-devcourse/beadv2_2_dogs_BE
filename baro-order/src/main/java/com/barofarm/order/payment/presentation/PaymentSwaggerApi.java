@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Tag(name = "Payment", description = "결제 관련 API")
-@RequestMapping("${api.v1}/payments")
+@RequestMapping("${api.v1}/payments/toss")
 public interface PaymentSwaggerApi {
 
     @Operation(
@@ -45,7 +45,7 @@ public interface PaymentSwaggerApi {
             content = @Content(mediaType = "application/json")
         )
     })
-    @PostMapping("/toss/confirm")
+    @PostMapping("/confirm")
     ResponseDto<TossPaymentConfirmInfo> confirmPayment(
         @Valid @RequestBody TossPaymentConfirmRequest confirmRequest
     );
@@ -86,8 +86,49 @@ public interface PaymentSwaggerApi {
                     content = @Content(mediaType = "application/json")
             )
     })
-    @PostMapping("/toss/refund")
+    @PostMapping("/refund")
     ResponseDto<TossPaymentRefundInfo> refundPayment(
             @Valid @RequestBody TossPaymentRefundRequest refundRequest
+    );
+
+    @Operation(
+        summary = "토스 예치금 충전 승인",
+        description = "Toss Payments 결제 승인 API를 호출하여 예치금 충전 결제를 확정하고, 예치금 충전(DepositCharge)을 성공 처리한 뒤 결제(Payment) 내역을 생성한다."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "예치금 충전 승인 성공",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "요청 값 검증 실패 또는 잘못된 승인 요청 (TOSS_PAYMENT_INVALID_REQUEST)",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Toss 인증 실패 또는 Secret Key 오류 (INVALID_SECRET_KEY, TOSS_PAYMENT_UNAUTHORIZED)",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "예치금 충전 요청을 찾을 수 없음 (DEPOSIT_CHARGE_NOT_FOUND)",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "이미 처리된 충전 요청 또는 처리 불가 상태 (DEPOSIT_CHARGE_INVALID_STATUS, TOSS_PAYMENT_CONFLICT)",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Toss 서버 오류 또는 결제 승인 실패 (TOSS_PAYMENT_SERVER_ERROR, TOSS_PAYMENT_CONFIRM_FAILED)",
+            content = @Content(mediaType = "application/json")
+        )
+    })
+    @PostMapping("/confirm/deposit")
+    ResponseDto<TossPaymentConfirmInfo> confirmDeposit(
+        @Valid @RequestBody TossPaymentConfirmRequest request
     );
 }
