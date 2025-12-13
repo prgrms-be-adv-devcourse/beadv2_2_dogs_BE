@@ -61,8 +61,8 @@ public class PaymentService {
     public ResponseDto<TossPaymentConfirmInfo> confirmDeposit(TossPaymentConfirmCommand command) {
         TossPaymentResponse tossPayment = tossPaymentClient.confirm(command);
 
-        UUID depositId = UUID.fromString(tossPayment.orderId());
-        depositService.markDepositCharge(depositId);
+        UUID chargeId = UUID.fromString(tossPayment.orderId());
+        depositService.markDepositCharge(chargeId);
 
         Payment payment = Payment.of(tossPayment, DEPOSIT_CHARGE);
         Payment saved = paymentRepository.save(payment);
@@ -70,6 +70,4 @@ public class PaymentService {
         // TODO: 정산 서비스 호출 & 알람 서비스 호출
         return ResponseDto.ok(TossPaymentConfirmInfo.from(saved));
     }
-
-
 }

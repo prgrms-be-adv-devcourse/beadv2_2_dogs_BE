@@ -1,24 +1,25 @@
 package com.barofarm.order.deposit.infrastructure;
 
-import com.barofarm.order.deposit.domain.Deposit;
-import com.barofarm.order.deposit.domain.DepositRepository;
-
+import com.barofarm.order.deposit.domain.DepositCharge;
+import com.barofarm.order.deposit.domain.DepositChargeRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.UUID;
 
-public class DepositChargeRepositoryAdapter implements DepositRepository {
+@Repository
+@RequiredArgsConstructor
+public class DepositChargeRepositoryAdapter implements DepositChargeRepository {
+
+    private final DepositChargeJpaRepository depositChargeJpaRepository;
+
     @Override
-    public Optional<Deposit> findById(UUID depositId) {
-        return Optional.empty();
+    public DepositCharge save(DepositCharge deposit) {
+        return depositChargeJpaRepository.save(deposit);
     }
 
     @Override
-    public Optional<Deposit> findByUserId(UUID userId) {
+    public Optional<DepositCharge> findById(UUID depositChargeId) {
         return Optional.empty();
-    }
-
-    @Override
-    public Deposit save(Deposit deposit) {
-        return null;
     }
 }
