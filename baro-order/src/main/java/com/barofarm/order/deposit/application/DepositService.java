@@ -1,7 +1,5 @@
 package com.barofarm.order.deposit.application;
 
-import static com.barofarm.order.deposit.exception.DepositErrorCode.*;
-
 import com.barofarm.order.common.exception.CustomException;
 import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.deposit.application.dto.request.DepositChargeCreateCommand;
@@ -38,7 +36,7 @@ public class DepositService {
     public ResponseDto<DepositChargeCreateInfo> createCharge(UUID userId, DepositChargeCreateCommand command) {
 
         Deposit deposit = depositRepository.findByUserId(userId)
-            .orElseThrow(() -> new CustomException(DEPOSIT_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(DepositErrorCode.DEPOSIT_NOT_FOUND));
 
         DepositCharge charge = DepositCharge.of(command.amount(), deposit);
         DepositCharge saved = depositChargeRepository.save(charge);
@@ -48,14 +46,14 @@ public class DepositService {
     @Transactional
     public void markDepositCharge(UUID userId, UUID chargeId) {
         DepositCharge charge = depositChargeRepository.findById(chargeId)
-            .orElseThrow(() -> new CustomException(DEPOSIT_CHARGE_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(DepositErrorCode.DEPOSIT_CHARGE_NOT_FOUND));
 
         if (!charge.isPending()) {
-            throw new CustomException(DEPOSIT_CHARGE_INVALID_STATUS);
+            throw new CustomException(DepositErrorCode.DEPOSIT_CHARGE_INVALID_STATUS);
         }
         Deposit deposit = charge.getDeposit();
         if (!deposit.getUserId().equals(userId)) {
-            throw new CustomException(DEPOSIT_ACCESS_DENIED);
+            throw new CustomException(DepositErrorCode.DEPOSIT_ACCESS_DENIED);
         }
 
         deposit.increase(charge.getAmount());
@@ -65,7 +63,7 @@ public class DepositService {
     @Transactional(readOnly = true)
     public ResponseDto<DepositInfo> findDeposit(UUID userId) {
         Deposit deposit = depositRepository.findByUserId(userId)
-            .orElseThrow(() -> new CustomException(DEPOSIT_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(DepositErrorCode.DEPOSIT_NOT_FOUND));
 
         return ResponseDto.ok(DepositInfo.from(deposit));
     }

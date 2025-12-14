@@ -15,7 +15,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Tag(name = "Order", description = "주문 관련 API")
 @RequestMapping("${api.v1}/orders")
@@ -50,7 +56,9 @@ public interface OrderSwaggerApi {
         )
     })
     @PostMapping
-    ResponseDto<OrderCreateInfo> createOrder(@RequestHeader("X-User-Id") UUID userId, @Valid @RequestBody OrderCreateRequest request);
+    ResponseDto<OrderCreateInfo> createOrder(
+        @RequestHeader("X-User-Id") UUID userId,
+        @Valid @RequestBody OrderCreateRequest request);
 
     @Operation(summary = "주문 상세 조회", description = "특정 주문 ID에 대한 상세 정보를 조회한다.")
     @ApiResponses({

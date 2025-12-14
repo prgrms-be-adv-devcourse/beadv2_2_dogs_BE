@@ -17,8 +17,10 @@ public class OrderItemRepositoryAdapter implements OrderItemRepository {
 
 
     @Override
-    public CustomPage<OrderItemSettlementResponse> findOrderItemsForSettlement(LocalDateTime startDateTime, LocalDateTime endDateTime, Pageable pageable) {
-        Page<OrderItemSettlementResponse> page = orderItemJpaRepository.findOrderItemsForSettlement(startDateTime, endDateTime, pageable);
+    public CustomPage<OrderItemSettlementResponse> findOrderItemsForSettlement(
+        LocalDateTime startDateTime, LocalDateTime endDateTime, Pageable pageable) {
+        Page<OrderItemSettlementResponse> page = orderItemJpaRepository
+            .findOrderItemsForSettlement(startDateTime, endDateTime, pageable);
         return CustomPage.from(page);
     }
 }

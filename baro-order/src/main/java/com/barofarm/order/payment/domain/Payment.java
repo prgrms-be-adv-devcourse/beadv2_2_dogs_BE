@@ -2,7 +2,12 @@ package com.barofarm.order.payment.domain;
 
 import com.barofarm.order.common.entity.BaseEntity;
 import com.barofarm.order.payment.client.dto.TossPaymentResponse;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AccessLevel;

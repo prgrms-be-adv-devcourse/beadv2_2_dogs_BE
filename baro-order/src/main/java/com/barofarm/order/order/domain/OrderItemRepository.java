@@ -6,5 +6,6 @@ import java.time.LocalDateTime;
 import org.springframework.data.domain.Pageable;
 
 public interface OrderItemRepository {
-    CustomPage<OrderItemSettlementResponse> findOrderItemsForSettlement(LocalDateTime startDateTime, LocalDateTime endDateTime, Pageable pageable);
+    CustomPage<OrderItemSettlementResponse> findOrderItemsForSettlement(
+        LocalDateTime startDateTime, LocalDateTime endDateTime, Pageable pageable);
 }

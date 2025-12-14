@@ -122,7 +122,8 @@ public class OrderService {
         }
     }
 
-    public CustomPage<OrderItemSettlementResponse> findOrderItemsForSettlement(LocalDate startDate, LocalDate endDate, Pageable pageable) {
+    public CustomPage<OrderItemSettlementResponse> findOrderItemsForSettlement(
+        LocalDate startDate, LocalDate endDate, Pageable pageable) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay().minusNanos(1);
 

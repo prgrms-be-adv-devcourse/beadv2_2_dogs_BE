@@ -97,7 +97,8 @@ public interface PaymentSwaggerApi {
 
     @Operation(
         summary = "토스 예치금 충전 승인",
-        description = "Toss Payments 결제 승인 API를 호출하여 예치금 충전 결제를 확정하고, 예치금 충전(DepositCharge)을 성공 처리한 뒤 결제(Payment) 내역을 생성한다."
+        description = "Toss Payments 결제 승인 API를 호출하여 예치금 충전 결제를 확정하고, "
+            + "예치금 충전(DepositCharge)을 성공 처리한 뒤 결제(Payment) 내역을 생성한다."
     )
     @ApiResponses({
         @ApiResponse(
