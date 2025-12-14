@@ -23,7 +23,7 @@ public class ProductEventPublisher {
             "📨 [EVENT_PUBLISHER] Building PRODUCT_CREATED - ID: {}, Name: {}, Category: {}, Price: {}",
             product.getId(), product.getProductName(), product.getProductCategory(), product.getPrice());
         ProductEvent event = buildEvent(ProductEventType.PRODUCT_CREATED, product);
-        log.info("📨 [EVENT_PUBLISHER] Event built successfully - Type: {}, Product ID: {}", 
+        log.info("📨 [EVENT_PUBLISHER] Event built successfully - Type: {}, Product ID: {}",
             event.getType(), event.getData().getProductId());
         producer.send(event);
     }

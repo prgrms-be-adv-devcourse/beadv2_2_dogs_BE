@@ -69,7 +69,7 @@ public class ProductService {
       Product savedProduct = productRepository.save(product);
 
       // 카프카 이벤트 발행
-      log.info("📤 [PRODUCT_SERVICE] Publishing PRODUCT_CREATED event to Kafka - Product ID: {}, Name: {}", 
+      log.info("📤 [PRODUCT_SERVICE] Publishing PRODUCT_CREATED event to Kafka - Product ID: {}, Name: {}",
         product.getId(), product.getProductName());
       productEventPublisher.publishProductCreated(product);
 
