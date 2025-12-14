@@ -71,7 +71,7 @@ public class DeliveryService {
     @Transactional
     public void startDelivery(UUID deliveryId) {
         Delivery delivery = deliveryRepository.findById(deliveryId)
-            .orElseThrow(() -> new CustomException(DELIVERY_NOT_FOUND);
+            .orElseThrow(() -> new CustomException(DELIVERY_NOT_FOUND));
 
         delivery.startDelivery();
     }
