@@ -7,7 +7,7 @@ import org.springframework.kafka.annotation.EnableKafka;
 
 @SpringBootApplication
 @EnableKafka
-@EnableFeignClients(basePackages = "com.barofarm.support.common.client")
+@EnableFeignClients(basePackages = "com.barofarm.support")
 public class SupportApplication {
 
     public static void main(String[] args) {
