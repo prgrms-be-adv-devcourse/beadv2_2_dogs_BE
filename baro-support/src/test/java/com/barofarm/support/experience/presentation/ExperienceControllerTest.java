@@ -10,7 +10,8 @@ import com.barofarm.support.common.response.ResponseDto;
 import com.barofarm.support.experience.application.ExperienceService;
 import com.barofarm.support.experience.application.dto.ExperienceServiceResponse;
 import com.barofarm.support.experience.domain.ExperienceStatus;
-import com.barofarm.support.experience.presentation.dto.ExperienceRequest;
+import com.barofarm.support.experience.presentation.dto.ExperienceCreateRequest;
+import com.barofarm.support.experience.presentation.dto.ExperienceUpdateRequest;
 import com.barofarm.support.experience.presentation.dto.ExperienceResponse;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
@@ -40,7 +41,8 @@ class ExperienceControllerTest {
     private UUID farmId;
     private UUID experienceId;
     private UUID userId;
-    private ExperienceRequest request;
+    private ExperienceCreateRequest createRequest;
+    private ExperienceUpdateRequest updateRequest;
     private ExperienceServiceResponse serviceResponse;
 
     @BeforeEach
@@ -49,8 +51,11 @@ class ExperienceControllerTest {
         experienceId = UUID.randomUUID();
         userId = UUID.randomUUID();
 
-        request = new ExperienceRequest(farmId, "딸기 수확 체험", "신선한 딸기를 직접 수확해보세요", BigInteger.valueOf(15000), 20,
+        createRequest = new ExperienceCreateRequest(farmId, "딸기 수확 체험", "신선한 딸기를 직접 수확해보세요", BigInteger.valueOf(15000), 20,
                 120, LocalDateTime.of(2025, 3, 1, 9, 0), LocalDateTime.of(2025, 5, 31, 18, 0), ExperienceStatus.ON_SALE);
+
+        updateRequest = new ExperienceUpdateRequest("수정된 제목", "수정된 설명", BigInteger.valueOf(25000), 30, 150,
+                LocalDateTime.of(2025, 4, 1, 9, 0), LocalDateTime.of(2025, 6, 30, 18, 0), ExperienceStatus.CLOSED);
 
         serviceResponse = new ExperienceServiceResponse(experienceId, farmId, "딸기 수확 체험", "신선한 딸기를 직접 수확해보세요",
                 BigInteger.valueOf(15000), 20, 120, LocalDateTime.of(2025, 3, 1, 9, 0), LocalDateTime.of(2025, 5, 31, 18, 0),
@@ -62,7 +67,7 @@ class ExperienceControllerTest {
     void createExperience() {
         when(experienceService.createExperience(eq(userId), any())).thenReturn(serviceResponse);
 
-        ResponseDto<ExperienceResponse> result = experienceController.createExperience(userId, request);
+        ResponseDto<ExperienceResponse> result = experienceController.createExperience(userId, createRequest);
 
         assertThat(result).isNotNull();
         assertThat(result.data()).isNotNull();
@@ -168,7 +173,7 @@ class ExperienceControllerTest {
         when(experienceService.updateExperience(eq(userId), eq(experienceId), any())).thenReturn(updatedServiceResponse);
 
         // when
-        ResponseDto<ExperienceResponse> result = experienceController.updateExperience(userId, experienceId, request);
+        ResponseDto<ExperienceResponse> result = experienceController.updateExperience(userId, experienceId, updateRequest);
 
         // then
         assertThat(result).isNotNull();

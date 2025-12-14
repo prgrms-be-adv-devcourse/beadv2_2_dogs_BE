@@ -2,7 +2,8 @@ package com.barofarm.support.experience.presentation;
 
 import com.barofarm.support.common.response.CustomPage;
 import com.barofarm.support.common.response.ResponseDto;
-import com.barofarm.support.experience.presentation.dto.ExperienceRequest;
+import com.barofarm.support.experience.presentation.dto.ExperienceCreateRequest;
+import com.barofarm.support.experience.presentation.dto.ExperienceUpdateRequest;
 import com.barofarm.support.experience.presentation.dto.ExperienceResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,7 +38,7 @@ public interface ExperienceSwaggerApi {
         @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
         @Parameter(description = "사용자 이메일 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Email") UUID userEmail,
         @Parameter(description = "사용자 역할 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Role") String userRole,
-        @Valid @RequestBody ExperienceRequest request
+        @Valid @RequestBody ExperienceCreateRequest request
     );
 
     @Operation(summary = "체험 프로그램 상세 조회", description = "체험 ID로 체험 프로그램 상세 정보를 조회합니다.")
@@ -112,7 +113,7 @@ public interface ExperienceSwaggerApi {
         @Parameter(description = "사용자 이메일 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Email") UUID userEmail,
         @Parameter(description = "사용자 역할 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Role") String userRole,
         @Parameter(description = "체험 프로그램 ID", required = true) @PathVariable("id") UUID id,
-        @Valid @RequestBody ExperienceRequest request
+        @Valid @RequestBody ExperienceUpdateRequest request
     );
 
     @Operation(summary = "체험 프로그램 삭제", description = "체험 프로그램을 삭제합니다.")

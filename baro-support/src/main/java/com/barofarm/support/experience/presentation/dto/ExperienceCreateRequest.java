@@ -13,12 +13,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 체험 프로그램 생성/수정 Command DTO */
-@Schema(description = "체험 프로그램 생성/수정 요청")
+/** 체험 프로그램 생성 Command DTO */
+@Schema(description = "체험 프로그램 생성 요청")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExperienceRequest {
+public class ExperienceCreateRequest {
 
     @Schema(description = "농장 ID", example = "550e8400-e29b-41d4-a716-446655440000",
         requiredMode = Schema.RequiredMode.REQUIRED)
@@ -65,3 +65,4 @@ public class ExperienceRequest {
             availableStartDate, availableEndDate, status);
     }
 }
+
