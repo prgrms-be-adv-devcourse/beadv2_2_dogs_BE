@@ -49,6 +49,15 @@ detect_docker_compose() {
 DOCKER_COMPOSE=$(detect_docker_compose)
 log_info "Using Docker Compose command: $DOCKER_COMPOSE"
 
+# Docker Compose 명령어를 함수로 래핑하여 안전하게 사용
+docker_compose_cmd() {
+    if [[ "$DOCKER_COMPOSE" == "docker compose" ]]; then
+        docker compose "$@"
+    else
+        docker-compose "$@"
+    fi
+}
+
 # ===================================
 # 파라미터 검증
 # ===================================
@@ -59,7 +68,7 @@ if [ -z "$MODULE_NAME" ]; then
     echo "Usage: bash deploy-module.sh [MODULE_NAME]"
     echo ""
     echo "Available modules:"
-    echo "  - data    (데이터 인프라: Redis, MySQL, Kafka)"
+    echo "  - data    (데이터 인프라: Redis, MySQL, Kafka, Elasticsearch)"
     echo "  - cloud   (Spring Cloud: Eureka, Gateway, Config)"
     echo "  - infra   (data + cloud)"
     echo "  - auth    (인증 모듈)"
@@ -139,14 +148,66 @@ fi
 # ===================================
 check_data_infra() {
     log_step "🔍 Checking data infrastructure..."
-    if ! docker ps | grep -q baro-redis; then
+    # MySQL, Kafka가 모두 실행 중인지 확인
+    MYSQL_RUNNING=$(docker ps --format '{{.Names}}' | grep -q "^baro-mysql$" && echo "yes" || echo "no")
+    KAFKA_RUNNING=$(docker ps --format '{{.Names}}' | grep -q "^baro-kafka$" && echo "yes" || echo "no")
+    
+    if [ "$MYSQL_RUNNING" = "no" ] || [ "$KAFKA_RUNNING" = "no" ]; then
         log_warn "Data infrastructure not running. Starting data infrastructure first..."
-        $DOCKER_COMPOSE -f docker-compose.data.yml pull
-        $DOCKER_COMPOSE -f docker-compose.data.yml up -d
+        # Elasticsearch는 build가 필요하므로 build 먼저 시도
+        if [ -f "docker/baro-es/Dockerfile" ]; then
+            log_info "Building Elasticsearch image..."
+            if docker_compose_cmd -f docker-compose.data.yml build elasticsearch 2>&1; then
+                log_info "✅ Elasticsearch image built successfully"
+            else
+                log_warn "⚠️ Elasticsearch build failed, will try to use existing image or skip"
+            fi
+        fi
+        # pull은 build가 필요한 이미지는 제외하고 실행
+        docker_compose_cmd -f docker-compose.data.yml pull mysql kafka 2>/dev/null || true
+        # Elasticsearch가 없어도 MySQL, Kafka는 시작
+        docker_compose_cmd -f docker-compose.data.yml up -d mysql kafka
+        # Elasticsearch는 별도로 시도 (실패해도 계속 진행)
+        docker_compose_cmd -f docker-compose.data.yml up -d elasticsearch 2>/dev/null || log_warn "⚠️ Elasticsearch start failed, continuing without it"
         log_info "Waiting for data infrastructure to be ready (20 seconds)..."
         sleep 20
     else
-        log_info "Data infrastructure is already running."
+        log_info "✅ Data infrastructure is already running (MySQL: $MYSQL_RUNNING, Kafka: $KAFKA_RUNNING)."
+    fi
+    
+    # MySQL이 실행 중이면 데이터베이스 초기화 확인 및 실행
+    if [ "$MYSQL_RUNNING" = "yes" ]; then
+        log_step "🔍 Checking MySQL databases..."
+        # MySQL이 준비될 때까지 대기
+        if docker exec baro-mysql mysqladmin ping -h localhost --silent 2>/dev/null; then
+            # 필수 데이터베이스가 있는지 확인
+            REQUIRED_DBS=("baroauth" "baroseller" "barobuyer" "baroorder" "barosupport")
+            MISSING_DBS=()
+            
+            for db in "${REQUIRED_DBS[@]}"; do
+                if ! docker exec baro-mysql mysql -u root -p"${MYSQL_ROOT_PASSWORD:-rootpassword}" -e "USE \`$db\`;" 2>/dev/null; then
+                    MISSING_DBS+=("$db")
+                fi
+            done
+            
+            if [ ${#MISSING_DBS[@]} -gt 0 ]; then
+                log_warn "⚠️ Missing databases detected: ${MISSING_DBS[*]}"
+                log_info "Creating missing databases..."
+                
+                # SQL 스크립트 실행
+                if [ -f "scripts/init-db/01-create-databases.sql" ]; then
+                    docker exec -i baro-mysql mysql -u root -p"${MYSQL_ROOT_PASSWORD:-rootpassword}" < scripts/init-db/01-create-databases.sql 2>/dev/null && \
+                        log_info "✅ Databases created successfully" || \
+                        log_warn "⚠️ Failed to create databases, but continuing..."
+                else
+                    log_warn "⚠️ Database initialization script not found: scripts/init-db/01-create-databases.sql"
+                fi
+            else
+                log_info "✅ All required databases exist."
+            fi
+        else
+            log_warn "⚠️ MySQL is not ready yet, skipping database check."
+        fi
     fi
 }
 
@@ -159,8 +220,36 @@ check_cloud_infra() {
         local cloud_image_tag="${IMAGE_TAG:-latest}"
         log_info "Using image tag for cloud infrastructure: ${cloud_image_tag}"
         export IMAGE_TAG="${cloud_image_tag}"
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
+        
+        # 이미지 pull 시도
+        log_info "Pulling cloud infrastructure images..."
+        local pull_output
+        pull_output=$(docker_compose_cmd -f docker-compose.cloud.yml pull 2>&1) || {
+            local pull_exit_code=$?
+            log_warn "⚠️ Image pull failed (exit code: $pull_exit_code)"
+            
+            # 이미지가 없을 때 latest 태그로 fallback 시도
+            if echo "$pull_output" | grep -q "not found\|manifest unknown"; then
+                log_warn "⚠️ Images with tag '${cloud_image_tag}' not found. Trying 'latest' tag as fallback..."
+                export IMAGE_TAG="latest"
+                if docker_compose_cmd -f docker-compose.cloud.yml pull 2>&1; then
+                    log_info "✅ Fallback to 'latest' tag successful"
+                else
+                    log_error "❌ Failed to pull images with both '${cloud_image_tag}' and 'latest' tags"
+                    log_error "Please ensure images are built and pushed to the registry:"
+                    log_error "  - ghcr.io/do-develop-space/eureka:${cloud_image_tag}"
+                    log_error "  - ghcr.io/do-develop-space/gateway:${cloud_image_tag}"
+                    log_error "  - ghcr.io/do-develop-space/config:${cloud_image_tag}"
+                    log_error "Or push the images with 'latest' tag for fallback."
+                    return 1
+                fi
+            else
+                log_error "❌ Image pull failed for unknown reason"
+                return 1
+            fi
+        }
+        
+        docker_compose_cmd -f docker-compose.cloud.yml up -d
         log_info "Waiting for Spring Cloud to be ready (30 seconds)..."
         sleep 30
     else
@@ -195,20 +284,20 @@ deploy_module() {
     CURRENT_IMAGE=$(docker inspect "baro-${module}" --format='{{.Config.Image}}' 2>/dev/null || echo "none")
     
     log_step "📥 Pulling image for $module (tag: ${IMAGE_TAG})..."
-    if ! $DOCKER_COMPOSE -f "$compose_file" pull; then
+    if ! docker_compose_cmd -f "$compose_file" pull; then
         log_error "❌ Failed to pull image for $module"
         exit 1
     fi
     
     # Pull한 이미지 정보
-    NEW_IMAGE=$($DOCKER_COMPOSE -f "$compose_file" config | grep "image:" | head -1 | awk '{print $2}')
+    NEW_IMAGE=$(docker_compose_cmd -f "$compose_file" config | grep "image:" | head -1 | awk '{print $2}')
     log_info "Image to deploy: $NEW_IMAGE"
     
     log_step "🛑 Stopping existing container for $module..."
-    $DOCKER_COMPOSE -f "$compose_file" down || true
+    docker_compose_cmd -f "$compose_file" down || true
     
     log_step "🏃 Starting $module..."
-    if ! $DOCKER_COMPOSE -f "$compose_file" up -d; then
+    if ! docker_compose_cmd -f "$compose_file" up -d; then
         log_error "❌ Failed to start container for $module"
         log_error "Checking container logs..."
         docker logs baro-${module} --tail 50 2>&1 || echo "Container logs not available"
@@ -243,14 +332,14 @@ deploy_all() {
     
     # 1. 데이터 인프라
     log_info "Step 1/4: Deploying data infrastructure..."
-    $DOCKER_COMPOSE -f docker-compose.data.yml pull
-    $DOCKER_COMPOSE -f docker-compose.data.yml up -d
+        docker_compose_cmd -f docker-compose.data.yml pull
+        docker_compose_cmd -f docker-compose.data.yml up -d
     sleep 20
     
     # 2. Spring Cloud 인프라
     log_info "Step 2/4: Deploying Spring Cloud infrastructure..."
-    $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
-    $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
+        docker_compose_cmd -f docker-compose.cloud.yml pull
+        docker_compose_cmd -f docker-compose.cloud.yml up -d
     sleep 30
     
     # 3. 비즈니스 모듈들
@@ -283,9 +372,12 @@ case $MODULE_NAME in
                 exit 1
             fi
         fi
-        $DOCKER_COMPOSE -f docker-compose.data.yml pull
-        $DOCKER_COMPOSE -f docker-compose.data.yml down || true
-        $DOCKER_COMPOSE -f docker-compose.data.yml up -d
+        # Elasticsearch 커스텀 이미지 빌드가 필요하므로 pull 대신 build
+        log_step "🔨 Building Elasticsearch image (if needed)..."
+        docker_compose_cmd -f docker-compose.data.yml build elasticsearch || log_warn "Build failed, trying pull..."
+        docker_compose_cmd -f docker-compose.data.yml pull || true
+        docker_compose_cmd -f docker-compose.data.yml down || true
+        docker_compose_cmd -f docker-compose.data.yml up -d
         log_info "✅ Data infrastructure deployed successfully!"
         ;;
     
@@ -301,9 +393,9 @@ case $MODULE_NAME in
         # IMAGE_TAG 환경 변수가 설정되어 있으면 사용, 없으면 latest
         export IMAGE_TAG="${IMAGE_TAG:-latest}"
         log_info "Using image tag for cloud infrastructure: ${IMAGE_TAG}"
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml pull
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml down || true
-        $DOCKER_COMPOSE -f docker-compose.cloud.yml up -d
+        docker_compose_cmd -f docker-compose.cloud.yml pull
+        docker_compose_cmd -f docker-compose.cloud.yml down || true
+        docker_compose_cmd -f docker-compose.cloud.yml up -d
         log_info "✅ Spring Cloud infrastructure deployed successfully!"
         ;;
     
@@ -324,9 +416,9 @@ case $MODULE_NAME in
             log_info "✅ Data infrastructure is already running. Skipping data deployment."
         else
             log_info "Step 1/2: Deploying data infrastructure..."
-            $DOCKER_COMPOSE -f docker-compose.data.yml pull
-            $DOCKER_COMPOSE -f docker-compose.data.yml down || true
-            $DOCKER_COMPOSE -f docker-compose.data.yml up -d
+            docker_compose_cmd -f docker-compose.data.yml pull
+            docker_compose_cmd -f docker-compose.data.yml down || true
+            docker_compose_cmd -f docker-compose.data.yml up -d
             sleep 20
         fi
         
@@ -381,7 +473,8 @@ docker ps --filter "name=baro-" --format "table {{.Names}}\t{{.Status}}\t{{.Port
 # 6. 정리
 # ===================================
 log_step "🧹 Cleaning up unused Docker resources..."
-docker system prune -f --volumes
+# --volumes 옵션 제거 (볼륨 삭제는 위험함, 데이터 손실 가능)
+docker system prune -f
 
 log_info "🎉 Deployment completed!"
 
