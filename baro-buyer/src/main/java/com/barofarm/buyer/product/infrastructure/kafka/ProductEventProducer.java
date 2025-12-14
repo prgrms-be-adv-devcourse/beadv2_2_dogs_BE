@@ -30,4 +30,5 @@ public class ProductEventProducer {
                         TOPIC, event.getType(), data.getProductId(), ex.getMessage(), ex);
             }
         });
+    }
 }
