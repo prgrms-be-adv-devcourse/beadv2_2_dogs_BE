@@ -1,0 +1,185 @@
+# 데이터 인프라 서비스
+# Redis, MySQL, Kafka, Elasticsearch 등 데이터 저장소
+
+services:
+  # ===================================
+  # Cache & Session Store
+  # ===================================
+  # redis:
+  #   image: redis:7.2-alpine
+  #   container_name: baro-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+  #   restart: unless-stopped
+  #   networks:
+  #     - baro-network
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 5
+
+  # ===================================
+  # Database
+  # ===================================
+  mysql:
+    image: mysql:8.0
+    container_name: baro-mysql
+    ports:
+      - "3306:3306"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    command: --innodb-buffer-pool-size=256M --max-connections=100
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-barofarm}
+      - MYSQL_USER=${MYSQL_USER:-barouser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+      # 모듈별 데이터베이스 환경 변수 (선택사항, 스크립트에서 자동 생성)
+      # MYSQL_DATABASE_AUTH=baroauth
+      # MYSQL_DATABASE_SELLER=baroseller
+      # MYSQL_DATABASE_BUYER=barobuyer
+      # MYSQL_DATABASE_ORDER=baroorder
+      # MYSQL_DATABASE_SUPPORT=barosupport
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 초기화 스크립트 디렉토리 마운트
+      # - 01-create-databases.sql: 최초 배포 시 자동 실행 (데이터 디렉토리가 비어있을 때만)
+      # - always-create-databases.sh: 수동 실행용 (일부 데이터베이스만 있는 경우 사용)
+      # 자세한 사용법: scripts/init-db/README.md 참조
+      - ./scripts/init-db:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${MYSQL_USER:-barouser}", "-p${MYSQL_PASSWORD:-baropassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===================================
+  # Message Queue (Kafka KRaft Mode)
+  # ===================================
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: baro-kafka
+    # init: true - tini를 PID 1로 실행하여 zombie 프로세스 방지
+    # tini가 모든 자식 프로세스의 종료 상태를 수집(wait)하여 zombie 발생 방지
+    init: true
+    ports:
+      - "9092:9092"  # Broker listener
+      - "9093:9093"  # Controller listener
+    environment:
+      # KRaft 모드 설정
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      # CLUSTER_ID는 기존 볼륨에 저장된 값을 사용 (변경 시 데이터 손실)
+      # 새로 초기화하려면 .env에서 다른 값으로 설정
+      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID:-}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-}
+      
+      # Listeners 설정
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      
+      # 토픽 설정
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      
+      # 로그 설정
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      # 메모리 제한
+      KAFKA_HEAP_OPTS: -Xmx384m -Xms256m
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      # init: true로 tini가 PID 1로 실행되어 모든 자식 프로세스의 종료 상태를 수집
+      # CMD 사용으로 shell 없이 직접 실행 (추가 안전장치)
+      # interval을 30s로 늘려 healthcheck 빈도 감소
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 60s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  # ===================================
+  # Search Engine (Elasticsearch)
+  # ===================================
+  elasticsearch:
+    # 커스텀 이미지 사용 (Nori 분석기 포함)
+    # build가 실패하면 공식 이미지 사용하도록 주석 처리 가능
+    image: baro-elasticsearch:latest
+    build:
+      context: ./docker/baro-es
+      dockerfile: Dockerfile
+    # 공식 이미지 직접 사용 (Nori 분석기 불필요한 경우)
+    # image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    # build 섹션을 주석 처리하고 위의 image만 사용하면 공식 이미지 사용
+    container_name: baro-elasticsearch
+    # init: true - tini를 PID 1로 실행하여 zombie 프로세스 방지
+    # tini가 모든 자식 프로세스의 종료 상태를 수집(wait)하여 zombie 발생 방지
+    init: true
+    environment:
+      - node.name=es01
+      - cluster.name=docker-cluster
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms256m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      # init: true로 tini가 PID 1로 실행되어 모든 자식 프로세스의 종료 상태를 수집
+      # CMD 사용으로 shell 없이 직접 실행 (리다이렉션 제거)
+      # /_cluster/health 엔드포인트 사용으로 더 명확한 상태 확인
+      test: ["CMD", "curl", "-sSf", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  # redis-data:
+  #   driver: local
+  mysql-data:
+    driver: local
+  kafka-data:
+    driver: local
+  elasticsearch-data:
+    driver: local
+
+networks:
+  baro-network:
+    # Docker Compose가 프로젝트 이름을 접두사로 붙이므로 be_baro-network 사용
+    name: be_baro-network  # 네트워크 이름 명시적으로 지정
+    external: true
+
