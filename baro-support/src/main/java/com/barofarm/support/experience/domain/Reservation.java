@@ -58,7 +58,12 @@ public class Reservation extends BaseEntity {
     private ReservationStatus status;
 
     /**
-     * 예약 정보 업데이트 (예약 날짜, 시간대, 인원, 가격)
+     * 예약 정보 업데이트
+     *
+     * @param reservedDate 예약 날짜
+     * @param reservedTimeSlot 예약 시간대
+     * @param headCount 예약 인원
+     * @param totalPrice 총 가격
      */
     public void update(
             LocalDate reservedDate,
@@ -66,16 +71,28 @@ public class Reservation extends BaseEntity {
             Integer headCount,
             BigInteger totalPrice
     ) {
-        this.reservedDate = reservedDate;
-        this.reservedTimeSlot = reservedTimeSlot;
-        this.headCount = headCount;
-        this.totalPrice = totalPrice;
+        if (reservedDate != null) {
+            this.reservedDate = reservedDate;
+        }
+        if (reservedTimeSlot != null) {
+            this.reservedTimeSlot = reservedTimeSlot;
+        }
+        if (headCount != null) {
+            this.headCount = headCount;
+        }
+        if (totalPrice != null) {
+            this.totalPrice = totalPrice;
+        }
     }
 
     /**
      * 예약 상태 변경
+     *
+     * @param status 변경할 예약 상태
      */
     public void changeStatus(ReservationStatus status) {
-        this.status = status;
+        if (status != null) {
+            this.status = status;
+        }
     }
 }

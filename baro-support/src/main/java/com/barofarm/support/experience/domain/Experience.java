@@ -65,6 +65,15 @@ public class Experience extends BaseEntity {
 
     /**
      * 체험 프로그램 정보 업데이트
+     *
+     * @param title 체험 제목
+     * @param description 체험 설명
+     * @param pricePerPerson 1인당 가격
+     * @param capacity 수용 인원
+     * @param durationMinutes 소요 시간 (분)
+     * @param availableStartDate 예약 가능 시작일
+     * @param availableEndDate 예약 가능 종료일
+     * @param status 체험 상태
      */
     public void update(
             String title,
@@ -76,13 +85,29 @@ public class Experience extends BaseEntity {
             LocalDateTime availableEndDate,
             ExperienceStatus status
     ) {
-        this.title = title;
-        this.description = description;
-        this.pricePerPerson = pricePerPerson;
-        this.capacity = capacity;
-        this.durationMinutes = durationMinutes;
-        this.availableStartDate = availableStartDate;
-        this.availableEndDate = availableEndDate;
-        this.status = status;
+        if (title != null) {
+            this.title = title;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (pricePerPerson != null) {
+            this.pricePerPerson = pricePerPerson;
+        }
+        if (capacity != null) {
+            this.capacity = capacity;
+        }
+        if (durationMinutes != null) {
+            this.durationMinutes = durationMinutes;
+        }
+        if (availableStartDate != null) {
+            this.availableStartDate = availableStartDate;
+        }
+        if (availableEndDate != null) {
+            this.availableEndDate = availableEndDate;
+        }
+        if (status != null) {
+            this.status = status;
+        }
     }
 }
