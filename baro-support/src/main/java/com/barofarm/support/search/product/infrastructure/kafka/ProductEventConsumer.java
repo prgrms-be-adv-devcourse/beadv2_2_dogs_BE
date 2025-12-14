@@ -4,9 +4,11 @@ import com.barofarm.support.event.ProductEvent;
 import com.barofarm.support.search.product.application.ProductSearchService;
 import com.barofarm.support.search.product.application.dto.ProductIndexRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ProductEventConsumer {
@@ -21,12 +23,40 @@ public class ProductEventConsumer {
     @KafkaListener(topics = "product-events", groupId = "search-service")
     public void onMessage(ProductEvent event) {
         ProductEvent.ProductEventData data = event.getData();
-        switch (event.getType()) {
-            case PRODUCT_CREATED, PRODUCT_UPDATED -> productSearchService.indexProduct(toRequest(data));
-            case PRODUCT_DELETED -> productSearchService.deleteProduct(data.getProductId());
-            default -> {
-                // enum의 모든 케이스를 처리하므로 도달 불가능하지만 Checkstyle 요구사항 충족
+        log.info("📨 [CONSUMER] Received product event from topic '{}', partition {}, offset {} - Type: {}, Product ID: {}, Name: {}, Category: {}, Price: {}",
+                topic, partition, offset, event.getType(), data.getProductId(), data.getProductName(), 
+                data.getProductCategory(), data.getPrice());
+
+        try {
+            switch (event.getType()) {
+                case PRODUCT_CREATED -> {
+                    log.info("🆕 [CONSUMER] Processing PRODUCT_CREATED event - Product ID: {}, Name: {}, Category: {}, Price: {}", 
+                        data.getProductId(), data.getProductName(), data.getProductCategory(), data.getPrice());
+                    productSearchService.indexProduct(toRequest(data));
+                    log.info("✅ [CONSUMER] Successfully indexed product - ID: {}, Name: {}", 
+                        data.getProductId(), data.getProductName());
+                }
+                case PRODUCT_UPDATED -> {
+                    log.info("🔄 [CONSUMER] Processing PRODUCT_UPDATED event - Product ID: {}, Name: {}, Category: {}, Price: {}", 
+                        data.getProductId(), data.getProductName(), data.getProductCategory(), data.getPrice());
+                    productSearchService.indexProduct(toRequest(data));
+                    log.info("✅ [CONSUMER] Successfully updated product - ID: {}, Name: {}", 
+                        data.getProductId(), data.getProductName());
+                }
+                case PRODUCT_DELETED -> {
+                    log.info("🗑️ [CONSUMER] Processing PRODUCT_DELETED event - Product ID: {}", data.getProductId());
+                    productSearchService.deleteProduct(data.getProductId());
+                    log.info("✅ [CONSUMER] Successfully deleted product - ID: {}", data.getProductId());
+                }
+                default -> {
+                    log.warn("⚠️ [CONSUMER] Unknown event type received - Type: {}, Product ID: {}", 
+                        event.getType(), data.getProductId());
+                }
             }
+        } catch (Exception e) {
+            log.error("❌ [CONSUMER] Failed to process product event - Type: {}, Product ID: {}, Name: {}, Error: {}", 
+                event.getType(), data.getProductId(), data.getProductName(), e.getMessage(), e);
+            throw e; // 예외를 다시 던져서 Kafka가 재시도하도록 함
         }
     }
 
