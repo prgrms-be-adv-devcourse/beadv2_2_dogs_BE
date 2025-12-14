@@ -15,6 +15,7 @@ public record OrderCreateCommand(
 ) {
     public record OrderItemCreateCommand(
         UUID productId,
+        UUID sellerId,
         int quantity,
         long unitPrice
     )

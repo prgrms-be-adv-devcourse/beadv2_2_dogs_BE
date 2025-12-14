@@ -38,6 +38,7 @@ public record OrderCreateRequest(
         List<OrderCreateCommand.OrderItemCreateCommand> itemCommands = items.stream()
                 .map(i -> new OrderCreateCommand.OrderItemCreateCommand(
                         i.productId(),
+                        i.sellerId(),
                         i.quantity(),
                         i.unitPrice()
                 ))
@@ -61,6 +62,9 @@ public record OrderCreateRequest(
 
         @Positive(message = "수량은 1개 이상이어야 합니다.")
         int quantity,
+
+        @NotNull(message = "판매자 ID는 필수입니다.")
+        UUID sellerId,
 
         @Positive(message = "단가(unitPrice)는 0보다 커야 합니다.")
         long unitPrice

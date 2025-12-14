@@ -96,8 +96,8 @@ public class Order extends BaseEntity {
         );
     }
 
-    public void addOrderItem(UUID productId, int quantity, Long unitPrice) {
-        OrderItem orderItem = OrderItem.of(this, productId, quantity, unitPrice);
+    public void addOrderItem(UUID productId, UUID sellerId, int quantity, Long unitPrice) {
+        OrderItem orderItem = OrderItem.of(this, productId, sellerId, quantity, unitPrice);
         this.orderItems.add(orderItem);
         this.totalAmount += orderItem.getTotalPrice();
     }
