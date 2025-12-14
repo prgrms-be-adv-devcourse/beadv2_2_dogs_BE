@@ -9,9 +9,6 @@ spring:
     name: order-service
   main:
     allow-bean-definition-overriding: true
-  autoconfigure:
-    exclude:
-      - 'org.springframework.cloud.openfeign.FeignAutoConfiguration$FeignJacksonConfiguration'
   cloud:
     openfeign:
       client:
@@ -19,6 +16,9 @@ spring:
           default:
             decode404: true
             loggerLevel: basic
+      # Feign Jackson 자동 설정 비활성화 (tools.jackson 오류 방지)
+      jackson:
+        enabled: false
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE:-baroorder}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true}
     driver-class-name: com.mysql.cj.jdbc.Driver
