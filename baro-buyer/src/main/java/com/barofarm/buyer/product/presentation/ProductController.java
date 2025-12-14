@@ -1,5 +1,6 @@
 package com.barofarm.buyer.product.presentation;
 
+import com.barofarm.buyer.common.response.CustomPage;
 import com.barofarm.buyer.common.response.ResponseDto;
 import com.barofarm.buyer.product.application.ProductService;
 import com.barofarm.buyer.product.application.dto.ProductDetailInfo;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,6 +32,12 @@ public class ProductController {
   @GetMapping("/{id}")
   public ResponseDto<ProductDetailInfo> getProductDetailInfo(@PathVariable UUID id) {
     return ResponseDto.ok(productService.getProductDetail(id));
+  }
+
+  @Operation(summary = "상품 모두 조회 API", description = "모든 상품의 정보를 조회합니다.")
+  @GetMapping
+  public ResponseDto<CustomPage<ProductDetailInfo>> getProducts(Pageable pageable) {
+    return ResponseDto.ok(productService.getProducts(pageable));
   }
 
   @Operation(summary = "상품 생성 API", description = "member의 role을 검증 한 후, 상품을 생성합니다.")

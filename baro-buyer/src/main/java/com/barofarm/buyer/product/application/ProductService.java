@@ -1,6 +1,7 @@
 package com.barofarm.buyer.product.application;
 
 import com.barofarm.buyer.common.exception.CustomException;
+import com.barofarm.buyer.common.response.CustomPage;
 import com.barofarm.buyer.product.application.dto.ProductCreateCommand;
 import com.barofarm.buyer.product.application.dto.ProductDetailInfo;
 import com.barofarm.buyer.product.application.dto.ProductUpdateCommand;
@@ -10,6 +11,8 @@ import com.barofarm.buyer.product.domain.ProductStatus;
 import com.barofarm.buyer.product.exception.ProductErrorCode;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,14 @@ public class ProductService {
 
     return ProductDetailInfo.from(product);
   }
+
+    @Transactional(readOnly = true)
+    public CustomPage<ProductDetailInfo> getProducts(Pageable pageable) {
+        Page<ProductDetailInfo> products = productRepository.findAll(pageable)
+            .map(ProductDetailInfo::from);
+
+        return CustomPage.from(products);
+    }
 
   public ProductDetailInfo createProduct(ProductCreateCommand command) {
     //      MemberRole memberRole = MemberRole.from(role);
