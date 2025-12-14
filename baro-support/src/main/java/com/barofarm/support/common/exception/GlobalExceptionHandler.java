@@ -3,7 +3,6 @@ package com.barofarm.support.common.exception;
 import com.barofarm.support.common.response.ResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,14 +23,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .body(body);
-      
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ResponseDto<Void>> handleIllegalArgument(
-        IllegalArgumentException e,
-        HttpServletRequest request) {
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(ResponseDto.error(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
