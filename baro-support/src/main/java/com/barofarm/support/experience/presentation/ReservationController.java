@@ -31,7 +31,8 @@ public class ReservationController implements ReservationSwaggerApi {
             @RequestHeader("X-User-Role") String userRole,
             @Valid @RequestBody ReservationRequest request
     ) {
-        ReservationServiceResponse serviceResponse = reservationService.createReservation(userId, request.toServiceRequest());
+        ReservationServiceResponse serviceResponse =
+                reservationService.createReservation(userId, request.toServiceRequest());
         return ResponseDto.ok(ReservationResponse.from(serviceResponse));
     }
 
@@ -80,7 +81,8 @@ public class ReservationController implements ReservationSwaggerApi {
             @PathVariable("reservationId") UUID reservationId,
             @RequestParam ReservationStatus status
     ) {
-        ReservationServiceResponse serviceResponse = reservationService.updateReservationStatus(userId, reservationId, status);
+        ReservationServiceResponse serviceResponse =
+                reservationService.updateReservationStatus(userId, reservationId, status);
         return ResponseDto.ok(ReservationResponse.from(serviceResponse));
     }
 

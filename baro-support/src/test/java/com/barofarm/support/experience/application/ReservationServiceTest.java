@@ -3,14 +3,20 @@ package com.barofarm.support.experience.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.barofarm.support.common.client.FarmClient;
 import com.barofarm.support.common.exception.CustomException;
 import com.barofarm.support.experience.application.dto.ReservationServiceRequest;
 import com.barofarm.support.experience.application.dto.ReservationServiceResponse;
 import com.barofarm.support.experience.domain.Experience;
 import com.barofarm.support.experience.domain.ExperienceRepository;
-import com.barofarm.support.common.client.FarmClient;
 import com.barofarm.support.experience.domain.ExperienceStatus;
 import com.barofarm.support.experience.domain.Reservation;
 import com.barofarm.support.experience.domain.ReservationRepository;
@@ -71,8 +77,11 @@ class ReservationServiceTest {
                 "10:00-12:00", 2, BigInteger.valueOf(30000), ReservationStatus.REQUESTED);
 
         // Experience는 protected 생성자이므로 Reflection을 사용하거나 Mock을 사용
+        // 예약 날짜(2025-03-15)가 체험 가능 기간 내에 있도록 설정
+        java.time.LocalDateTime availableStart = java.time.LocalDateTime.of(2025, 3, 1, 9, 0);
+        java.time.LocalDateTime availableEnd = java.time.LocalDateTime.of(2025, 3, 31, 18, 0);
         experience = new Experience(experienceId, farmId, "Test Experience", "Description",
-                BigInteger.valueOf(15000), 20, 120, java.time.LocalDateTime.now(), java.time.LocalDateTime.now().plusDays(30),
+                BigInteger.valueOf(15000), 20, 120, availableStart, availableEnd,
                 com.barofarm.support.experience.domain.ExperienceStatus.ON_SALE);
     }
 
@@ -320,9 +329,8 @@ class ReservationServiceTest {
         // given
         UUID sellerId = UUID.randomUUID();
         when(reservationRepository.findById(reservationId)).thenReturn(Optional.of(validReservation));
-        when(experienceRepository.findById(experienceId)).thenReturn(Optional.of(experience));
-        when(farmClient.getFarmIdByUserId(sellerId)).thenReturn(farmId);
         // REQUESTED -> COMPLETED는 불가능 (CONFIRMED를 거쳐야 함)
+        // 상태 검증이 먼저 수행되므로 experienceRepository와 farmClient stubbing 불필요
 
         // when & then
         assertThatThrownBy(() -> reservationService.updateReservationStatus(sellerId, reservationId, ReservationStatus.COMPLETED))
@@ -341,6 +349,7 @@ class ReservationServiceTest {
         Reservation canceledReservation = new Reservation(reservationId, experienceId, buyerId, LocalDate.of(2025, 3, 15),
                 "10:00-12:00", 2, BigInteger.valueOf(30000), ReservationStatus.CANCELED);
         when(reservationRepository.findById(reservationId)).thenReturn(Optional.of(canceledReservation));
+        // 상태 검증이 먼저 수행되므로 experienceRepository와 farmClient stubbing 불필요
 
         // when & then
         assertThatThrownBy(() -> reservationService.updateReservationStatus(sellerId, reservationId, ReservationStatus.CONFIRMED))
@@ -355,13 +364,14 @@ class ReservationServiceTest {
     @DisplayName("COMPLETED 상태의 예약은 상태 변경이 불가능하다")
     void updateReservationStatus_CompletedCannotBeChanged() {
         // given
-        UUID sellerId = UUID.randomUUID();
+        // CANCELED는 구매자만 가능하므로 buyerId 사용
         Reservation completedReservation = new Reservation(reservationId, experienceId, buyerId, LocalDate.of(2025, 3, 15),
                 "10:00-12:00", 2, BigInteger.valueOf(30000), ReservationStatus.COMPLETED);
         when(reservationRepository.findById(reservationId)).thenReturn(Optional.of(completedReservation));
 
         // when & then
-        assertThatThrownBy(() -> reservationService.updateReservationStatus(sellerId, reservationId, ReservationStatus.CANCELED))
+        // COMPLETED 상태는 최종 상태이므로 상태 변경 불가 (권한 검증 전에 상태 검증이 이루어짐)
+        assertThatThrownBy(() -> reservationService.updateReservationStatus(buyerId, reservationId, ReservationStatus.CANCELED))
                 .isInstanceOf(CustomException.class)
                 .satisfies(exception -> {
                     CustomException customException = (CustomException) exception;

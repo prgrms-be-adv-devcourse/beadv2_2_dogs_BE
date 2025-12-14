@@ -3,7 +3,10 @@ package com.barofarm.support.experience.presentation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.barofarm.support.common.response.CustomPage;
 import com.barofarm.support.common.response.ResponseDto;
@@ -11,8 +14,8 @@ import com.barofarm.support.experience.application.ExperienceService;
 import com.barofarm.support.experience.application.dto.ExperienceServiceResponse;
 import com.barofarm.support.experience.domain.ExperienceStatus;
 import com.barofarm.support.experience.presentation.dto.ExperienceCreateRequest;
-import com.barofarm.support.experience.presentation.dto.ExperienceUpdateRequest;
 import com.barofarm.support.experience.presentation.dto.ExperienceResponse;
+import com.barofarm.support.experience.presentation.dto.ExperienceUpdateRequest;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -41,6 +44,8 @@ class ExperienceControllerTest {
     private UUID farmId;
     private UUID experienceId;
     private UUID userId;
+    private UUID userEmail;
+    private String userRole;
     private ExperienceCreateRequest createRequest;
     private ExperienceUpdateRequest updateRequest;
     private ExperienceServiceResponse serviceResponse;
@@ -50,6 +55,8 @@ class ExperienceControllerTest {
         farmId = UUID.randomUUID();
         experienceId = UUID.randomUUID();
         userId = UUID.randomUUID();
+        userEmail = UUID.randomUUID();
+        userRole = "SELLER";
 
         createRequest = new ExperienceCreateRequest(farmId, "딸기 수확 체험", "신선한 딸기를 직접 수확해보세요", BigInteger.valueOf(15000), 20,
                 120, LocalDateTime.of(2025, 3, 1, 9, 0), LocalDateTime.of(2025, 5, 31, 18, 0), ExperienceStatus.ON_SALE);
@@ -67,7 +74,7 @@ class ExperienceControllerTest {
     void createExperience() {
         when(experienceService.createExperience(eq(userId), any())).thenReturn(serviceResponse);
 
-        ResponseDto<ExperienceResponse> result = experienceController.createExperience(userId, createRequest);
+        ResponseDto<ExperienceResponse> result = experienceController.createExperience(userId, userEmail, userRole, createRequest);
 
         assertThat(result).isNotNull();
         assertThat(result.data()).isNotNull();
@@ -152,7 +159,7 @@ class ExperienceControllerTest {
         when(experienceService.getMyExperiences(eq(userId), any(Pageable.class))).thenReturn(servicePage);
 
         // when
-        ResponseDto<CustomPage<ExperienceResponse>> result = experienceController.getMyExperiences(userId, pageable);
+        ResponseDto<CustomPage<ExperienceResponse>> result = experienceController.getMyExperiences(userId, userEmail, userRole, pageable);
 
         // then
         assertThat(result).isNotNull();
@@ -173,7 +180,7 @@ class ExperienceControllerTest {
         when(experienceService.updateExperience(eq(userId), eq(experienceId), any())).thenReturn(updatedServiceResponse);
 
         // when
-        ResponseDto<ExperienceResponse> result = experienceController.updateExperience(userId, experienceId, updateRequest);
+        ResponseDto<ExperienceResponse> result = experienceController.updateExperience(userId, userEmail, userRole, experienceId, updateRequest);
 
         // then
         assertThat(result).isNotNull();
@@ -190,7 +197,7 @@ class ExperienceControllerTest {
         doNothing().when(experienceService).deleteExperience(userId, experienceId);
 
         // when
-        ResponseDto<Void> result = experienceController.deleteExperience(userId, experienceId);
+        ResponseDto<Void> result = experienceController.deleteExperience(userId, userEmail, userRole, experienceId);
 
         // then
         assertThat(result).isNotNull();

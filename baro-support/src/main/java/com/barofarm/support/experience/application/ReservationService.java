@@ -1,5 +1,6 @@
 package com.barofarm.support.experience.application;
 
+import com.barofarm.support.common.client.FarmClient;
 import com.barofarm.support.common.exception.CustomException;
 import com.barofarm.support.experience.application.dto.ReservationServiceRequest;
 import com.barofarm.support.experience.application.dto.ReservationServiceResponse;
@@ -9,7 +10,6 @@ import com.barofarm.support.experience.domain.ExperienceStatus;
 import com.barofarm.support.experience.domain.Reservation;
 import com.barofarm.support.experience.domain.ReservationRepository;
 import com.barofarm.support.experience.domain.ReservationStatus;
-import com.barofarm.support.common.client.FarmClient;
 import com.barofarm.support.experience.exception.ExperienceErrorCode;
 import com.barofarm.support.experience.exception.ReservationErrorCode;
 import java.util.UUID;
@@ -264,7 +264,8 @@ public class ReservationService {
      * @param pageable 페이지 정보
      * @return 예약 페이지
      */
-    public Page<ReservationServiceResponse> getReservationsByExperienceId(UUID userId, UUID experienceId, Pageable pageable) {
+    public Page<ReservationServiceResponse> getReservationsByExperienceId(
+            UUID userId, UUID experienceId, Pageable pageable) {
         Experience experience = findExperienceById(experienceId);
 
         // 판매자 권한 검증
@@ -299,8 +300,12 @@ public class ReservationService {
      * @return 수정된 예약
      */
     @Transactional
-    public ReservationServiceResponse updateReservationStatus(UUID userId, UUID reservationId, ReservationStatus status) {
+    public ReservationServiceResponse updateReservationStatus(
+            UUID userId, UUID reservationId, ReservationStatus status) {
         Reservation reservation = findReservationById(reservationId);
+
+        // 상태 변경 가능 여부 검증 (최종 상태 체크를 먼저 수행하여 불필요한 권한 검증 방지)
+        validateStatusTransition(reservation.getStatus(), status);
 
         // 상태에 따라 권한이 다를 수 있음 (구매자는 CANCELED만 가능, 판매자는 CONFIRMED/COMPLETED 가능)
         if (status == ReservationStatus.CANCELED) {
@@ -310,9 +315,6 @@ public class ReservationService {
             Experience experience = findExperienceById(reservation.getExperienceId());
             validateSellerAccess(experience, userId);
         }
-
-        // 상태 변경 가능 여부 검증
-        validateStatusTransition(reservation.getStatus(), status);
 
         reservation.changeStatus(status);
         // JPA 더티 체킹, @Transactional 종료 시 자동으로 변경사항이 DB에 반영됨

@@ -1,12 +1,12 @@
 package com.barofarm.support.experience.application;
 
+import com.barofarm.support.common.client.FarmClient;
 import com.barofarm.support.common.exception.CustomException;
 import com.barofarm.support.experience.application.dto.ExperienceServiceRequest;
 import com.barofarm.support.experience.application.dto.ExperienceServiceResponse;
 import com.barofarm.support.experience.domain.Experience;
 import com.barofarm.support.experience.domain.ExperienceRepository;
 import com.barofarm.support.experience.exception.ExperienceErrorCode;
-import com.barofarm.support.common.client.FarmClient;
 import java.math.BigInteger;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -160,7 +160,8 @@ public class ExperienceService {
      * @return 수정된 체험 프로그램
      */
     @Transactional
-    public ExperienceServiceResponse updateExperience(UUID userId, UUID experienceId, ExperienceServiceRequest request) {
+    public ExperienceServiceResponse updateExperience(
+            UUID userId, UUID experienceId, ExperienceServiceRequest request) {
         Experience existingExperience = findExperienceById(experienceId);
 
         // Feign 클라이언트를 통해 사용자가 소유한 farmId 조회

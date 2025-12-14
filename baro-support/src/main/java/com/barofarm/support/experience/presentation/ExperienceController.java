@@ -5,8 +5,8 @@ import com.barofarm.support.common.response.ResponseDto;
 import com.barofarm.support.experience.application.ExperienceService;
 import com.barofarm.support.experience.application.dto.ExperienceServiceResponse;
 import com.barofarm.support.experience.presentation.dto.ExperienceCreateRequest;
-import com.barofarm.support.experience.presentation.dto.ExperienceUpdateRequest;
 import com.barofarm.support.experience.presentation.dto.ExperienceResponse;
+import com.barofarm.support.experience.presentation.dto.ExperienceUpdateRequest;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,8 @@ public class ExperienceController implements ExperienceSwaggerApi {
             @Valid @RequestBody ExperienceCreateRequest request
     ) {
         // Command DTO → Service DTO 변환
-        ExperienceServiceResponse serviceResponse = experienceService.createExperience(userId, request.toServiceRequest());
+        ExperienceServiceResponse serviceResponse =
+                experienceService.createExperience(userId, request.toServiceRequest());
         // Service DTO → Presentation DTO 변환
         return ResponseDto.ok(ExperienceResponse.from(serviceResponse));
     }
@@ -76,7 +77,8 @@ public class ExperienceController implements ExperienceSwaggerApi {
             @PathVariable("id") UUID id,
             @Valid @RequestBody ExperienceUpdateRequest request
     ) {
-        ExperienceServiceResponse serviceResponse = experienceService.updateExperience(userId, id, request.toServiceRequest());
+        ExperienceServiceResponse serviceResponse =
+                experienceService.updateExperience(userId, id, request.toServiceRequest());
         return ResponseDto.ok(ExperienceResponse.from(serviceResponse));
     }
 

@@ -3,7 +3,11 @@ package com.barofarm.support.experience.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.barofarm.support.common.client.FarmClient;
 import com.barofarm.support.experience.application.dto.ExperienceServiceRequest;
@@ -169,8 +173,13 @@ class ExperienceServiceTest {
 
         // when & then
         assertThatThrownBy(() -> experienceService.createExperience(userId, invalidRequest))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("예약 가능 시작일은 종료일보다 이전이어야 합니다");
+                .isInstanceOf(com.barofarm.support.common.exception.CustomException.class)
+                .satisfies(exception -> {
+                    com.barofarm.support.common.exception.CustomException customException =
+                            (com.barofarm.support.common.exception.CustomException) exception;
+                    assertThat(customException.getErrorCode())
+                            .isEqualTo(com.barofarm.support.experience.exception.ExperienceErrorCode.INVALID_DATE_RANGE);
+                });
 
         verify(experienceRepository, never()).save(any(Experience.class));
     }

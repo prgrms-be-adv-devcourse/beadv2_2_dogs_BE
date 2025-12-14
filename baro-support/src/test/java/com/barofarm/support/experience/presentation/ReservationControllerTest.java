@@ -3,7 +3,11 @@ package com.barofarm.support.experience.presentation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.barofarm.support.common.response.CustomPage;
 import com.barofarm.support.common.response.ResponseDto;
@@ -42,6 +46,8 @@ class ReservationControllerTest {
     private UUID buyerId;
     private UUID reservationId;
     private UUID userId;
+    private UUID userEmail;
+    private String userRole;
     private ReservationRequest request;
     private ReservationServiceResponse serviceResponse;
 
@@ -51,6 +57,8 @@ class ReservationControllerTest {
         buyerId = UUID.randomUUID();
         reservationId = UUID.randomUUID();
         userId = buyerId; // 기본적으로 buyerId와 동일하게 설정
+        userEmail = UUID.randomUUID();
+        userRole = "BUYER";
 
         request = new ReservationRequest(experienceId, buyerId, LocalDate.of(2025, 3, 15), "10:00-12:00", 2,
                 BigInteger.valueOf(30000));
@@ -65,7 +73,7 @@ class ReservationControllerTest {
     void createReservation() {
         when(reservationService.createReservation(eq(userId), any())).thenReturn(serviceResponse);
 
-        ResponseDto<ReservationResponse> result = reservationController.createReservation(userId, request);
+        ResponseDto<ReservationResponse> result = reservationController.createReservation(userId, userEmail, userRole, request);
 
         assertThat(result).isNotNull();
         assertThat(result.data()).isNotNull();
@@ -81,7 +89,7 @@ class ReservationControllerTest {
         when(reservationService.getReservationById(eq(userId), eq(reservationId))).thenReturn(serviceResponse);
 
         // when
-        ResponseDto<ReservationResponse> result = reservationController.getReservationById(userId, reservationId);
+        ResponseDto<ReservationResponse> result = reservationController.getReservationById(userId, userEmail, userRole, reservationId);
 
         // then
         assertThat(result).isNotNull();
@@ -107,7 +115,9 @@ class ReservationControllerTest {
                 .thenReturn(servicePage);
 
         // when
-        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(sellerId, experienceId, null,
+        UUID sellerEmail = UUID.randomUUID();
+        String sellerRole = "SELLER";
+        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(sellerId, sellerEmail, sellerRole, experienceId, null,
                 pageable);
 
         // then
@@ -133,7 +143,7 @@ class ReservationControllerTest {
         when(reservationService.getReservationsByBuyerId(eq(userId), eq(buyerId), any(Pageable.class))).thenReturn(servicePage);
 
         // when
-        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(userId, null, buyerId,
+        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(userId, userEmail, userRole, null, buyerId,
                 pageable);
 
         // then
@@ -151,7 +161,7 @@ class ReservationControllerTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(userId, null, null,
+        ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(userId, userEmail, userRole, null, null,
                 pageable);
 
         // then
@@ -175,7 +185,9 @@ class ReservationControllerTest {
                 .thenReturn(updatedServiceResponse);
 
         // when
-        ResponseDto<ReservationResponse> result = reservationController.updateReservationStatus(sellerId, reservationId,
+        UUID sellerEmail = UUID.randomUUID();
+        String sellerRole = "SELLER";
+        ResponseDto<ReservationResponse> result = reservationController.updateReservationStatus(sellerId, sellerEmail, sellerRole, reservationId,
                 ReservationStatus.CONFIRMED);
 
         // then
@@ -192,7 +204,7 @@ class ReservationControllerTest {
         doNothing().when(reservationService).deleteReservation(userId, reservationId);
 
         // when
-        ResponseDto<Void> result = reservationController.deleteReservation(userId, reservationId);
+        ResponseDto<Void> result = reservationController.deleteReservation(userId, userEmail, userRole, reservationId);
 
         // then
         assertThat(result).isNotNull();

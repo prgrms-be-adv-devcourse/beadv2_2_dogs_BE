@@ -65,4 +65,3 @@ public class ExperienceCreateRequest {
             availableStartDate, availableEndDate, status);
     }
 }
-
