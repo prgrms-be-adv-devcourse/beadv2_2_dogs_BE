@@ -24,27 +24,56 @@ public class ExperienceService {
     private final ExperienceRepository experienceRepository;
     private final FarmClient farmClient;
 
+    /**
+     * 체험 프로그램 ID로 조회 (null 체크 및 존재 여부 검증 포함)
+     *
+     * @param experienceId 체험 ID
+     * @return 체험 프로그램 엔티티
+     * @throws CustomException 체험 ID가 null이거나 존재하지 않는 경우
+     */
+    private Experience findExperienceById(UUID experienceId) {
+        if (experienceId == null) {
+            throw new CustomException(ExperienceErrorCode.EXPERIENCE_NOT_FOUND);
+        }
+
+        return experienceRepository.findById(experienceId)
+                .orElseThrow(() -> new CustomException(ExperienceErrorCode.EXPERIENCE_NOT_FOUND));
+    }
 
     /**
-     * 체험 프로그램 유효성 검증
+     * 체험 프로그램 권한 검증
      *
      * @param experience 검증할 체험 프로그램
+     * @param userFarmId 사용자가 소유한 농장 ID
+     * @throws CustomException 권한이 없는 경우
+     */
+    private void validateAccess(Experience experience, UUID userFarmId) {
+        if (!experience.getFarmId().equals(userFarmId)) {
+            throw new CustomException(ExperienceErrorCode.ACCESS_DENIED);
+        }
+    }
+
+    /**
+     * 체험 프로그램 데이터 유효성 검증
+     *
+     * @param experience 검증할 체험 프로그램
+     * @throws CustomException 검증 실패 시
      */
     private void validateExperience(Experience experience) {
         if (experience.getAvailableStartDate().isAfter(experience.getAvailableEndDate())) {
-            throw new IllegalArgumentException("예약 가능 시작일은 종료일보다 이전이어야 합니다.");
+            throw new CustomException(ExperienceErrorCode.INVALID_DATE_RANGE);
         }
 
         if (experience.getPricePerPerson().compareTo(BigInteger.ZERO) < 0) {
-            throw new IllegalArgumentException("1인당 가격은 0원 이상이어야 합니다.");
+            throw new CustomException(ExperienceErrorCode.INVALID_PRICE);
         }
 
         if (experience.getCapacity() < 1) {
-            throw new IllegalArgumentException("수용 인원은 1명 이상이어야 합니다.");
+            throw new CustomException(ExperienceErrorCode.INVALID_CAPACITY);
         }
 
         if (experience.getDurationMinutes() < 1) {
-            throw new IllegalArgumentException("소요 시간은 1분 이상이어야 합니다.");
+            throw new CustomException(ExperienceErrorCode.INVALID_DURATION);
         }
     }
 
@@ -61,12 +90,8 @@ public class ExperienceService {
         // 현재 통신은 구현/테스트되지 않았음, Mock으로 테스트 진행
         UUID userFarmId = farmClient.getFarmIdByUserId(userId);
 
-        // request.getFarmId()와 사용자가 소유한 farmId를 비교하여 본인 농장인지 검증
-        if (!request.getFarmId().equals(userFarmId)) {
-            throw new CustomException(ExperienceErrorCode.ACCESS_DENIED);
-        }
-
         Experience experience = request.toEntity();
+        validateAccess(experience, userFarmId);
         validateExperience(experience);
         Experience savedExperience = experienceRepository.save(experience);
 
@@ -80,13 +105,7 @@ public class ExperienceService {
      * @return 체험 프로그램
      */
     public ExperienceServiceResponse getExperienceById(UUID experienceId) {
-        if (experienceId == null) {
-            throw new CustomException(ExperienceErrorCode.EXPERIENCE_NOT_FOUND);
-        }
-
-        Experience experience = experienceRepository.findById(experienceId)
-                .orElseThrow(() -> new CustomException(ExperienceErrorCode.EXPERIENCE_NOT_FOUND));
-
+        Experience experience = findExperienceById(experienceId);
         return ExperienceServiceResponse.from(experience);
     }
 
@@ -142,17 +161,13 @@ public class ExperienceService {
      */
     @Transactional
     public ExperienceServiceResponse updateExperience(UUID userId, UUID experienceId, ExperienceServiceRequest request) {
-        Experience existingExperience = experienceRepository.findById(experienceId)
-                .orElseThrow(() -> new CustomException(ExperienceErrorCode.EXPERIENCE_NOT_FOUND));
+        Experience existingExperience = findExperienceById(experienceId);
 
         // Feign 클라이언트를 통해 사용자가 소유한 farmId 조회
         // 현재 통신은 구현/테스트되지 않았음, Mock으로 테스트 진행
         UUID userFarmId = farmClient.getFarmIdByUserId(userId);
 
-        // existingExperience.getFarmId()와 사용자가 소유한 farmId를 비교
-        if (!existingExperience.getFarmId().equals(userFarmId)) {
-            throw new CustomException(ExperienceErrorCode.ACCESS_DENIED);
-        }
+        validateAccess(existingExperience, userFarmId);
 
         existingExperience.update(
                 request.getTitle(),
@@ -180,17 +195,13 @@ public class ExperienceService {
      */
     @Transactional
     public void deleteExperience(UUID userId, UUID experienceId) {
-        Experience experience = experienceRepository.findById(experienceId)
-                .orElseThrow(() -> new CustomException(ExperienceErrorCode.EXPERIENCE_NOT_FOUND));
+        Experience experience = findExperienceById(experienceId);
 
         // Feign 클라이언트를 통해 사용자가 소유한 farmId 조회
         // 현재 통신은 구현/테스트되지 않았음, Mock으로 테스트 진행
         UUID userFarmId = farmClient.getFarmIdByUserId(userId);
 
-        // 해당 farmId와 사용자가 소유한 farmId를 비교
-        if (!experience.getFarmId().equals(userFarmId)) {
-            throw new CustomException(ExperienceErrorCode.ACCESS_DENIED);
-        }
+        validateAccess(experience, userFarmId);
 
         experienceRepository.deleteById(experienceId);
     }
