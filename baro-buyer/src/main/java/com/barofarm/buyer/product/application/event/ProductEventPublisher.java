@@ -19,7 +19,8 @@ public class ProductEventPublisher {
 
     // 상품 생성 시 발행
     public void publishProductCreated(Product product) {
-        log.info("📨 [EVENT_PUBLISHER] Building PRODUCT_CREATED event for product - ID: {}, Name: {}, Category: {}, Price: {}", 
+        log.info(
+            "📨 [EVENT_PUBLISHER] Building PRODUCT_CREATED - ID: {}, Name: {}, Category: {}, Price: {}",
             product.getId(), product.getProductName(), product.getProductCategory(), product.getPrice());
         ProductEvent event = buildEvent(ProductEventType.PRODUCT_CREATED, product);
         log.info("📨 [EVENT_PUBLISHER] Event built successfully - Type: {}, Product ID: {}", 

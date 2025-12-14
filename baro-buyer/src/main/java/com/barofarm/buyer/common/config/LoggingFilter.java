@@ -66,11 +66,12 @@ public class LoggingFilter extends OncePerRequestFilter implements Filter {
         }
         
         // 모든 요청 로깅 (INFO 레벨로 강제) - System.out과 log 모두 사용
-        System.err.println("🌐 [HTTP_REQUEST] " + method + " " + fullUrl + " - Remote: " + wrappedRequest.getRemoteAddr());
-        System.out.println("🌐 [HTTP_REQUEST] " + method + " " + fullUrl + " - Remote: " + wrappedRequest.getRemoteAddr());
-        log.error("🌐 [HTTP_REQUEST] {} {} - Remote: {}", method, fullUrl, wrappedRequest.getRemoteAddr());
-        log.warn("🌐 [HTTP_REQUEST] {} {} - Remote: {}", method, fullUrl, wrappedRequest.getRemoteAddr());
-        log.info("🌐 [HTTP_REQUEST] {} {} - Remote: {}", method, fullUrl, wrappedRequest.getRemoteAddr());
+        String remoteAddr = wrappedRequest.getRemoteAddr();
+        System.err.println("🌐 [HTTP_REQUEST] " + method + " " + fullUrl + " - Remote: " + remoteAddr);
+        System.out.println("🌐 [HTTP_REQUEST] " + method + " " + fullUrl + " - Remote: " + remoteAddr);
+            log.error("🌐 [HTTP_REQUEST] {} {} - Remote: {}", method, fullUrl, remoteAddr);
+            log.warn("🌐 [HTTP_REQUEST] {} {} - Remote: {}", method, fullUrl, remoteAddr);
+            log.info("🌐 [HTTP_REQUEST] {} {} - Remote: {}", method, fullUrl, remoteAddr);
         
         try {
             // 모든 요청 처리
@@ -96,11 +97,12 @@ public class LoggingFilter extends OncePerRequestFilter implements Filter {
             wrappedResponse.copyBodyToResponse();
             
             // 응답 로깅
-            System.err.println("✅ [HTTP_RESPONSE] " + method + " " + fullUrl + " - Status: " + wrappedResponse.getStatus());
-            System.out.println("✅ [HTTP_RESPONSE] " + method + " " + fullUrl + " - Status: " + wrappedResponse.getStatus());
-            log.error("✅ [HTTP_RESPONSE] {} {} - Status: {}", method, fullUrl, wrappedResponse.getStatus());
-            log.warn("✅ [HTTP_RESPONSE] {} {} - Status: {}", method, fullUrl, wrappedResponse.getStatus());
-            log.info("✅ [HTTP_RESPONSE] {} {} - Status: {}", method, fullUrl, wrappedResponse.getStatus());
+            int status = wrappedResponse.getStatus();
+            System.err.println("✅ [HTTP_RESPONSE] " + method + " " + fullUrl + " - Status: " + status);
+            System.out.println("✅ [HTTP_RESPONSE] " + method + " " + fullUrl + " - Status: " + status);
+            log.error("✅ [HTTP_RESPONSE] {} {} - Status: {}", method, fullUrl, status);
+            log.warn("✅ [HTTP_RESPONSE] {} {} - Status: {}", method, fullUrl, status);
+            log.info("✅ [HTTP_RESPONSE] {} {} - Status: {}", method, fullUrl, status);
         } catch (Exception e) {
             System.err.println("❌ [HTTP_ERROR] " + method + " " + fullUrl + " - Error: " + e.getMessage());
             System.err.println("❌ [HTTP_ERROR] StackTrace: ");

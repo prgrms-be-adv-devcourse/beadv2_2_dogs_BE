@@ -17,17 +17,21 @@ public class ProductEventProducer {
 
     public void send(ProductEvent event) {
         ProductEvent.ProductEventData data = event.getData();
-        log.info("📤 [PRODUCER] Sending product event to topic '{}' - Type: {}, Product ID: {}, Name: {}, Category: {}, Price: {}", 
-            TOPIC, event.getType(), data.getProductId(), data.getProductName(), data.getProductCategory(), data.getPrice());
+        log.info(
+            "📤 [PRODUCER] Sending product event to topic '{}' - Type: {}, ID: {}, Name: {}, Category: {}, Price: {}",
+            TOPIC, event.getType(), data.getProductId(), data.getProductName(),
+            data.getProductCategory(), data.getPrice());
         kafkaTemplate.send(TOPIC, event).whenComplete((result, ex) -> {
             if (ex == null) {
                 log.info(
-                        "✅ [PRODUCER] Successfully sent product event to topic '{}' - Type: {}, Product ID: {}, Partition: {}, Offset: {}",
-                        TOPIC, event.getType(), data.getProductId(), 
-                        result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
+                    "✅ [PRODUCER] Successfully sent product event to topic '{}' - Type: {}, Product ID: {}, "
+                        + "Partition: {}, Offset: {}",
+                    TOPIC, event.getType(), data.getProductId(),
+                    result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
             } else {
-                log.error("❌ [PRODUCER] Failed to send product event to topic '{}' - Type: {}, Product ID: {}, Error: {}",
-                        TOPIC, event.getType(), data.getProductId(), ex.getMessage(), ex);
+                log.error(
+                    "❌ [PRODUCER] Failed to send product event to topic '{}' - Type: {}, Product ID: {}, Error: {}",
+                    TOPIC, event.getType(), data.getProductId(), ex.getMessage(), ex);
             }
         });
     }
