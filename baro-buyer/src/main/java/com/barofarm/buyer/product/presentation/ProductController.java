@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/products")
@@ -38,7 +40,11 @@ public class ProductController {
       @RequestHeader("X-Member-Id") UUID memberId,
       @RequestHeader("X-Member-Role") String role,
       @Valid @RequestBody ProductCreateRequest request) {
-    return ResponseDto.ok(productService.createProduct(request.toCommand(memberId, role)));
+    log.info("📥 [CONTROLLER] Product creation request received - Member ID: {}, Role: {}, Product Name: {}, Category: {}, Price: {}", 
+        memberId, role, request.productName(), request.productCategory(), request.price());
+    ProductDetailInfo result = productService.createProduct(request.toCommand(memberId, role));
+    log.info("✅ [CONTROLLER] Product created successfully - Product ID: {}", result.id());
+    return ResponseDto.ok(result);
   }
 
   @Operation(

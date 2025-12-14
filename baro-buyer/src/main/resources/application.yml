@@ -10,12 +10,12 @@ spring:
   main:
     allow-bean-definition-overriding: true
   datasource:
-    url: jdbc:mysql://3.34.14.73:3306/barobuyer?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE:-barobuyer}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${MYSQL_USER:barouser}
-    password: ${MYSQL_PASSWORD:baroUser123!!123!!}
+    username: ${MYSQL_USER:-barouser}
+    password: ${MYSQL_PASSWORD:-baropassword}
   kafka:
-    bootstrap-servers: localhost:29092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -42,12 +42,15 @@ eureka:
 logging:
   level:
     root: INFO
-    com.barofarm.buyer: DEBUG
+    com.barofarm.buyer: INFO
+    com.barofarm.buyer.product: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.hibernate.orm.jdbc.bind: TRACE
     org.springframework.web: DEBUG
     org.springframework.web.servlet.DispatcherServlet: DEBUG
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE
+    com.barofarm.buyer.common.config.LoggingFilter: INFO
     # Kafka 로깅
     org.springframework.kafka: INFO
     org.apache.kafka: WARN

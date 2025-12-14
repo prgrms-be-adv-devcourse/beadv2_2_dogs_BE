@@ -36,7 +36,7 @@ services:
           memory: 512M
         reservations:
           memory: 256M
-    command: --innodb-buffer-pool-size=256M --max-connections=100
+    command: --innodb-buffer-pool-size=256M --max-connections=100 --lower-case-table-names=1
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
       - MYSQL_DATABASE=${MYSQL_DATABASE:-barofarm}
@@ -74,22 +74,22 @@ services:
     # tini가 모든 자식 프로세스의 종료 상태를 수집(wait)하여 zombie 발생 방지
     init: true
     ports:
-      - "29092:9092"  # Broker listener
-      - "9092:9092"  # Broker listener
-      - "9093:9093"  # Controller listener
+      - "29092:9092"  # Broker listener (외부 접근용)
+      - "9092:9092"  # Broker listener (외부 접근용)
+      # 9093은 Controller listener로 카프카 내부 통신용이므로 외부 노출 불필요
     environment:
       # KRaft 모드 설정
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
       # CLUSTER_ID는 기존 볼륨에 저장된 값을 사용 (변경 시 데이터 손실)
       # 새로 초기화하려면 .env에서 다른 값으로 설정
       KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qg}
       CLUSTER_ID: ${KAFKA_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qg}
 
       # Listeners 설정
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://:29092,CONTROLLER://:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -118,8 +118,9 @@ services:
     healthcheck:
       # init: true로 tini가 PID 1로 실행되어 모든 자식 프로세스의 종료 상태를 수집
       # CMD 사용으로 shell 없이 직접 실행 (추가 안전장치)
-      # interval을 30s로 늘려 healthcheck 빈도 감소
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      # interval을 60s로 늘려 healthcheck 빈도 감소
+      # 카프카는 29092 포트로 리스닝하므로 healthcheck도 동일한 포트 사용
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:29092"]
       interval: 60s
       timeout: 5s
       retries: 10

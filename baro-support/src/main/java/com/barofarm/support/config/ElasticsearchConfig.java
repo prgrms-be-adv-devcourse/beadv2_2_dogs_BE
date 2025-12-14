@@ -25,6 +25,10 @@ public class ElasticsearchConfig extends ElasticsearchConfiguration {
     // "http://localhost:9200" -> "localhost:9200"
     String hostAndPort = elasticsearchUri.replace("http://", "").replace("https://", "");
 
-    return ClientConfiguration.builder().connectedTo(hostAndPort).build();
+    return ClientConfiguration.builder()
+        .connectedTo(hostAndPort)
+        .withConnectTimeout(java.time.Duration.ofSeconds(10))
+        .withSocketTimeout(java.time.Duration.ofSeconds(30))
+        .build();
   }
 }
