@@ -24,23 +24,25 @@ public class ProductEventConsumer {
     public void onMessage(ProductEvent event) {
         ProductEvent.ProductEventData data = event.getData();
         log.info("📨 [CONSUMER] Received product event - Type: {}, Product ID: {}, Name: {}, Category: {}, Price: {}",
-                event.getType(), data.getProductId(), data.getProductName(), 
+                event.getType(), data.getProductId(), data.getProductName(),
                 data.getProductCategory(), data.getPrice());
 
         try {
             switch (event.getType()) {
                 case PRODUCT_CREATED -> {
-                    log.info("🆕 [CONSUMER] Processing PRODUCT_CREATED event - Product ID: {}, Name: {}, Category: {}, Price: {}", 
+                    log.info(
+                        "🆕 [CONSUMER] Processing PRODUCT_CREATED - ID: {}, Name: {}, Category: {}, Price: {}",
                         data.getProductId(), data.getProductName(), data.getProductCategory(), data.getPrice());
                     productSearchService.indexProduct(toRequest(data));
-                    log.info("✅ [CONSUMER] Successfully indexed product - ID: {}, Name: {}", 
+                    log.info("✅ [CONSUMER] Successfully indexed product - ID: {}, Name: {}",
                         data.getProductId(), data.getProductName());
                 }
                 case PRODUCT_UPDATED -> {
-                    log.info("🔄 [CONSUMER] Processing PRODUCT_UPDATED event - Product ID: {}, Name: {}, Category: {}, Price: {}", 
+                    log.info(
+                        "🔄 [CONSUMER] Processing PRODUCT_UPDATED - ID: {}, Name: {}, Category: {}, Price: {}",
                         data.getProductId(), data.getProductName(), data.getProductCategory(), data.getPrice());
                     productSearchService.indexProduct(toRequest(data));
-                    log.info("✅ [CONSUMER] Successfully updated product - ID: {}, Name: {}", 
+                    log.info("✅ [CONSUMER] Successfully updated product - ID: {}, Name: {}",
                         data.getProductId(), data.getProductName());
                 }
                 case PRODUCT_DELETED -> {
@@ -49,12 +51,12 @@ public class ProductEventConsumer {
                     log.info("✅ [CONSUMER] Successfully deleted product - ID: {}", data.getProductId());
                 }
                 default -> {
-                    log.warn("⚠️ [CONSUMER] Unknown event type received - Type: {}, Product ID: {}", 
+                    log.warn("⚠️ [CONSUMER] Unknown event type received - Type: {}, Product ID: {}",
                         event.getType(), data.getProductId());
                 }
             }
         } catch (Exception e) {
-            log.error("❌ [CONSUMER] Failed to process product event - Type: {}, Product ID: {}, Name: {}, Error: {}", 
+            log.error("❌ [CONSUMER] Failed to process product event - Type: {}, Product ID: {}, Name: {}, Error: {}",
                 event.getType(), data.getProductId(), data.getProductName(), e.getMessage(), e);
             throw e; // 예외를 다시 던져서 Kafka가 재시도하도록 함
         }
