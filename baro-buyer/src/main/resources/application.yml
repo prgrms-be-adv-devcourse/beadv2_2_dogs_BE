@@ -10,7 +10,7 @@ spring:
   main:
     allow-bean-definition-overriding: true
   datasource:
-    url: jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE:}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE:-barobuyer}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true}
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${MYSQL_USER:}
     password: ${MYSQL_PASSWORD:}
@@ -23,6 +23,23 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
         use_sql_comments: true
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      group-id: support-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.type.mapping: productEvent:com.barofarm.support.event.ProductEvent
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.barofarm.support.event.ProductEvent
+      auto-offset-reset: latest  # earliest에서 latest로 변경하여 오래된 메시지 건너뛰기
+      # auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 eureka:
   client:
@@ -52,6 +69,17 @@ logging:
     org.hibernate.orm.jdbc.bind: TRACE
     org.springframework.web: DEBUG
     org.springframework.web.servlet.DispatcherServlet: DEBUG
+
+# Actuator 설정
+# management:
+#   endpoints:
+#     web:
+#       exposure:
+#         include: refresh, health, beans, info
+#   endpoint:
+#     health:
+#       enabled: true
+#       show-details: when-authorized
 
 # Swagger/OpenAPI 설정
 springdoc:
