@@ -17,4 +17,14 @@ public class DeliveryRepositoryAdapter implements DeliveryRepository {
     public Optional<Delivery> findByOrderId(UUID orderId) {
         return deliveryJpaRepository.findByOrderId(orderId);
     }
+
+    @Override
+    public boolean existsByOrderId(UUID orderId) {
+        return deliveryJpaRepository.existsByOrderId(orderId);
+    }
+
+    @Override
+    public Delivery save(Delivery delivery) {
+        return deliveryJpaRepository.save(delivery);
+    }
 }
