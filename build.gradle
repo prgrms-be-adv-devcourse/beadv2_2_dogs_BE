@@ -35,7 +35,7 @@ subprojects {
     }
 
     ext {
-        set('springCloudVersion', "2025.0.0")
+        set('springCloudVersion', "2025.1.0")
     }
 
     dependencyManagement {
@@ -77,8 +77,7 @@ subprojects {
             target 'src/*/java/**/*.java'
             importOrder()
             removeUnusedImports()
-            // eclipse() 제거: 메서드 체이닝과 파라미터 포맷팅이 자동으로 변경되지 않도록
-            leadingTabsToSpaces(4)  // 탭을 4칸 스페이스로 변환
+            leadingTabsToSpaces(4)
             trimTrailingWhitespace()
             endWithNewline()
         }
