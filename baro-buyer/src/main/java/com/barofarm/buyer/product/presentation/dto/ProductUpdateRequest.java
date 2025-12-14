@@ -6,6 +6,7 @@ import com.barofarm.buyer.product.domain.ProductStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import java.util.UUID;
 
 public record ProductUpdateRequest(
@@ -15,7 +16,8 @@ public record ProductUpdateRequest(
     @NotNull(message = "가격은 필수입니다.") @Min(value = 0, message = "가격은 0 이상이어야 합니다.") Long price,
     @NotNull(message = "재고는 필수입니다.") @Min(value = 0, message = "재고는 0 이상이어야 합니다.")
         Integer stockQuantity,
-    @NotNull(message = "상품 상태는 필수입니다.") ProductStatus productStatus) {
+    @NotNull(message = "상품 상태는 필수입니다.") ProductStatus productStatus,
+    List<String> imageUrls) {
   public ProductUpdateCommand toCommand(UUID memberId, String role) {
     return new ProductUpdateCommand(
         memberId,
@@ -25,6 +27,7 @@ public record ProductUpdateRequest(
         productCategory,
         price,
         stockQuantity,
-        productStatus);
+        productStatus,
+        imageUrls);
   }
 }

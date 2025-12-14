@@ -3,15 +3,19 @@ package com.barofarm.buyer.product.domain;
 import com.barofarm.buyer.common.entity.BaseEntity;
 import com.barofarm.buyer.common.exception.CustomException;
 import com.barofarm.buyer.product.exception.ProductErrorCode;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -21,7 +25,9 @@ import lombok.NoArgsConstructor;
 @Getter
 public class Product extends BaseEntity {
 
-  @Id private UUID id;
+  @Id
+  @Column(name = "product_id", columnDefinition = "BINARY(16)")
+  private UUID id;
 
   @Column(nullable = false, columnDefinition = "BINARY(16)")
   private UUID sellerId;
@@ -46,7 +52,14 @@ public class Product extends BaseEntity {
   @Column(name = "product_status", nullable = false)
   private ProductStatus productStatus;
 
-  @Builder
+    @OneToMany(
+        mappedBy = "product",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+    )
+    @OrderBy("sortOrder ASC")
+    private final List<ProductImage> images = new ArrayList<>();
+
   private Product(
       UUID sellerId,
       String productName,
@@ -76,15 +89,15 @@ public class Product extends BaseEntity {
       Integer stockQuantity,
       ProductStatus productStatus) {
 
-    return Product.builder()
-        .sellerId(sellerId)
-        .productName(productName)
-        .description(description)
-        .productCategory(productCategory)
-        .price(price)
-        .stockQuantity(stockQuantity)
-        .productStatus(productStatus)
-        .build();
+      return new Product(
+          sellerId,
+          productName,
+          description,
+          productCategory,
+          price,
+          stockQuantity,
+          productStatus
+      );
   }
 
   public void update(
@@ -104,6 +117,23 @@ public class Product extends BaseEntity {
     this.stockQuantity = stockQuantity;
     this.productStatus = productStatus;
   }
+
+    public void addImage(String imageUrl, int order) {
+        this.images.add(ProductImage.create(this, imageUrl, order));
+    }
+
+    public void clearImages() {
+        this.images.clear();
+    }
+
+    public void replaceImages(List<String> imageUrls) {
+        this.images.clear();
+
+        int order = 0;
+        for (String imageUrl : imageUrls) {
+            addImage(imageUrl, order++);
+        }
+    }
 
   public void validateOwner(UUID memberId) {
     if (!this.sellerId.equals(memberId)) {

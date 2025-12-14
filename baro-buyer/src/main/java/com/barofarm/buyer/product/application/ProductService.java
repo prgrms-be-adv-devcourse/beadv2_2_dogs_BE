@@ -47,9 +47,13 @@ public class ProductService {
             command.stockQuantity(),
             ProductStatus.ON_SALE);
 
-    productRepository.save(product);
+      if (command.imageUrls() != null) {
+          product.replaceImages(command.imageUrls());
+      }
 
-    return ProductDetailInfo.from(product);
+      Product savedProduct = productRepository.save(product);
+
+      return ProductDetailInfo.from(savedProduct);
   }
 
   public ProductDetailInfo updateProduct(UUID id, ProductUpdateCommand command) {
@@ -74,10 +78,15 @@ public class ProductService {
         command.stockQuantity(),
         command.productStatus());
 
+    //이미지 업데이트
+      if (command.imageUrls() != null) {
+          product.replaceImages(command.imageUrls());
+      }
+
     return ProductDetailInfo.from(product);
   }
 
-  public void deleteProduct(UUID id, UUID memberId, String role) {
+    public void deleteProduct(UUID id, UUID memberId, String role) {
     Product product =
         productRepository
             .findById(id)
