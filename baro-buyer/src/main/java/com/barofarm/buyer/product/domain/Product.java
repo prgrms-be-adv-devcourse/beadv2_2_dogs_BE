@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 public class Product extends BaseEntity {
 
   @Id
-  @Column(name = "product_id", columnDefinition = "BINARY(16)")
+  @Column(columnDefinition = "BINARY(16)")
   private UUID id;
 
   @Column(nullable = false, columnDefinition = "BINARY(16)")
