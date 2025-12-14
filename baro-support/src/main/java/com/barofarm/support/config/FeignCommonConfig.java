@@ -1,4 +1,4 @@
-package com.barofarm.support.review.client;
+package com.barofarm.support.config;
 
 import feign.Logger;
 import org.springframework.context.annotation.Bean;
