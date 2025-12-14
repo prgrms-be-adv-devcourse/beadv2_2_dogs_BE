@@ -64,6 +64,7 @@ spring:
                 - Path=/support-service/**
               filters:
                 - RewritePath=/support-service/(?<segment>.*), /${segment}
+                - AuthenticationFilter
 
             # Auth Service API 문서 프록시
             - id: auth-service-openapi
