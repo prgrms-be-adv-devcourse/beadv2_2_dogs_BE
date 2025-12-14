@@ -7,6 +7,7 @@ import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -58,6 +59,15 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
+            .body(body);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ResponseDto<Void>> handleNoResourceFoundException(NoResourceFoundException e) {
+        ResponseDto<Void> body = ResponseDto.error(HttpStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다: " + e.getResourcePath());
+
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
             .body(body);
     }
 
