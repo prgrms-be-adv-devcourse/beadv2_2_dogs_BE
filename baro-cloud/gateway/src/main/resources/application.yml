@@ -26,44 +26,41 @@ spring:
             - id: auth-service
               uri: lb://auth-service
               predicates:
-                - Path=/api/auth/**
+                - Path=/auth-service/**
               filters:
-                - RewritePath=/api/(?<segment>.*), /${segment}
+                - RewritePath=/auth-service/(?<segment>.*), /${segment}
 
             # Buyer Service
             - id: buyer-service
               uri: lb://buyer-service
               predicates:
-                - Path=/api/buyers/**,/api/carts/**,/api/products/**
+                - Path=/buyer-service/**
               filters:
-                - RewritePath=/api/(?<segment>.*), /${segment}
-                - AuthenticationFilter
+                - RewritePath=/buyer-service/(?<segment>.*), /${segment}
 
             # Seller Service
             - id: seller-service
               uri: lb://seller-service
               predicates:
-                - Path=/sellers/**
+                - Path=/seller-service/**
               filters:
-                - RewritePath=/sellers/(?<segment>.*), /${segment}
-                - AuthenticationFilter
+                - RewritePath=/seller-service/(?<segment>.*), /${segment}
 
             # Order Service
             - id: order-service
               uri: lb://order-service
               predicates:
-                - Path=/api/orders/**,/api/payments/**
+                - Path=/order-service/**,/api/payments/**
               filters:
-                - RewritePath=/api/(?<segment>.*), /${segment}
-                - AuthenticationFilter
+                - RewritePath=/order-service/(?<segment>.*), /${segment}
 
             # Support Service
             - id: support-service
               uri: lb://support-service
               predicates:
-                - Path=/api/settlements/**,/api/deliveries/**,/api/notifications/**,/api/experiences/**,/api/search/**,/api/reviews/**
+                - Path=/support-service/**
               filters:
-                - RewritePath=/api/(?<segment>.*), /${segment}
+                - RewritePath=/support-service/(?<segment>.*), /${segment}
 
             # Auth Service API 문서 프록시
             - id: auth-service-openapi
