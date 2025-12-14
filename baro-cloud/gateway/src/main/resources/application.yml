@@ -37,7 +37,6 @@ spring:
                 - Path=/buyer-service/**
               filters:
                 - RewritePath=/buyer-service/(?<segment>.*), /${segment}
-                - AuthenticationFilter
 
             # Seller Service
             - id: seller-service
@@ -46,7 +45,6 @@ spring:
                 - Path=/seller-service/**
               filters:
                 - RewritePath=/seller-service/(?<segment>.*), /${segment}
-                - AuthenticationFilter
 
             # Order Service
             - id: order-service
@@ -55,7 +53,6 @@ spring:
                 - Path=/order-service/**,/api/payments/**
               filters:
                 - RewritePath=/order-service/(?<segment>.*), /${segment}
-                - AuthenticationFilter
 
             # Support Service
             - id: support-service
@@ -64,7 +61,6 @@ spring:
                 - Path=/support-service/**
               filters:
                 - RewritePath=/support-service/(?<segment>.*), /${segment}
-                - AuthenticationFilter
 
             # Auth Service API 문서 프록시
             - id: auth-service-openapi
