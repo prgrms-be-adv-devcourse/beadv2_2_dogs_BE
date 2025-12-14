@@ -12,11 +12,13 @@ import com.barofarm.buyer.product.domain.ProductStatus;
 import com.barofarm.buyer.product.exception.ProductErrorCode;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -67,6 +69,8 @@ public class ProductService {
       Product savedProduct = productRepository.save(product);
 
       // 카프카 이벤트 발행
+      log.info("📤 [PRODUCT_SERVICE] Publishing PRODUCT_CREATED event to Kafka - Product ID: {}, Name: {}", 
+        product.getId(), product.getProductName());
       productEventPublisher.publishProductCreated(product);
 
       return ProductDetailInfo.from(savedProduct);
