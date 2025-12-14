@@ -18,7 +18,7 @@ public class SwaggerConfig {
 
     private Info apiInfo() {
         return new Info()
-            .title("baro-farm")
-            .description("This is baro-farm api");
+            .title("baro-farm Buyer Service")
+            .description("This is baro-farm buyer service api");
     }
 }

@@ -5,23 +5,27 @@ import com.barofarm.buyer.common.response.CustomPage;
 import com.barofarm.buyer.product.application.dto.ProductCreateCommand;
 import com.barofarm.buyer.product.application.dto.ProductDetailInfo;
 import com.barofarm.buyer.product.application.dto.ProductUpdateCommand;
+import com.barofarm.buyer.product.application.event.ProductEventPublisher;
 import com.barofarm.buyer.product.domain.Product;
 import com.barofarm.buyer.product.domain.ProductRepository;
 import com.barofarm.buyer.product.domain.ProductStatus;
 import com.barofarm.buyer.product.exception.ProductErrorCode;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class ProductService {
 
   private final ProductRepository productRepository;
+  private final ProductEventPublisher productEventPublisher;
 
   @Transactional(readOnly = true)
   public ProductDetailInfo getProductDetail(UUID id) {
@@ -64,6 +68,11 @@ public class ProductService {
 
       Product savedProduct = productRepository.save(product);
 
+      // 카프카 이벤트 발행
+      log.info("📤 [PRODUCT_SERVICE] Publishing PRODUCT_CREATED event to Kafka - Product ID: {}, Name: {}", 
+        product.getId(), product.getProductName());
+      productEventPublisher.publishProductCreated(product);
+
       return ProductDetailInfo.from(savedProduct);
   }
 
@@ -89,11 +98,6 @@ public class ProductService {
         command.stockQuantity(),
         command.productStatus());
 
-    //이미지 업데이트
-      if (command.imageUrls() != null) {
-          product.replaceImages(command.imageUrls());
-      }
-
     return ProductDetailInfo.from(product);
   }
 
@@ -112,5 +116,8 @@ public class ProductService {
     product.validateOwner(memberId);
 
     productRepository.deleteById(id);
+
+      // 카프카 이벤트 발행
+      productEventPublisher.publishProductDeleted(product);
   }
 }
