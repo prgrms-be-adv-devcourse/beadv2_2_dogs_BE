@@ -1,0 +1,28 @@
+# Support 모듈
+# 정산, 배송, 알림, 체험, 검색, 리뷰 관리
+
+services:
+  baro-support:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/baro-support:${IMAGE_TAG:-latest}
+    container_name: baro-support
+    ports:
+      - "8089:8089"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+      - SPRING_DATASOURCE_URL=jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE_SUPPORT:-barosupport}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true
+      - MYSQL_DATABASE=${MYSQL_DATABASE_SUPPORT:-barosupport}
+      - MYSQL_USER=${MYSQL_USER:-barouser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+      - JAVA_OPTS=-Xms256m -Xmx384m
+    restart: unless-stopped
+    networks:
+      - baro-network
+
+networks:
+  baro-network:
+    name: be_baro-network  # 네트워크 이름 명시적으로 지정
+    external: true
+

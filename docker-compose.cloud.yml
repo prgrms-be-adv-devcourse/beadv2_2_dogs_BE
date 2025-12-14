@@ -1,0 +1,85 @@
+# Spring Cloud 인프라 서비스
+# Eureka, Gateway, Config Server
+
+services:
+  # ===================================
+  # Service Registry
+  # ===================================
+  eureka:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/eureka:${IMAGE_TAG:-latest}
+    container_name: baro-eureka
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - JAVA_OPTS=-Xms128m -Xmx256m
+      # Docker 환경에서는 서비스 이름(eureka) 사용 (기본값)
+      # 로컬 개발 시 EUREKA_INSTANCE_HOSTNAME=localhost로 오버라이드 가능
+      - EUREKA_INSTANCE_HOSTNAME=${EUREKA_INSTANCE_HOSTNAME:-eureka}
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ===================================
+  # Config Server
+  # ===================================
+  config:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/config:${IMAGE_TAG:-latest}
+    container_name: baro-config
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - JAVA_OPTS=-Xms128m -Xmx256m
+    depends_on:
+      eureka:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8888/actuator/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ===================================
+  # API Gateway
+  # ===================================
+  gateway:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/gateway:${IMAGE_TAG:-latest}
+    container_name: baro-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      # - SPRING_DATA_REDIS_HOST=redis
+      # - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    depends_on:
+      eureka:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/actuator/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  baro-network:
+    name: be_baro-network  # 네트워크 이름 명시적으로 지정
+    external: true
+
