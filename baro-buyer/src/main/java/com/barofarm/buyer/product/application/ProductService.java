@@ -1,6 +1,7 @@
 package com.barofarm.buyer.product.application;
 
 import com.barofarm.buyer.common.exception.CustomException;
+import com.barofarm.buyer.common.response.CustomPage;
 import com.barofarm.buyer.product.application.dto.ProductCreateCommand;
 import com.barofarm.buyer.product.application.dto.ProductDetailInfo;
 import com.barofarm.buyer.product.application.dto.ProductUpdateCommand;
@@ -11,6 +12,8 @@ import com.barofarm.buyer.product.domain.ProductStatus;
 import com.barofarm.buyer.product.exception.ProductErrorCode;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +35,14 @@ public class ProductService {
     return ProductDetailInfo.from(product);
   }
 
+    @Transactional(readOnly = true)
+    public CustomPage<ProductDetailInfo> getProducts(Pageable pageable) {
+        Page<ProductDetailInfo> products = productRepository.findAll(pageable)
+            .map(ProductDetailInfo::from);
+
+        return CustomPage.from(products);
+    }
+
   public ProductDetailInfo createProduct(ProductCreateCommand command) {
     //      MemberRole memberRole = MemberRole.from(role);
     //
@@ -49,12 +60,16 @@ public class ProductService {
             command.stockQuantity(),
             ProductStatus.ON_SALE);
 
-    productRepository.save(product);
+      if (command.imageUrls() != null) {
+          product.replaceImages(command.imageUrls());
+      }
 
-    // 카프카 이벤트 발행
-    productEventPublisher.publishProductCreated(product);
+      Product savedProduct = productRepository.save(product);
 
-    return ProductDetailInfo.from(product);
+      // 카프카 이벤트 발행
+      productEventPublisher.publishProductCreated(product);
+
+      return ProductDetailInfo.from(savedProduct);
   }
 
   public ProductDetailInfo updateProduct(UUID id, ProductUpdateCommand command) {
@@ -79,13 +94,10 @@ public class ProductService {
         command.stockQuantity(),
         command.productStatus());
 
-      // 카프카 이벤트 발행
-      productEventPublisher.publishProductUpdated(product);
-
     return ProductDetailInfo.from(product);
   }
 
-  public void deleteProduct(UUID id, UUID memberId, String role) {
+    public void deleteProduct(UUID id, UUID memberId, String role) {
     Product product =
         productRepository
             .findById(id)
