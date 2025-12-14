@@ -1,9 +1,7 @@
 package com.barofarm.support.common.exception;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
-@RequiredArgsConstructor
 public enum CommonErrorCode implements BaseErrorCode {
 
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
@@ -13,6 +11,11 @@ public enum CommonErrorCode implements BaseErrorCode {
 
     private final HttpStatus status;
     private final String message;
+
+    CommonErrorCode(HttpStatus status, String message) {
+        this.status = status;
+        this.message = message;
+    }
 
     @Override
     public HttpStatus getStatus() {

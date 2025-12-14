@@ -1,12 +1,8 @@
 package com.barofarm.support.review.exception;
 
 import com.barofarm.support.common.exception.BaseErrorCode;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-@Getter
-@AllArgsConstructor
 public enum ReviewErrorCode implements BaseErrorCode {
 
     // ======== ORDER 검증 관련 ========
@@ -34,6 +30,21 @@ public enum ReviewErrorCode implements BaseErrorCode {
     REVIEW_ALREADY_DELETED(HttpStatus.CONFLICT, "이미 삭제된 리뷰입니다."),
     REVIEW_NOT_READABLE(HttpStatus.FORBIDDEN, "해당 리뷰를 조회할 수 없습니다.");
 
-    private HttpStatus status;
-    private String message;
+    private final HttpStatus status;
+    private final String message;
+
+    ReviewErrorCode(HttpStatus status, String message) {
+        this.status = status;
+        this.message = message;
+    }
+
+    @Override
+    public HttpStatus getStatus() {
+        return status;
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
+    }
 }

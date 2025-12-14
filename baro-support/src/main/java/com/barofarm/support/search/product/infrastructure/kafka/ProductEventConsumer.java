@@ -23,8 +23,8 @@ public class ProductEventConsumer {
     @KafkaListener(topics = "product-events", groupId = "search-service")
     public void onMessage(ProductEvent event) {
         ProductEvent.ProductEventData data = event.getData();
-        log.info("📨 [CONSUMER] Received product event from topic '{}', partition {}, offset {} - Type: {}, Product ID: {}, Name: {}, Category: {}, Price: {}",
-                topic, partition, offset, event.getType(), data.getProductId(), data.getProductName(), 
+        log.info("📨 [CONSUMER] Received product event - Type: {}, Product ID: {}, Name: {}, Category: {}, Price: {}",
+                event.getType(), data.getProductId(), data.getProductName(), 
                 data.getProductCategory(), data.getPrice());
 
         try {
