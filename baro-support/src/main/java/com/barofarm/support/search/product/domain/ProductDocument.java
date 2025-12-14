@@ -25,7 +25,7 @@ public class ProductDocument {
   private Long price; // 필터링 & 정렬 기능이 필요하다면 유효 (가격대 필터, 가격순 정렬)
 
   @Field(type = FieldType.Keyword)
-  private String status; // 검색 결과 반환 로직 내에서 ON_SALE 상태만 결과에 노출
+  private String status; // 검색 결과 반환 로직 내에서 ON_SALE, DISCOUNTED 상태만 결과에 노출
 
   @Field(type = FieldType.Date, format = DateFormat.date_time)
   @JsonFormat(pattern = "uuuu-MM-dd'T'HH:mm:ssX", timezone = "UTC")
