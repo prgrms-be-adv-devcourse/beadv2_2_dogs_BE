@@ -2,10 +2,8 @@ package com.barofarm.order.order.infrastructure;
 
 import com.barofarm.order.order.application.dto.response.OrderItemSettlementResponse;
 import com.barofarm.order.order.domain.OrderItem;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
