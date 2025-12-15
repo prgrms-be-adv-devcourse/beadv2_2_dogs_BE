@@ -1,37 +1,6 @@
 package com.barofarm.seller.farm;
 
-import static com.barofarm.seller.farm.domain.Status.ACTIVE;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.barofarm.seller.common.response.CustomPage;
-import com.barofarm.seller.common.response.ResponseDto;
-import com.barofarm.seller.config.BaseControllerSupport;
-import com.barofarm.seller.farm.application.dto.response.FarmCreateInfo;
-import com.barofarm.seller.farm.application.dto.response.FarmDetailInfo;
-import com.barofarm.seller.farm.application.dto.response.FarmUpdateInfo;
-import com.barofarm.seller.farm.presentation.dto.FarmCreateRequestDto;
-import com.barofarm.seller.farm.presentation.dto.FarmUpdateRequestDto;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Stream;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 //class FarmControllerTest extends BaseControllerSupport {
 //

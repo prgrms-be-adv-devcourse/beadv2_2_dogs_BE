@@ -1,29 +1,6 @@
 package com.barofarm.seller.farm;
 
-import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_FORBIDDEN;
-import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_NOT_FOUND;
-import static com.barofarm.seller.seller.exception.SellerErrorCode.SELLER_NOT_FOUND;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
-import com.barofarm.seller.common.exception.CustomException;
-import com.barofarm.seller.common.response.CustomPage;
-import com.barofarm.seller.common.response.ResponseDto;
-import com.barofarm.seller.config.BaseServiceTest;
-import com.barofarm.seller.farm.application.dto.request.FarmCreateCommand;
-import com.barofarm.seller.farm.application.dto.request.FarmUpdateCommand;
-import com.barofarm.seller.farm.application.dto.response.FarmCreateInfo;
-import com.barofarm.seller.farm.application.dto.response.FarmDetailInfo;
-import com.barofarm.seller.farm.application.dto.response.FarmUpdateInfo;
-import com.barofarm.seller.farm.domain.Farm;
-import com.barofarm.seller.seller.domain.Seller;
-import java.util.UUID;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 
 //class FarmServiceTest extends BaseServiceTest {
 //

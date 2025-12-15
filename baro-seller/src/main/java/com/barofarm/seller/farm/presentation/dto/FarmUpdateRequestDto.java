@@ -1,9 +1,6 @@
 package com.barofarm.seller.farm.presentation.dto;
 
 import com.barofarm.seller.farm.application.dto.request.FarmUpdateCommand;
-import jakarta.validation.constraints.NotBlank;
-
-import com.barofarm.seller.farm.application.dto.request.FarmUpdateCommand;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -51,4 +48,3 @@ public record FarmUpdateRequestDto(
         );
     }
 }
-
