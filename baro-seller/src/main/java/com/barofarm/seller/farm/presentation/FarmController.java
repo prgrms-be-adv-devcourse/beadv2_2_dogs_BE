@@ -26,19 +26,19 @@ public class FarmController implements FarmSwaggerApi {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseDto<FarmCreateInfo> createFarm(
+            @RequestHeader("X-User-Id") UUID userId,
             @RequestPart("data") @Valid FarmCreateRequestDto request,
-            @RequestPart("image") MultipartFile image) {
-        UUID mockSellerId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return farmService.createFarm(mockSellerId, request.toCommand(), image);
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        return farmService.createFarm(userId, request.toCommand(), image);
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseDto<FarmUpdateInfo> updateFarm(
+            @RequestHeader("X-User-Id") UUID userId,
             @PathVariable("id") UUID id,
             @RequestPart("data") @Valid FarmUpdateRequestDto request,
-            @RequestPart("image") MultipartFile image) {
-        UUID mockSellerId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return farmService.updateFarm(mockSellerId, id, request.toCommand(), image);
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        return farmService.updateFarm(userId, id, request.toCommand(), image);
     }
 
     @GetMapping("/{id}")
@@ -52,9 +52,10 @@ public class FarmController implements FarmSwaggerApi {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseDto<Void> deleteFarm(@PathVariable("id") UUID id) {
-        UUID mockSellerId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        farmService.deleteFarm(mockSellerId, id);
+    public ResponseDto<Void> deleteFarm(
+            @RequestHeader("X-User-Id") UUID userId,
+            @PathVariable("id") UUID id) {
+        farmService.deleteFarm(userId, id);
         return ResponseDto.ok(null);
     }
 }

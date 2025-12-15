@@ -126,11 +126,11 @@ public class FarmService {
     }
 
     @Transactional
-    public ResponseDto<Void> deleteFarm(UUID mockSellerId, UUID farmId) {
+    public ResponseDto<Void> deleteFarm(UUID sellerId, UUID farmId) {
         Farm farm = farmRepository.findById(farmId)
             .orElseThrow(() -> new CustomException(FARM_NOT_FOUND));
 
-        if (!farm.getSeller().getId().equals(mockSellerId)) {
+        if (!farm.getSeller().getId().equals(sellerId)) {
             throw new CustomException(FARM_FORBIDDEN);
         }
 
