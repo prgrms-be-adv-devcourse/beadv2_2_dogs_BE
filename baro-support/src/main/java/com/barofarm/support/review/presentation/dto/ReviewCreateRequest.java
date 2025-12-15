@@ -21,7 +21,7 @@ public record ReviewCreateRequest(
     @NotBlank
     String content
 ) {
-    public ReviewCreateCommand toCommand(UUID userId, UUID productId) {
+    public ReviewCreateCommand toCommand(UUID productId, UUID userId) {
         return new ReviewCreateCommand(
             orderItemId,
             userId,
