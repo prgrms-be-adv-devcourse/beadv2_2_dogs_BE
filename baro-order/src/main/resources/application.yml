@@ -47,10 +47,16 @@ spring:
         spring.json.value.default.type: com.barofarm.support.event.ProductEvent
       auto-offset-reset: latest  # earliest에서 latest로 변경하여 오래된 메시지 건너뛰기
       # auto-offset-reset: earliest
-    producer:
+    # producer:
       # key-serializer: org.apache.kafka.common.serialization.StringSerializer
       # value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-  
+
+payment:
+  toss:
+    secret-key: ${TOSS_SECRET_KEY:}
+    # success-url: ${TOSS_SUCCESS_URL:http://localhost:8080/payments/success.html}
+    # fail-url: ${TOSS_FAIL_URL:http://localhost:8080/payments/fail.html}
+
 eureka:
   client:
     service-url:
