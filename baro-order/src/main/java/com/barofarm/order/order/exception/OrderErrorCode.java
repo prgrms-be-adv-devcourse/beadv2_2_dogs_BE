@@ -13,7 +13,8 @@ public enum OrderErrorCode implements BaseErrorCode {
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."),
     INVENTORY_SERVICE_ERROR(HttpStatus.BAD_GATEWAY, "재고 서비스 호출에 실패했습니다."),
     ORDER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 주문에 대한 접근 권한이 없습니다."),
-    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 주문 정보입니다.");
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 주문 정보입니다."),
+    ORDER_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 주문 상품 정보입니다.");
 
     private final HttpStatus status;
     private final String message;

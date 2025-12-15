@@ -1,21 +1,26 @@
 package com.barofarm.order.order.application;
 
+import static com.barofarm.order.order.domain.OrderStatus.PENDING;
 import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_ACCESS_DENIED;
+import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_ITEM_NOT_FOUND;
 import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 
 import com.barofarm.order.common.exception.CustomException;
 import com.barofarm.order.common.response.CustomPage;
 import com.barofarm.order.common.response.ResponseDto;
+import com.barofarm.order.order.application.dto.request.DeliveryInternalCreateRequest;
 import com.barofarm.order.order.application.dto.request.OrderCreateCommand;
 import com.barofarm.order.order.application.dto.response.OrderCancelInfo;
 import com.barofarm.order.order.application.dto.response.OrderCreateInfo;
 import com.barofarm.order.order.application.dto.response.OrderDetailInfo;
+import com.barofarm.order.order.application.dto.response.OrderItemInternalResponse;
 import com.barofarm.order.order.application.dto.response.OrderItemSettlementResponse;
+import com.barofarm.order.order.client.DeliveryClient;
 import com.barofarm.order.order.client.InventoryClient;
 import com.barofarm.order.order.domain.Order;
+import com.barofarm.order.order.domain.OrderItem;
 import com.barofarm.order.order.domain.OrderItemRepository;
 import com.barofarm.order.order.domain.OrderRepository;
-import com.barofarm.order.order.domain.OrderStatus;
 import com.barofarm.order.order.presentation.dto.InventoryDecreaseRequest;
 import com.barofarm.order.order.presentation.dto.InventoryIncreaseRequest;
 import java.time.LocalDate;
@@ -34,6 +39,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final InventoryClient inventoryClient;
+    private final DeliveryClient deliveryClient;
 
     @Transactional
     public ResponseDto<OrderCreateInfo> createOrder(UUID userId, OrderCreateCommand command){
@@ -59,6 +65,17 @@ public class OrderService {
         }
 
         Order saved = orderRepository.save(order);
+
+        DeliveryInternalCreateRequest.Address address = new DeliveryInternalCreateRequest.Address(
+                saved.getReceiverName(),
+                saved.getPhone(),
+                saved.getZipCode(),
+                saved.getAddress(),
+                saved.getAddressDetail()
+        );
+
+        deliveryClient.createDelivery(new DeliveryInternalCreateRequest(saved.getId(), address));
+
         return ResponseDto.ok(OrderCreateInfo.from(saved));
     }
 
@@ -117,16 +134,25 @@ public class OrderService {
             throw new CustomException(ORDER_ACCESS_DENIED);
         }
 
-        if (order.getStatus() == OrderStatus.PENDING) {
+        if (order.getStatus() == PENDING) {
             order.markPaid();
         }
     }
 
+    @Transactional(readOnly = true)
     public CustomPage<OrderItemSettlementResponse> findOrderItemsForSettlement(
         LocalDate startDate, LocalDate endDate, Pageable pageable) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay().minusNanos(1);
 
         return orderItemRepository.findOrderItemsForSettlement(startDateTime, endDateTime, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderItemInternalResponse getOrderItem(UUID orderItemId) {
+        OrderItem orderItem = orderItemRepository.findById(orderItemId)
+                .orElseThrow(() -> new CustomException(ORDER_ITEM_NOT_FOUND));
+
+        return OrderItemInternalResponse.from(orderItem);
     }
 }

@@ -6,12 +6,9 @@ import com.barofarm.order.order.application.OrderService;
 import com.barofarm.order.order.application.dto.response.OrderCancelInfo;
 import com.barofarm.order.order.application.dto.response.OrderCreateInfo;
 import com.barofarm.order.order.application.dto.response.OrderDetailInfo;
-import com.barofarm.order.order.application.dto.response.OrderItemSettlementResponse;
 import com.barofarm.order.order.presentation.dto.OrderCreateRequest;
-import java.time.LocalDate;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,7 +17,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -56,14 +52,5 @@ public class OrderController implements OrderSwaggerApi {
         @RequestHeader("X-User-Id") UUID userId,
         @PathVariable UUID orderId) {
         return orderService.cancelOrder(userId, orderId);
-    }
-
-    @GetMapping("/internal/settlements/order-items")
-    public CustomPage<OrderItemSettlementResponse> getOrderItemsForSettlement(
-        @RequestParam LocalDate startDate,
-        @RequestParam LocalDate endDate,
-        @RequestParam int page,
-        @RequestParam int size) {
-        return orderService.findOrderItemsForSettlement(startDate, endDate, PageRequest.of(page, size));
     }
 }

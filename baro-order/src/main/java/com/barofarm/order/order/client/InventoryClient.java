@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(
     name = "inventory-service",
-    url = "http://localhost:8082/api/v1/inventories",
-    configuration = InventoryFeignConfig.class
+    configuration = InventoryFeignConfig.class,
+    path = "${api.v1}/inventories"
 )
 public interface InventoryClient {
 
