@@ -3,10 +3,7 @@ package com.barofarm.order.order.presentation;
 import com.barofarm.order.common.response.CustomPage;
 import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.order.application.OrderService;
-import com.barofarm.order.order.application.dto.response.OrderCancelInfo;
-import com.barofarm.order.order.application.dto.response.OrderCreateInfo;
-import com.barofarm.order.order.application.dto.response.OrderDetailInfo;
-import com.barofarm.order.order.application.dto.response.OrderItemSettlementResponse;
+import com.barofarm.order.order.application.dto.response.*;
 import com.barofarm.order.order.presentation.dto.OrderCreateRequest;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -65,5 +62,10 @@ public class OrderController implements OrderSwaggerApi {
         @RequestParam int page,
         @RequestParam int size) {
         return orderService.findOrderItemsForSettlement(startDate, endDate, PageRequest.of(page, size));
+    }
+
+    @GetMapping("/internal/order-items/{id}")
+    public OrderItemInternalResponse getOrderItem(@PathVariable("id") UUID orderItemId) {
+        return orderService.getOrderItem(orderItemId);
     }
 }
