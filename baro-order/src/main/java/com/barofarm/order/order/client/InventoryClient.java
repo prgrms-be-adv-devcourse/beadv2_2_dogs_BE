@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(
-    name = "inventory-service",
+    name = "buyer-service",
     configuration = InventoryFeignConfig.class,
     path = "${api.v1}/inventories"
 )
