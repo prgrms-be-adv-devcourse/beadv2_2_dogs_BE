@@ -76,7 +76,7 @@ management:
 
 jwt:
   secret: "너무_짧지_않은_랜덤_시크릿_문자열_최소32바이트_나중에_env로_옮길예정"
-  access-token-validity-ms: 900000      # 15분
+  access-token-validity-ms: 604800000   # 7일
   refresh-token-validity-ms: 1209600000 # 14일
 
 
