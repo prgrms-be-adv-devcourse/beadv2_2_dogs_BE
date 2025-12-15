@@ -54,18 +54,4 @@ public class OrderController implements OrderSwaggerApi {
         @PathVariable UUID orderId) {
         return orderService.cancelOrder(userId, orderId);
     }
-
-    @GetMapping("/internal/settlements/order-items")
-    public CustomPage<OrderItemSettlementResponse> getOrderItemsForSettlement(
-        @RequestParam LocalDate startDate,
-        @RequestParam LocalDate endDate,
-        @RequestParam int page,
-        @RequestParam int size) {
-        return orderService.findOrderItemsForSettlement(startDate, endDate, PageRequest.of(page, size));
-    }
-
-    @GetMapping("/internal/order-items/{id}")
-    public OrderItemInternalResponse getOrderItem(@PathVariable("id") UUID orderItemId) {
-        return orderService.getOrderItem(orderItemId);
-    }
 }

@@ -3,8 +3,10 @@ package com.barofarm.order.order.application;
 import com.barofarm.order.common.exception.CustomException;
 import com.barofarm.order.common.response.CustomPage;
 import com.barofarm.order.common.response.ResponseDto;
+import com.barofarm.order.order.application.dto.request.DeliveryInternalCreateRequest;
 import com.barofarm.order.order.application.dto.request.OrderCreateCommand;
 import com.barofarm.order.order.application.dto.response.*;
+import com.barofarm.order.order.client.DeliveryClient;
 import com.barofarm.order.order.client.InventoryClient;
 import com.barofarm.order.order.domain.*;
 import com.barofarm.order.order.presentation.dto.InventoryDecreaseRequest;
@@ -27,6 +29,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final InventoryClient inventoryClient;
+    private final DeliveryClient deliveryClient;
 
     @Transactional
     public ResponseDto<OrderCreateInfo> createOrder(UUID userId, OrderCreateCommand command){
@@ -52,6 +55,17 @@ public class OrderService {
         }
 
         Order saved = orderRepository.save(order);
+
+        DeliveryInternalCreateRequest.Address address = new DeliveryInternalCreateRequest.Address(
+                saved.getReceiverName(),
+                saved.getPhone(),
+                saved.getZipCode(),
+                saved.getAddress(),
+                saved.getAddressDetail()
+        );
+
+        deliveryClient.createDelivery(new DeliveryInternalCreateRequest(saved.getId(), address));
+
         return ResponseDto.ok(OrderCreateInfo.from(saved));
     }
 
