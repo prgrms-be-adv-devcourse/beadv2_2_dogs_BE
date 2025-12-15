@@ -20,7 +20,7 @@ public class SellerController {
     private final SellerService sellerService;
 
     @PostMapping("/apply")
-    public ResponseDto<Void> applyForSeller(@RequestHeader("userId") UUID userId,
+    public ResponseDto<Void> applyForSeller(@RequestHeader("X-User-Id") UUID userId,
             @Valid @RequestBody SellerApplyRequestDto request) {
         sellerService.applyForSeller(userId, request);
         return ResponseDto.ok(null);
