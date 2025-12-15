@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(
-    name = "delivery-service"
+    name = "support-service"
 )
 public interface DeliveryClient {
 
