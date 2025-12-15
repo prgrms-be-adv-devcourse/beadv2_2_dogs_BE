@@ -62,6 +62,7 @@ public class SecurityConfig {
                             "/api/v1/auth/logout",
                             "/api/v1/auth/verification/**",
                             "/api/v1/auth/password/**",
+                            "/api/v1/auth/*/grant-seller", // TODO: 이후에 삭제하고 SELLER와 내부 토큰으로
                             "/swagger-ui/**",
                             "/swagger-ui.html",
                             "/v3/api-docs",
