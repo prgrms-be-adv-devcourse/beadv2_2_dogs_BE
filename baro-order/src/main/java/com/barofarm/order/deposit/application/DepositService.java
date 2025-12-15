@@ -1,11 +1,14 @@
 package com.barofarm.order.deposit.application;
 
+import static com.barofarm.order.deposit.exception.DepositErrorCode.DEPOSIT_ALREADY_EXISTS;
+
 import com.barofarm.order.common.exception.CustomException;
 import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.deposit.application.dto.request.DepositChargeCreateCommand;
 import com.barofarm.order.deposit.application.dto.request.DepositPaymentCommand;
 import com.barofarm.order.deposit.application.dto.request.DepositRefundCommand;
 import com.barofarm.order.deposit.application.dto.response.DepositChargeCreateInfo;
+import com.barofarm.order.deposit.application.dto.response.DepositCreateInfo;
 import com.barofarm.order.deposit.application.dto.response.DepositInfo;
 import com.barofarm.order.deposit.application.dto.response.DepositPaymentInfo;
 import com.barofarm.order.deposit.application.dto.response.DepositRefundInfo;
@@ -31,6 +34,16 @@ public class DepositService {
     private final DepositChargeRepository depositChargeRepository;
     private final PaymentRepository paymentRepository;
     private final OrderService orderService;
+
+    @Transactional
+    public ResponseDto<DepositCreateInfo> createDeposit(UUID userId) {
+        boolean exists = depositRepository.findByUserId(userId).isPresent();
+        if (exists) {
+            throw new CustomException(DEPOSIT_ALREADY_EXISTS);
+        }
+        Deposit saved = depositRepository.save(Deposit.of(userId));
+        return ResponseDto.ok(DepositCreateInfo.from(saved));
+    }
 
     @Transactional
     public ResponseDto<DepositChargeCreateInfo> createCharge(UUID userId, DepositChargeCreateCommand command) {
