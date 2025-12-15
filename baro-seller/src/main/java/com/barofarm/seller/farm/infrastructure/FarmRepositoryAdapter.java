@@ -26,8 +26,8 @@ public class FarmRepositoryAdapter implements FarmRepository {
     }
 
     @Override
-    public void deleteById(UUID id) {
-        farmJpaRepository.deleteById(id);
+    public void delete(Farm farm) {
+        farmJpaRepository.delete(farm);
     }
 
     @Override

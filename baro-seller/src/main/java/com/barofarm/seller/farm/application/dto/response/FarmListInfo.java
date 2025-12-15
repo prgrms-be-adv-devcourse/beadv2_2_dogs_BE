@@ -5,7 +5,7 @@ import com.barofarm.seller.farm.domain.FarmImage;
 import com.barofarm.seller.farm.domain.Status;
 import java.util.UUID;
 
-public record FarmCreateInfo(
+public record FarmListInfo(
     UUID id,
     String name,
     String description,
@@ -17,11 +17,10 @@ public record FarmCreateInfo(
     String cultivationMethod,
     Status status,
     UUID sellerId,
-    Image image
+    ImageDto image
 ) {
-
-    public static FarmCreateInfo from(Farm farm) {
-        return new FarmCreateInfo(
+    public static FarmListInfo from(Farm farm) {
+        return new FarmListInfo(
             farm.getId(),
             farm.getName(),
             farm.getDescription(),
@@ -33,21 +32,17 @@ public record FarmCreateInfo(
             farm.getCultivationMethod(),
             farm.getStatus(),
             farm.getSeller().getId(),
-            farm.getImage() != null ? Image.from(farm.getImage()) : null
+            farm.getImage() == null ? null : ImageDto.from(farm.getImage())
         );
     }
 
-    public record Image(
+    public record ImageDto(
         UUID id,
         String url,
         String s3Key
     ) {
-        public static Image from(FarmImage image) {
-            return new Image(
-                image.getId(),
-                image.getUrl(),
-                image.getS3Key()
-            );
+        public static ImageDto from(FarmImage image) {
+            return new ImageDto(image.getId(), image.getUrl(), image.getS3Key());
         }
     }
 }

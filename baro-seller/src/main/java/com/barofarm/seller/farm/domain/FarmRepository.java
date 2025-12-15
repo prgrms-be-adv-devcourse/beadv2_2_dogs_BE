@@ -9,6 +9,6 @@ public interface FarmRepository {
 
     Farm save(Farm farm);
     Optional<Farm> findById(UUID id);
-    void deleteById(UUID id);
+    void delete(Farm farm);
     Page<Farm> findAll(Pageable pageable);
 }
