@@ -2,6 +2,7 @@ package com.barofarm.seller.farm.infrastructure;
 
 import com.barofarm.seller.farm.domain.Farm;
 import com.barofarm.seller.farm.domain.FarmRepository;
+import com.barofarm.seller.seller.domain.Seller;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,12 +27,17 @@ public class FarmRepositoryAdapter implements FarmRepository {
     }
 
     @Override
-    public void deleteById(UUID id) {
-        farmJpaRepository.deleteById(id);
+    public void delete(Farm farm) {
+        farmJpaRepository.delete(farm);
     }
 
     @Override
     public Page<Farm> findAll(Pageable pageable) {
         return farmJpaRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<Farm> findBySeller(Seller seller, Pageable pageable) {
+        return farmJpaRepository.findBySeller(seller, pageable);
     }
 }

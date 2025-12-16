@@ -5,6 +5,7 @@ import com.barofarm.seller.common.response.ResponseDto;
 import com.barofarm.seller.farm.application.FarmService;
 import com.barofarm.seller.farm.application.dto.response.FarmCreateInfo;
 import com.barofarm.seller.farm.application.dto.response.FarmDetailInfo;
+import com.barofarm.seller.farm.application.dto.response.FarmListInfo;
 import com.barofarm.seller.farm.application.dto.response.FarmUpdateInfo;
 import com.barofarm.seller.farm.presentation.dto.FarmCreateRequestDto;
 import com.barofarm.seller.farm.presentation.dto.FarmUpdateRequestDto;
@@ -12,34 +13,40 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("${api.v1}/farms")
 @RequiredArgsConstructor
-// TODO: 나중에 인증/인가 붙이면 @RequestHeader("userId") UUID sellerId 사용
-public class FarmController implements FarmSwaggerApi{
+public class FarmController {
 
     private final FarmService farmService;
 
-    @PostMapping
-    public ResponseDto<FarmCreateInfo> createFarm(@Valid @RequestBody FarmCreateRequestDto request) {
-        UUID mockSellerId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return farmService.createFarm(mockSellerId, request.toCommand());
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseDto<FarmCreateInfo> createFarm(
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestPart("data") @Valid FarmCreateRequestDto request,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        return farmService.createFarm(userId, request.toCommand(), image);
     }
 
-    @PutMapping("/{id}")
-    public ResponseDto<FarmUpdateInfo> updateFarm(@PathVariable("id") UUID id,
-                                                     @Valid @RequestBody FarmUpdateRequestDto request) {
-        UUID mockSellerId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        return farmService.updateFarm(mockSellerId, id, request.toCommand());
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseDto<FarmUpdateInfo> updateFarm(
+            @RequestHeader("X-User-Id") UUID userId,
+            @PathVariable("id") UUID id,
+            @RequestPart("data") @Valid FarmUpdateRequestDto request,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+        return farmService.updateFarm(userId, id, request.toCommand(), image);
     }
 
     @GetMapping("/{id}")
@@ -47,15 +54,24 @@ public class FarmController implements FarmSwaggerApi{
         return farmService.findFarm(id);
     }
 
+    @GetMapping("/me")
+    public ResponseDto<CustomPage<FarmListInfo>> findMyFarmList(
+            @RequestHeader("X-User-Id") UUID userId,
+            Pageable pageable
+    ) {
+        return farmService.findMyFarmList(userId, pageable);
+    }
+
     @GetMapping
-    public ResponseDto<CustomPage<FarmDetailInfo>> findFarmList(Pageable pageable) {
+    public ResponseDto<CustomPage<FarmListInfo>> findFarmList(Pageable pageable) {
         return farmService.findFarmList(pageable);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseDto<Void> deleteFarm(@PathVariable("id") UUID id) {
-        UUID mockSellerId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        farmService.deleteFarm(mockSellerId, id);
+    public ResponseDto<Void> deleteFarm(
+            @RequestHeader("X-User-Id") UUID userId,
+            @PathVariable("id") UUID id) {
+        farmService.deleteFarm(userId, id);
         return ResponseDto.ok(null);
     }
 }
