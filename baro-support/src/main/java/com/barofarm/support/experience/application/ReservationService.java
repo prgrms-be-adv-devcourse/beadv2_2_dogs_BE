@@ -136,16 +136,26 @@ public class ReservationService {
      */
     private boolean validateBuyerOrSellerAccess(Reservation reservation, UUID userId) {
         boolean isBuyer = reservation.getBuyerId().equals(userId);
+        if (isBuyer) {
+            return true;
+        }
 
+        // TODO: seller-service 연동 안정화 후, userFarmId == null인 경우에도 ACCESS_DENIED를 던지도록 원복할 것
         Experience experience = findExperienceById(reservation.getExperienceId());
         UUID userFarmId = getUserFarmIdOrNull(userId);
-        boolean isSeller = userFarmId != null && experience.getFarmId().equals(userFarmId);
+        // seller-service에서 404를 반환하면 판매자 권한 체크를 건너뛴다.
+        if (userFarmId == null) {
+            // throw new CustomException(ReservationErrorCode.ACCESS_DENIED);
+            // 임시로 농장이 없는 경우는 권한 체크를 건너뛴다.
+            return false;
+        }
 
-        if (!isBuyer && !isSeller) {
+        boolean isSeller = experience.getFarmId().equals(userFarmId);
+        if (!isSeller) {
             throw new CustomException(ReservationErrorCode.ACCESS_DENIED);
         }
 
-        return isBuyer;
+        return false;
     }
 
     /**
