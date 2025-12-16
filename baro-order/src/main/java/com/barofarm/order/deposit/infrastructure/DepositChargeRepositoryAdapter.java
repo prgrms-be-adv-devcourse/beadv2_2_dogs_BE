@@ -20,6 +20,6 @@ public class DepositChargeRepositoryAdapter implements DepositChargeRepository {
 
     @Override
     public Optional<DepositCharge> findById(UUID depositChargeId) {
-        return Optional.empty();
+        return depositChargeJpaRepository.findById(depositChargeId);
     }
 }
