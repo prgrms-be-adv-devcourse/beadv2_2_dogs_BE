@@ -31,7 +31,7 @@ public class SellerController {
     }
 
     // 단건 조회
-    @GetMapping("/user/{userId}")
+    @GetMapping("/sellerInfo/{userId}")
     public ResponseDto<SellerInfoDto> getByUserId(@PathVariable("userId") UUID userId) {
 
         SellerInfoDto info = sellerService.getASellerByUserId(userId);
@@ -39,7 +39,7 @@ public class SellerController {
     }
 
     // 벌크로 조회
-    @GetMapping("/users/bulks")
+    @PostMapping("/sellerInfo/bulks")
     public ResponseDto<List<SellerInfoDto>> getByUsers(@RequestBody List<UUID> userIds) {
 
         List<SellerInfoDto> infos = sellerService.getSellersByIds(userIds);
