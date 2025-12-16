@@ -5,9 +5,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -32,11 +36,22 @@ public class Reservation extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "reservation_id", columnDefinition = "BINARY(16)")
+    @Column(name = "id", columnDefinition = "BINARY(16)")
     private UUID reservationId;
 
     @Column(name = "experience_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID experienceId;
+
+    // Experience FK
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+        name = "experience_id",
+        referencedColumnName = "id",
+        insertable = false,
+        updatable = false,
+        foreignKey = @ForeignKey(name = "fk_reservation_experience")
+    )
+    private Experience experience;
 
     @Column(name = "buyer_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID buyerId;

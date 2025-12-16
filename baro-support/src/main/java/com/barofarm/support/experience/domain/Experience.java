@@ -32,7 +32,7 @@ public class Experience extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "experience_id", columnDefinition = "BINARY(16)")
+    @Column(name = "id", columnDefinition = "BINARY(16)")
     private UUID experienceId;
 
     @Column(name = "farm_id", nullable = false, columnDefinition = "BINARY(16)")
