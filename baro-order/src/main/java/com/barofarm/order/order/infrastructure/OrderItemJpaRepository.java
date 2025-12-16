@@ -17,7 +17,7 @@ public interface OrderItemJpaRepository extends JpaRepository<OrderItem, UUID> {
             oi.id,
             oi.sellerId,
             oi.productId,
-            oi.totalPrice,
+            oi.unitPrice,
             oi.quantity,
             o.createdAt,
             o.canceledAt
