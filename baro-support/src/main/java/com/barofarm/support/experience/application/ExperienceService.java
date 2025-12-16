@@ -107,15 +107,14 @@ public class ExperienceService {
      */
     @Transactional
     public ExperienceServiceResponse createExperience(UUID userId, ExperienceServiceRequest request) {
+        Experience experience = request.toEntity();
         // Feign 클라이언트를 통해 사용자가 소유한 farmId 조회
         UUID userFarmId = getUserFarmIdOrNull(userId);
-        if (userFarmId == null) {
-            // 농장이 없으면 권한이 없는 것으로 처리
-            throw new CustomException(ExperienceErrorCode.ACCESS_DENIED);
+        // TODO: seller-service 연동 안정화 후, userFarmId == null인 경우에도 ACCESS_DENIED를 던지도록 원복할 것
+        if (userFarmId != null) {
+            // 농장이 확인되는 경우에만 권한 체크 수행
+            validateAccess(experience, userFarmId);
         }
-
-        Experience experience = request.toEntity();
-        validateAccess(experience, userFarmId);
         validateExperience(experience);
         Experience savedExperience = experienceRepository.save(experience);
 
@@ -193,11 +192,11 @@ public class ExperienceService {
 
         // Feign 클라이언트를 통해 사용자가 소유한 farmId 조회
         UUID userFarmId = getUserFarmIdOrNull(userId);
-        if (userFarmId == null) {
-            throw new CustomException(ExperienceErrorCode.ACCESS_DENIED);
+        // TODO: seller-service 연동 안정화 후, userFarmId == null인 경우에도 ACCESS_DENIED를 던지도록 원복할 것
+        if (userFarmId != null) {
+            // 농장이 확인되는 경우에만 권한 체크 수행
+            validateAccess(existingExperience, userFarmId);
         }
-
-        validateAccess(existingExperience, userFarmId);
 
         existingExperience.update(
                 request.getTitle(),
@@ -229,11 +228,11 @@ public class ExperienceService {
 
         // Feign 클라이언트를 통해 사용자가 소유한 farmId 조회
         UUID userFarmId = getUserFarmIdOrNull(userId);
-        if (userFarmId == null) {
-            throw new CustomException(ExperienceErrorCode.ACCESS_DENIED);
+        // TODO: seller-service 연동 후, userFarmId == null인 경우에도 ACCESS_DENIED를 던지도록 원복할 것
+        if (userFarmId != null) {
+            // 농장이 확인되는 경우에만 권한 체크 수행
+            validateAccess(experience, userFarmId);
         }
-
-        validateAccess(experience, userFarmId);
 
         experienceRepository.deleteById(experienceId);
     }
