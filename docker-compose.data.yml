@@ -33,10 +33,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1G
         reservations:
-          memory: 256M
-    command: --innodb-buffer-pool-size=256M --max-connections=100 --lower-case-table-names=1
+          memory: 512M
+    command: --innodb-buffer-pool-size=768M --max-connections=100 --lower-case-table-names=1
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
       - MYSQL_DATABASE=${MYSQL_DATABASE:-barofarm}
