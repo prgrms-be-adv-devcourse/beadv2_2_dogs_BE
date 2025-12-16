@@ -27,9 +27,6 @@ spring:
     scheduling:
       cron:
         settlement: "0 0 0 1 * *"
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
 
   mail:
     host: smtp.gmail.com
