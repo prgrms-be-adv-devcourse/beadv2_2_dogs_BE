@@ -1,5 +1,6 @@
 package com.barofarm.auth.infrastructure.security;
 
+import com.barofarm.auth.domain.user.User;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -11,11 +12,18 @@ public class AuthUserPrincipal implements UserDetails {
 
     private final UUID userId;
     private final String email;
-    private final String role;
+    private final String name;
+    private final String phone;
+    private final boolean marketingConsent;
+    private final User.UserType role;
 
-    public AuthUserPrincipal(UUID userId, String email, String role) {
+    public AuthUserPrincipal(UUID userId, String email, String name, String phone, boolean marketingConsent,
+            User.UserType role) {
         this.userId = userId;
         this.email = email;
+        this.name = name;
+        this.phone = phone;
+        this.marketingConsent = marketingConsent;
         this.role = role;
     }
 
@@ -23,7 +31,23 @@ public class AuthUserPrincipal implements UserDetails {
         return userId;
     }
 
-    public String getRole() {
+    public String getEmail() {
+        return email;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public boolean isMarketingConsent() {
+        return marketingConsent;
+    }
+
+    public User.UserType getRole() {
         return role;
     }
 

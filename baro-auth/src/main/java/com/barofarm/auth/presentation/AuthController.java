@@ -76,10 +76,17 @@ public class AuthController implements AuthSwaggerApi {
         return ResponseEntity.ok().build();
     }
 
+    // TODO: sercurity로 따로 관리하는 서비스 향후 AuthService와 관계 고려
     @GetMapping("/me")
     public ResponseEntity<MeResponse> getCurrentUser(@AuthenticationPrincipal AuthUserPrincipal principal) {
 
-        MeResponse response = new MeResponse(principal.getUserId(), principal.getUsername(), principal.getRole());
+        MeResponse response = new MeResponse(
+                principal.getUserId(),
+                principal.getEmail(),
+                principal.getName(),
+                principal.getPhone(),
+                principal.isMarketingConsent(),
+                principal.getRole());
 
         return ResponseEntity.ok(response);
     }
