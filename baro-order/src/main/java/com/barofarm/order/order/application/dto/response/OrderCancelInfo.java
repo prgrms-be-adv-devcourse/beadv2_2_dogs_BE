@@ -2,6 +2,7 @@ package com.barofarm.order.order.application.dto.response;
 
 import com.barofarm.order.order.domain.Order;
 import com.barofarm.order.order.domain.OrderStatus;
+import java.util.List;
 import java.util.UUID;
 
 public record OrderCancelInfo(
@@ -15,7 +16,8 @@ public record OrderCancelInfo(
     String address,
     String addressDetail,
     String deliveryMemo,
-    int itemCount
+    int itemCount,
+    List<OrderItemInfo> items
 ) {
     public static OrderCancelInfo from(Order order) {
         return new OrderCancelInfo(
@@ -29,7 +31,10 @@ public record OrderCancelInfo(
             order.getAddress(),
             order.getAddressDetail(),
             order.getDeliveryMemo(),
-            order.getOrderItems().size()
+            order.getOrderItems().size(),
+            order.getOrderItems().stream()
+                .map(OrderItemInfo::from)
+                .toList()
         );
     }
 }
