@@ -27,7 +27,6 @@ import lombok.ToString;
 @Table(name = "reservation")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Require
 // Set/Map 사용 시 동일성 비교를 위해 ID만 사용 (모든 필드 포함 시 영속성 컨텍스트 이슈 발생 가능)
 @EqualsAndHashCode(callSuper = false, of = "reservationId")
 @ToString(callSuper = false)
