@@ -70,7 +70,7 @@ public class Delivery extends BaseEntity {
     }
 
     public void ship(String courier, String trackingNumber) {
-        validateStatusTransition(DeliveryStatus.READY);
+        validateStatusTransition(DeliveryStatus.SHIPPED);
 
         if (courier == null || courier.isBlank()) {
             throw new IllegalArgumentException("택배사는 필수입니다.");
@@ -86,13 +86,13 @@ public class Delivery extends BaseEntity {
     }
 
     public void startDelivery() {
-        validateStatusTransition(DeliveryStatus.SHIPPED);
+        validateStatusTransition(DeliveryStatus.DELIVERING);
 
         this.deliveryStatus = DeliveryStatus.DELIVERING;
     }
 
     public void completeDelivery() {
-        validateStatusTransition(DeliveryStatus.DELIVERING);
+        validateStatusTransition(DeliveryStatus.DELIVERED);
 
         this.deliveryStatus = DeliveryStatus.DELIVERED;
         this.deliveredAt = LocalDateTime.now();
