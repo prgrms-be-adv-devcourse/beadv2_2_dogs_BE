@@ -12,6 +12,7 @@ import com.barofarm.support.experience.domain.ReservationRepository;
 import com.barofarm.support.experience.domain.ReservationStatus;
 import com.barofarm.support.experience.exception.ExperienceErrorCode;
 import com.barofarm.support.experience.exception.ReservationErrorCode;
+import feign.FeignException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,6 +29,26 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final ExperienceRepository experienceRepository;
     private final FarmClient farmClient;
+
+    /**
+     * 사용자 ID로 농장 ID 조회
+     *
+     * <p>seller-service에서 404를 반환하면 농장이 없다고 보고 null을 반환한다.
+     * 그 외 상태 코드는 그대로 예외를 전파한다.</p>
+     *
+     * @param userId 사용자 ID
+     * @return 농장 ID 또는 null
+     */
+    private UUID getUserFarmIdOrNull(UUID userId) {
+        try {
+            return farmClient.getFarmIdByUserId(userId);
+        } catch (FeignException e) {
+            if (e.status() == 404) {
+                return null;
+            }
+            throw e;
+        }
+    }
 
     /**
      * 예약 ID로 조회 (null 체크 및 존재 여부 검증 포함)
@@ -93,7 +114,10 @@ public class ReservationService {
      * @throws CustomException 권한이 없는 경우
      */
     private void validateSellerAccess(Experience experience, UUID userId) {
-        UUID userFarmId = farmClient.getFarmIdByUserId(userId);
+        UUID userFarmId = getUserFarmIdOrNull(userId);
+        if (userFarmId == null) {
+            throw new CustomException(ReservationErrorCode.ACCESS_DENIED);
+        }
         if (!experience.getFarmId().equals(userFarmId)) {
             throw new CustomException(ReservationErrorCode.ACCESS_DENIED);
         }
@@ -111,8 +135,8 @@ public class ReservationService {
         boolean isBuyer = reservation.getBuyerId().equals(userId);
 
         Experience experience = findExperienceById(reservation.getExperienceId());
-        UUID userFarmId = farmClient.getFarmIdByUserId(userId);
-        boolean isSeller = experience.getFarmId().equals(userFarmId);
+        UUID userFarmId = getUserFarmIdOrNull(userId);
+        boolean isSeller = userFarmId != null && experience.getFarmId().equals(userFarmId);
 
         if (!isBuyer && !isSeller) {
             throw new CustomException(ReservationErrorCode.ACCESS_DENIED);
