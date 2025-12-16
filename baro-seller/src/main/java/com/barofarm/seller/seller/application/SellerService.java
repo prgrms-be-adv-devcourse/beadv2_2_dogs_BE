@@ -1,13 +1,20 @@
 package com.barofarm.seller.seller.application;
 
+import static com.barofarm.seller.seller.exception.SellerErrorCode.SELLER_NOT_FOUND;
+
 import com.barofarm.seller.common.exception.CustomException;
 import com.barofarm.seller.seller.domain.Seller;
+import com.barofarm.seller.seller.domain.SellerRepository;
 import com.barofarm.seller.seller.domain.validation.BusinessValidator;
 import com.barofarm.seller.seller.exception.FeignErrorCode;
-import com.barofarm.seller.seller.infrastructure.SellerJpaRepository;
+import com.barofarm.seller.seller.exception.ValidationErrorCode;
 import com.barofarm.seller.seller.infrastructure.feign.AuthClient;
 import com.barofarm.seller.seller.presentation.dto.SellerApplyRequestDto;
+import com.barofarm.seller.seller.presentation.dto.SellerInfoDto;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,11 +27,54 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @RequiredArgsConstructor
 public class SellerService {
 
-    private final SellerJpaRepository sellerJpaRepository;
+    private final SellerRepository sellerRepository;
     private final AuthClient authClient;
 
     // 현재는 SimpleBusinessValidator만 주입해서 사용
     private final BusinessValidator businessValidator;
+
+    // 프론트에서 요청한 UserId로 조회하는 Seller 정보
+    @Transactional(readOnly = true)
+    public SellerInfoDto getASellerByUserId(UUID userId) {
+
+        Seller seller = sellerRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(SELLER_NOT_FOUND));
+
+        return SellerInfoDto.from(seller);
+    }
+
+    // bulk형태로 여러개 들어오면 한번에 여러개 Seller정보 주기
+    @Transactional(readOnly = true)
+    public List<SellerInfoDto> getSellersByIds(List<UUID> userIds) {
+
+        if(userIds == null || userIds.isEmpty()){
+            throw new CustomException(ValidationErrorCode.REQUIRED_FIELD_MISSING);
+        }
+
+        // 받을 수 있는 길이 100개로 제한
+        if(userIds.size() > 100){
+            throw new CustomException(ValidationErrorCode.REQUIRED_TOO_LARGE);
+        }
+
+        // 중복처리 방지 하기
+        List<UUID> distinctIds = userIds.stream().distinct().toList();
+        List<Seller> sellers = sellerRepository.findByIdIn(distinctIds);
+
+        Set<UUID> foundIds = sellers.stream().map(Seller::getId).collect(Collectors.toSet());
+        List<UUID> missing = distinctIds.stream()
+            .filter(id -> !foundIds.contains(id))
+            .toList();
+
+        // TODO: MISSING인 것들 보여주기 지금은 그냥 NOTFOUND만 나옴
+        if (!missing.isEmpty()) {
+            throw new CustomException(SELLER_NOT_FOUND);
+        }
+
+        return sellers.stream()
+            .map(SellerInfoDto::from)
+            .toList();
+    }
+
 
     @Transactional
     public void applyForSeller(UUID userId, SellerApplyRequestDto requestDto) {
@@ -42,7 +92,7 @@ public class SellerService {
             requestDto.settlementAccount()
         );
 
-        sellerJpaRepository.save(profile);
+        sellerRepository.save(profile);
 
         // 커밋이 실패했는데, feign으로 users테이블만 변경되는걸 막음
         // 3. auth-service에 SELLER 권한 부여 요청(Feign) - 커밋 이후에만 실행
