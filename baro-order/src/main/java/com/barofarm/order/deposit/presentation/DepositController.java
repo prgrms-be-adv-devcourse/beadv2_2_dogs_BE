@@ -3,6 +3,7 @@ package com.barofarm.order.deposit.presentation;
 import com.barofarm.order.common.response.ResponseDto;
 import com.barofarm.order.deposit.application.DepositService;
 import com.barofarm.order.deposit.application.dto.response.DepositChargeCreateInfo;
+import com.barofarm.order.deposit.application.dto.response.DepositCreateInfo;
 import com.barofarm.order.deposit.application.dto.response.DepositInfo;
 import com.barofarm.order.deposit.application.dto.response.DepositPaymentInfo;
 import com.barofarm.order.deposit.application.dto.response.DepositRefundInfo;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("${api.v1}/deposits")
 @RequiredArgsConstructor
-// TODO: 나중에 인증/인가 붙이면 @RequestHeader("userId") UUID sellerId 사용
 public class DepositController implements DepositSwaggerApi{
 
     private final DepositService depositService;
@@ -51,5 +51,10 @@ public class DepositController implements DepositSwaggerApi{
         @RequestHeader("X-User-Id") UUID userId,
         @Valid @RequestBody DepositRefundRequest request) {
         return depositService.refundDeposit(userId, request.toCommand());
+    }
+
+    @PostMapping("/create")
+    public ResponseDto<DepositCreateInfo> createDeposit(@RequestHeader("X-User-Id") UUID userId) {
+        return depositService.createDeposit(userId);
     }
 }

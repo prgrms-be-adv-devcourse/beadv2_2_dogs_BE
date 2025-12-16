@@ -18,22 +18,28 @@ import com.barofarm.order.deposit.domain.DepositChargeRepository;
 import com.barofarm.order.deposit.domain.DepositRepository;
 import com.barofarm.order.deposit.exception.DepositErrorCode;
 import com.barofarm.order.order.application.OrderService;
+import com.barofarm.order.order.application.dto.request.DeliveryInternalCreateRequest;
+import com.barofarm.order.order.application.dto.response.OrderDeliveryInfo;
+import com.barofarm.order.order.client.DeliveryClient;
 import com.barofarm.order.payment.domain.Payment;
 import com.barofarm.order.payment.domain.PaymentRepository;
 import com.barofarm.order.payment.domain.PaymentStatus;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DepositService {
 
     private final DepositRepository depositRepository;
     private final DepositChargeRepository depositChargeRepository;
     private final PaymentRepository paymentRepository;
     private final OrderService orderService;
+    private final DeliveryClient deliveryClient;
 
     @Transactional
     public ResponseDto<DepositCreateInfo> createDeposit(UUID userId) {
@@ -58,6 +64,7 @@ public class DepositService {
 
     @Transactional
     public void markDepositCharge(UUID userId, UUID chargeId) {
+
         DepositCharge charge = depositChargeRepository.findById(chargeId)
             .orElseThrow(() -> new CustomException(DepositErrorCode.DEPOSIT_CHARGE_NOT_FOUND));
 
@@ -98,6 +105,18 @@ public class DepositService {
 
         Payment payment = Payment.of(command.orderId(), command.amount());
         paymentRepository.save(payment);
+
+        // delivery-service에서 특정 시간 이후 order의 상태를 변경하도록 하면 좋을듯.
+        try {
+            OrderDeliveryInfo deliveryInfo = orderService.getDeliveryInfo(command.orderId());
+            DeliveryInternalCreateRequest request = DeliveryInternalCreateRequest.from(deliveryInfo);
+
+            deliveryClient.createDelivery(request);
+
+        } catch (Exception e) {
+            // 배송 생성 실패: 주문은 PAID 유지(재시도/운영)
+            log.error("배송 생성 실패. orderId={}", command.orderId(), e);
+        }
 
         return ResponseDto.ok(
             DepositPaymentInfo.of(

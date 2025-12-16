@@ -2,6 +2,7 @@ package com.barofarm.order.order.application.dto.response;
 
 import com.barofarm.order.order.domain.Order;
 import com.barofarm.order.order.domain.OrderStatus;
+import java.util.List;
 import java.util.UUID;
 
 public record OrderCreateInfo(
@@ -15,9 +16,9 @@ public record OrderCreateInfo(
     String address,
     String addressDetail,
     String deliveryMemo,
-    int itemCount
+    int itemCount,
+    List<OrderItemInfo> items
 ) {
-
     public static OrderCreateInfo from(Order order) {
         return new OrderCreateInfo(
             order.getId(),
@@ -30,7 +31,8 @@ public record OrderCreateInfo(
             order.getAddress(),
             order.getAddressDetail(),
             order.getDeliveryMemo(),
-            order.getOrderItems().size()
+            order.getOrderItems().size(),
+            order.getOrderItems().stream().map(OrderItemInfo::from).toList()
         );
     }
 }

@@ -1,5 +1,6 @@
 package com.barofarm.order.order.domain;
 
+
 import com.barofarm.order.common.entity.BaseEntity;
 import com.barofarm.order.order.application.dto.request.OrderCreateCommand;
 import jakarta.persistence.CascadeType;
