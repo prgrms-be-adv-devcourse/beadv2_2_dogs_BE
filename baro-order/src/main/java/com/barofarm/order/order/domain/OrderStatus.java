@@ -6,5 +6,9 @@ public enum OrderStatus {
     PREPARING,
     SHIPPED,
     CANCELED,
-    COMPLETED
+    COMPLETED;
+
+    public boolean isCancelable() {
+        return this == PENDING || this == PAID;
+    }
 }

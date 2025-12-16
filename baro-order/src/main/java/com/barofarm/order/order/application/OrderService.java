@@ -1,17 +1,20 @@
 package com.barofarm.order.order.application;
 
+import static com.barofarm.order.order.domain.OrderStatus.PAID;
 import static com.barofarm.order.order.domain.OrderStatus.PENDING;
+import static com.barofarm.order.order.exception.OrderErrorCode.INVALID_ORDER_STATUS_FOR_DELIVERY;
 import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_ACCESS_DENIED;
 import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_ITEM_NOT_FOUND;
 import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
+import static com.barofarm.order.payment.exception.PaymentErrorCode.ORDER_NOT_CANCELABLE_STATUS;
 
 import com.barofarm.order.common.exception.CustomException;
 import com.barofarm.order.common.response.CustomPage;
 import com.barofarm.order.common.response.ResponseDto;
-import com.barofarm.order.order.application.dto.request.DeliveryInternalCreateRequest;
 import com.barofarm.order.order.application.dto.request.OrderCreateCommand;
 import com.barofarm.order.order.application.dto.response.OrderCancelInfo;
 import com.barofarm.order.order.application.dto.response.OrderCreateInfo;
+import com.barofarm.order.order.application.dto.response.OrderDeliveryInfo;
 import com.barofarm.order.order.application.dto.response.OrderDetailInfo;
 import com.barofarm.order.order.application.dto.response.OrderItemInternalResponse;
 import com.barofarm.order.order.application.dto.response.OrderItemSettlementResponse;
@@ -66,16 +69,6 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
 
-        DeliveryInternalCreateRequest.Address address = new DeliveryInternalCreateRequest.Address(
-                saved.getReceiverName(),
-                saved.getPhone(),
-                saved.getZipCode(),
-                saved.getAddress(),
-                saved.getAddressDetail()
-        );
-
-        deliveryClient.createDelivery(new DeliveryInternalCreateRequest(saved.getId(), address));
-
         return ResponseDto.ok(OrderCreateInfo.from(saved));
     }
 
@@ -111,6 +104,10 @@ public class OrderService {
             return ResponseDto.ok(OrderCancelInfo.from(order));
         }
 
+        if (!order.getStatus().isCancelable()) {
+            throw new CustomException(ORDER_NOT_CANCELABLE_STATUS);
+        }
+
         InventoryIncreaseRequest inventoryRequest = new InventoryIncreaseRequest(
                 order.getOrderItems().stream()
                         .map(item -> new InventoryIncreaseRequest.Item(
@@ -123,6 +120,17 @@ public class OrderService {
 
         order.cancel();
         return ResponseDto.ok(OrderCancelInfo.from(order));
+    }
+
+    @Transactional(readOnly = true)
+    public OrderDeliveryInfo getDeliveryInfo(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));
+
+        if (order.getStatus() != PAID) {
+            throw new CustomException(INVALID_ORDER_STATUS_FOR_DELIVERY);
+        }
+        return OrderDeliveryInfo.from(order);
     }
 
     @Transactional
