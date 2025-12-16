@@ -26,22 +26,19 @@ public class OrderItemFeignReader implements ItemReader<OrderItemSettlementRespo
     @Override
     public OrderItemSettlementResponse read() {
 
-        while (iterator == null || !iterator.hasNext()) {
+        // iterator가 없거나 다 소비했으면 다음 페이지 로드
+        if (iterator == null || !iterator.hasNext()) {
 
             CustomPage<OrderItemSettlementResponse> response =
                 client.getOrderItems(start, end, page, size);
 
+            // 더 이상 읽을 데이터 없음 → 배치 종료
             if (response.content().isEmpty()) {
-                return null; // batch 종료 (no more data)
+                return null;
             }
 
             iterator = response.content().iterator();
-
-            if (!response.hasNext()) {
-                page = Integer.MAX_VALUE; // 마지막 페이지 처리
-            } else {
-                page++;
-            }
+            page++;
         }
 
         return iterator.next();

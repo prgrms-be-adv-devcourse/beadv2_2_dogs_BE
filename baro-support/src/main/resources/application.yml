@@ -27,7 +27,9 @@ spring:
     scheduling:
       cron:
         settlement: "0 0 0 1 * *"
-
+    batch:
+        job:
+            enabled: false
   mail:
     host: smtp.gmail.com
     port: 587

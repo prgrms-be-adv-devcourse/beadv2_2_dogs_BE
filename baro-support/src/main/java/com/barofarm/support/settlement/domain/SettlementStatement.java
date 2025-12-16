@@ -19,7 +19,7 @@ public class SettlementStatement {
 
     @Id
     @Column(columnDefinition = "BINARY(16)")
-    private UUID statementId;
+    private UUID id;
 
     private UUID sellerId;
 
@@ -57,7 +57,7 @@ public class SettlementStatement {
                                Long payoutAmount,
                                StatementStatus status) {
 
-        this.statementId = UUID.randomUUID();
+        this.id = UUID.randomUUID();
         this.sellerId = sellerId;
         this.periodStart = periodStart;
         this.periodEnd = periodEnd;

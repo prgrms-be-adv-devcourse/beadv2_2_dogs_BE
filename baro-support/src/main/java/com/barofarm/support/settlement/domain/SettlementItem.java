@@ -23,7 +23,7 @@ public class SettlementItem {
 
     @Id
     @Column(columnDefinition = "BINARY(16)")
-    private UUID settlementItemId;
+    private UUID id;
 
     // 원본 주문 정보
     private UUID orderId;
@@ -59,7 +59,7 @@ public class SettlementItem {
         OrderInfo orderInfo,
         SettlementCalculationInfo calcInfo
     ) {
-        this.settlementItemId = settlementItemId;
+        this.id = settlementItemId;
 
         this.orderId = orderInfo.orderId();
         this.orderItemId = orderInfo.orderItemId();
