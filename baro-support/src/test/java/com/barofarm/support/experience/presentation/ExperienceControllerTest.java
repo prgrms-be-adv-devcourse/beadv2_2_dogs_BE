@@ -144,10 +144,11 @@ class ExperienceControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/experiences/my-farm - 본인 농장의 체험 프로그램 목록 조회")
+    @DisplayName("GET /api/experiences/my-farm - 본인 또는 지정한 농장의 체험 프로그램 목록 조회")
     void getMyExperiences() {
         // given
         UUID userId = UUID.randomUUID();
+        UUID customFarmId = farmId; // 선택적으로 전달되는 farmId
         UUID experienceId2 = UUID.randomUUID();
         ExperienceServiceResponse serviceResponse2 = new ExperienceServiceResponse(experienceId2, farmId, "블루베리 수확 체험",
                 "달콤한 블루베리", BigInteger.valueOf(20000), 15, 90, LocalDateTime.of(2025, 6, 1, 9, 0), LocalDateTime.of(2025, 8, 31, 18, 0),
@@ -156,17 +157,18 @@ class ExperienceControllerTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<ExperienceServiceResponse> servicePage = new PageImpl<>(
                 java.util.Arrays.asList(serviceResponse, serviceResponse2), pageable, 2);
-        when(experienceService.getMyExperiences(eq(userId), any(Pageable.class))).thenReturn(servicePage);
+        when(experienceService.getMyExperiences(eq(userId), eq(customFarmId), any(Pageable.class))).thenReturn(servicePage);
 
         // when
-        ResponseDto<CustomPage<ExperienceResponse>> result = experienceController.getMyExperiences(userId, userEmail, userRole, pageable);
+        ResponseDto<CustomPage<ExperienceResponse>> result =
+                experienceController.getMyExperiences(userId, userEmail, userRole, customFarmId, pageable);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.data()).isNotNull();
         assertThat(result.data().content()).hasSize(2);
         assertThat(result.data().content()).extracting("title").contains("딸기 수확 체험", "블루베리 수확 체험");
-        verify(experienceService, times(1)).getMyExperiences(eq(userId), any(Pageable.class));
+        verify(experienceService, times(1)).getMyExperiences(eq(userId), eq(customFarmId), any(Pageable.class));
     }
 
     @Test

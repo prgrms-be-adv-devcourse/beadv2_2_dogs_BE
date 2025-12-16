@@ -62,9 +62,10 @@ public class ExperienceController implements ExperienceSwaggerApi {
             @RequestHeader("X-User-Id") UUID userId,
             @RequestHeader(value = "X-User-Email", required = false) String userEmail,
             @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @RequestParam(required = false) UUID farmId,
             Pageable pageable
     ) {
-        var servicePage = experienceService.getMyExperiences(userId, pageable);
+        var servicePage = experienceService.getMyExperiences(userId, farmId, pageable);
         var responsePage = servicePage.map(ExperienceResponse::from);
         return ResponseDto.ok(CustomPage.from(responsePage));
     }
