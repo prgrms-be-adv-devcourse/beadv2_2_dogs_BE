@@ -17,7 +17,6 @@ import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.UUID;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,7 +27,7 @@ import lombok.ToString;
 @Table(name = "reservation")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
+@Require
 // Set/Map 사용 시 동일성 비교를 위해 ID만 사용 (모든 필드 포함 시 영속성 컨텍스트 이슈 발생 가능)
 @EqualsAndHashCode(callSuper = false, of = "reservationId")
 @ToString(callSuper = false)
@@ -71,6 +70,26 @@ public class Reservation extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReservationStatus status;
+
+    public Reservation(
+        UUID reservationId,
+        UUID experienceId,
+        UUID buyerId,
+        LocalDate reservedDate,
+        String reservedTimeSlot,
+        Integer headCount,
+        BigInteger totalPrice,
+        ReservationStatus status
+    ) {
+        this.reservationId = reservationId;
+        this.experienceId = experienceId;
+        this.buyerId = buyerId;
+        this.reservedDate = reservedDate;
+        this.reservedTimeSlot = reservedTimeSlot;
+        this.headCount = headCount;
+        this.totalPrice = totalPrice;
+        this.status = status;
+    }
 
     /**
      * 예약 정보 업데이트
