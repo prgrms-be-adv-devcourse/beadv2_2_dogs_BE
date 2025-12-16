@@ -17,7 +17,7 @@ public class BatchTestController {
     private final JobLauncher jobLauncher;
     private final Job monthlySettlementJob;
 
-    @PostMapping("/internal/batch/settlement")
+    @PostMapping("${api.v1}/batch/settlement")
     public String run(@RequestParam LocalDate baseDate) throws Exception {
 
         JobParameters params = new JobParametersBuilder()
