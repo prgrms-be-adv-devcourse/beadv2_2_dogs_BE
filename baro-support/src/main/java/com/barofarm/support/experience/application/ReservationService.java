@@ -115,8 +115,11 @@ public class ReservationService {
      */
     private void validateSellerAccess(Experience experience, UUID userId) {
         UUID userFarmId = getUserFarmIdOrNull(userId);
+        // TODO: seller-service 연동 안정화 후, userFarmId == null인 경우에도 ACCESS_DENIED를 던지도록 원복할 것
         if (userFarmId == null) {
-            throw new CustomException(ReservationErrorCode.ACCESS_DENIED);
+            // throw new CustomException(ReservationErrorCode.ACCESS_DENIED);
+            // 임시로 농장이 없는 경우는 권한 체크를 건너뛴다.
+            return;
         }
         if (!experience.getFarmId().equals(userFarmId)) {
             throw new CustomException(ReservationErrorCode.ACCESS_DENIED);
