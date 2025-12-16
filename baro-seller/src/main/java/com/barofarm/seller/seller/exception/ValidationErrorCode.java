@@ -12,7 +12,10 @@ public enum ValidationErrorCode implements BaseErrorCode {
     REQUIRED_FIELD_MISSING(HttpStatus.BAD_REQUEST, "사업자번호와 대표자명은 필수입니다."),
 
     // 형식 오류(길이)
-    INVALID_BUSINESS_NO_FORMAT(HttpStatus.BAD_REQUEST, "사업자등록번호 형식이 올바르지 않습니다.."),
+    INVALID_BUSINESS_NO_FORMAT(HttpStatus.BAD_REQUEST, "사업자등록번호 형식이 올바르지 않습니다."),
+
+    // 형식 오류(너무 많은 값 담아 요청할 때)
+    REQUIRED_TOO_LARGE(HttpStatus.BAD_REQUEST, "요청 개수가 너무 많습니다"),
 
     // 중복 리소스
     DUPLICATE_BUSINESS_NO(HttpStatus.CONFLICT, "이미 등록된 사업자등록번호입니다."),
