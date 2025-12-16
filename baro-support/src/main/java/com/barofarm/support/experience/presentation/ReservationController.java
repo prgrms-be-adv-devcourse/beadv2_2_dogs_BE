@@ -27,8 +27,8 @@ public class ReservationController implements ReservationSwaggerApi {
     @Override
     public ResponseDto<ReservationResponse> createReservation(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestHeader("X-User-Email") UUID userEmail,
-            @RequestHeader("X-User-Role") String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @Valid @RequestBody ReservationRequest request
     ) {
         ReservationServiceResponse serviceResponse =
@@ -39,8 +39,8 @@ public class ReservationController implements ReservationSwaggerApi {
     @Override
     public ResponseDto<ReservationResponse> getReservationById(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestHeader("X-User-Email") UUID userEmail,
-            @RequestHeader("X-User-Role") String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @PathVariable("reservationId") UUID reservationId
     ) {
         ReservationServiceResponse serviceResponse = reservationService.getReservationById(userId, reservationId);
@@ -50,8 +50,8 @@ public class ReservationController implements ReservationSwaggerApi {
     @Override
     public ResponseDto<CustomPage<ReservationResponse>> getReservations(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestHeader("X-User-Email") UUID userEmail,
-            @RequestHeader("X-User-Role") String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @RequestParam(required = false) UUID experienceId,
             @RequestParam(required = false) UUID buyerId,
             Pageable pageable
@@ -76,8 +76,8 @@ public class ReservationController implements ReservationSwaggerApi {
     @Override
     public ResponseDto<ReservationResponse> updateReservationStatus(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestHeader("X-User-Email") UUID userEmail,
-            @RequestHeader("X-User-Role") String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @PathVariable("reservationId") UUID reservationId,
             @RequestParam ReservationStatus status
     ) {
@@ -89,8 +89,8 @@ public class ReservationController implements ReservationSwaggerApi {
     @Override
     public ResponseDto<Void> deleteReservation(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestHeader("X-User-Email") UUID userEmail,
-            @RequestHeader("X-User-Role") String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @PathVariable("reservationId") UUID reservationId
     ) {
         reservationService.deleteReservation(userId, reservationId);

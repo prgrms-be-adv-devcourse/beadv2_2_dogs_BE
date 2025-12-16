@@ -27,8 +27,8 @@ public class ExperienceController implements ExperienceSwaggerApi {
     @Override
     public ResponseDto<ExperienceResponse> createExperience(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestHeader("X-User-Email") UUID userEmail,
-            @RequestHeader("X-User-Role") String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @Valid @RequestBody ExperienceCreateRequest request
     ) {
         // Command DTO → Service DTO 변환
@@ -60,8 +60,8 @@ public class ExperienceController implements ExperienceSwaggerApi {
     @Override
     public ResponseDto<CustomPage<ExperienceResponse>> getMyExperiences(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestHeader("X-User-Email") UUID userEmail,
-            @RequestHeader("X-User-Role") String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             Pageable pageable
     ) {
         var servicePage = experienceService.getMyExperiences(userId, pageable);
@@ -72,8 +72,8 @@ public class ExperienceController implements ExperienceSwaggerApi {
     @Override
     public ResponseDto<ExperienceResponse> updateExperience(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestHeader("X-User-Email") UUID userEmail,
-            @RequestHeader("X-User-Role") String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @PathVariable("id") UUID id,
             @Valid @RequestBody ExperienceUpdateRequest request
     ) {
@@ -85,8 +85,8 @@ public class ExperienceController implements ExperienceSwaggerApi {
     @Override
     public ResponseDto<Void> deleteExperience(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestHeader("X-User-Email") UUID userEmail,
-            @RequestHeader("X-User-Role") String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @PathVariable("id") UUID id
     ) {
         experienceService.deleteExperience(userId, id);
