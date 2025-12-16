@@ -43,9 +43,9 @@ public interface ExperienceSwaggerApi {
     })
     @PostMapping
     ResponseDto<ExperienceResponse> createExperience(
-        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
-        @Parameter(description = "사용자 이메일 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Email") UUID userEmail,
-        @Parameter(description = "사용자 역할 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Role") String userRole,
+        @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") UUID userId,
+        @Parameter(description = "사용자 이메일", hidden = true) @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+        @Parameter(description = "사용자 역할", hidden = true) @RequestHeader(value = "X-User-Role", required = false) String userRole,
         @Valid @RequestBody ExperienceCreateRequest request
     );
 
@@ -91,9 +91,9 @@ public interface ExperienceSwaggerApi {
     })
     @GetMapping("/my-farm")
     ResponseDto<CustomPage<ExperienceResponse>> getMyExperiences(
-        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
-        @Parameter(description = "사용자 이메일 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Email") UUID userEmail,
-        @Parameter(description = "사용자 역할 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Role") String userRole,
+        @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") UUID userId,
+        @Parameter(description = "사용자 이메일", hidden = true) @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+        @Parameter(description = "사용자 역할", hidden = true) @RequestHeader(value = "X-User-Role", required = false) String userRole,
         Pageable pageable
     );
 
@@ -117,9 +117,9 @@ public interface ExperienceSwaggerApi {
     })
     @PutMapping("/{id}")
     ResponseDto<ExperienceResponse> updateExperience(
-        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
-        @Parameter(description = "사용자 이메일 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Email") UUID userEmail,
-        @Parameter(description = "사용자 역할 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Role") String userRole,
+        @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") UUID userId,
+        @Parameter(description = "사용자 이메일", hidden = true) @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+        @Parameter(description = "사용자 역할", hidden = true) @RequestHeader(value = "X-User-Role", required = false) String userRole,
         @Parameter(description = "체험 프로그램 ID", required = true) @PathVariable("id") UUID id,
         @Valid @RequestBody ExperienceUpdateRequest request
     );
@@ -139,9 +139,9 @@ public interface ExperienceSwaggerApi {
     })
     @DeleteMapping("/{id}")
     ResponseDto<Void> deleteExperience(
-        @Parameter(description = "사용자 ID (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
-        @Parameter(description = "사용자 이메일 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Email") UUID userEmail,
-        @Parameter(description = "사용자 역할 (헤더에서 자동 전달)", hidden = true) @RequestHeader("X-User-Role") String userRole,
+        @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") UUID userId,
+        @Parameter(description = "사용자 이메일", hidden = true) @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+        @Parameter(description = "사용자 역할", hidden = true) @RequestHeader(value = "X-User-Role", required = false) String userRole,
         @Parameter(description = "체험 프로그램 ID", required = true) @PathVariable("id") UUID id
     );
 }
