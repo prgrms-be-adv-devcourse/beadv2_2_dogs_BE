@@ -1,5 +1,6 @@
 package com.barofarm.support.settlement.batch;
 
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -20,10 +21,11 @@ public class SettlementScheduler {
     @Scheduled(cron = "${spring.task.scheduling.cron.settlement}")
     public void runMonthlySettlementJob() {
         log.info("Starting monthly settlement batch job...");
+        LocalDate baseDate = LocalDate.now();  //1일 기준으로 실행
 
         try {
             JobParameters params = new JobParametersBuilder()
-                .addLong("timestamp", System.currentTimeMillis()) // 매 실행마다 파라미터 변경
+                .addLocalDate("baseDate", baseDate)
                 .toJobParameters();
 
             jobLauncher.run(monthlySettlementJob, params);

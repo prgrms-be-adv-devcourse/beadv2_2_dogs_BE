@@ -7,15 +7,18 @@ import com.barofarm.support.settlement.client.OrderItemSettlementResponse;
 import com.barofarm.support.settlement.client.OrderSettlementClient;
 import com.barofarm.support.settlement.domain.SettlementItem;
 import jakarta.persistence.EntityManagerFactory;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.database.JpaItemWriter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -44,7 +47,7 @@ public class MonthSettlementBatchConfig{
 
         return new StepBuilder("settlementItemStep", jobRepository)
             .<OrderItemSettlementResponse, SettlementItem>chunk(200, tx)
-            .reader(orderItemReader())
+            .reader(orderItemReader(null))
             .processor(new SettlementItemProcessor())
             .writer(settlementItemWriter())
             .build();
@@ -59,8 +62,12 @@ public class MonthSettlementBatchConfig{
     }
 
     @Bean
-    public OrderItemFeignReader orderItemReader() {
-        YearMonth target = YearMonth.now().minusMonths(1);
+    @StepScope
+    public OrderItemFeignReader orderItemReader(
+        @Value("#{jobParameters['baseDate']}") LocalDate baseDate
+    ) {
+        YearMonth target = YearMonth.from(baseDate).minusMonths(1);
+
         return new OrderItemFeignReader(
             orderSettlementClient,
             target.atDay(1),
