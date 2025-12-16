@@ -30,16 +30,18 @@ public class SettlementStatementTasklet implements Tasklet {
 
         String sql = """
             INSERT INTO settlement_statement
-                (id, seller_id, total_sales, total_commission, payout_amount,
-                 period_start, period_end, status)
-            SELECT UUID(), seller_id,
-                   SUM(item_price),
-                   SUM(commission_amount),
-                   SUM(settlement_amount),
-                   ?, ?, 'PENDING'
+            (id, seller_id, total_sales, total_commission, payout_amount,
+             period_start, period_end, status)
+            SELECT
+                UUID_TO_BIN(UUID()),
+                seller_id,
+                SUM(item_price),
+                SUM(commission_amount),
+                SUM(settlement_amount),
+                ?, ?, 'PENDING'
             FROM settlement_item
             WHERE settlement_month = ?
-            GROUP BY seller_id
+            GROUP BY seller_id;
             """;
 
         jdbc.update(sql, start, month.atEndOfMonth(), start);
