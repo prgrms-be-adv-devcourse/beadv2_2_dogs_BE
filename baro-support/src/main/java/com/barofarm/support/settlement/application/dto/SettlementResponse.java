@@ -14,7 +14,7 @@ public record SettlementResponse(
 ) {
     public static SettlementResponse from(SettlementStatement statement) {
         return new SettlementResponse(
-            statement.getStatementId(),
+            statement.getId(),
             YearMonth.from(statement.getPeriodStart()),
             statement.getTotalSales(),
             statement.getTotalCommission(),
