@@ -44,8 +44,10 @@ public interface ReservationSwaggerApi {
     @PostMapping
     ResponseDto<ReservationResponse> createReservation(
         @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") UUID userId,
-        @Parameter(description = "사용자 이메일", hidden = true) @RequestHeader(value = "X-User-Email", required = false) String userEmail,
-        @Parameter(description = "사용자 역할", hidden = true) @RequestHeader(value = "X-User-Role", required = false) String userRole,
+        @Parameter(description = "사용자 이메일", hidden = true)
+        @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+        @Parameter(description = "사용자 역할", hidden = true)
+        @RequestHeader(value = "X-User-Role", required = false) String userRole,
         @Valid @RequestBody ReservationRequest request
     );
 
@@ -65,8 +67,10 @@ public interface ReservationSwaggerApi {
     @GetMapping("/{reservationId}")
     ResponseDto<ReservationResponse> getReservationById(
         @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") UUID userId,
-        @Parameter(description = "사용자 이메일", hidden = true) @RequestHeader(value = "X-User-Email", required = false) String userEmail,
-        @Parameter(description = "사용자 역할", hidden = true) @RequestHeader(value = "X-User-Role", required = false) String userRole,
+        @Parameter(description = "사용자 이메일", hidden = true)
+        @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+        @Parameter(description = "사용자 역할", hidden = true)
+        @RequestHeader(value = "X-User-Role", required = false) String userRole,
         @Parameter(description = "예약 ID", required = true) @PathVariable("reservationId") UUID reservationId
     );
 
@@ -81,8 +85,10 @@ public interface ReservationSwaggerApi {
     @GetMapping
     ResponseDto<CustomPage<ReservationResponse>> getReservations(
         @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") UUID userId,
-        @Parameter(description = "사용자 이메일", hidden = true) @RequestHeader(value = "X-User-Email", required = false) String userEmail,
-        @Parameter(description = "사용자 역할", hidden = true) @RequestHeader(value = "X-User-Role", required = false) String userRole,
+        @Parameter(description = "사용자 이메일", hidden = true)
+        @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+        @Parameter(description = "사용자 역할", hidden = true)
+        @RequestHeader(value = "X-User-Role", required = false) String userRole,
         @Parameter(description = "체험 ID (선택사항)", required = false) @RequestParam(required = false) UUID experienceId,
         @Parameter(description = "구매자 ID (선택사항)", required = false) @RequestParam(required = false) UUID buyerId,
         Pageable pageable
@@ -104,8 +110,10 @@ public interface ReservationSwaggerApi {
     @PutMapping("/{reservationId}/status")
     ResponseDto<ReservationResponse> updateReservationStatus(
         @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") UUID userId,
-        @Parameter(description = "사용자 이메일", hidden = true) @RequestHeader(value = "X-User-Email", required = false) String userEmail,
-        @Parameter(description = "사용자 역할", hidden = true) @RequestHeader(value = "X-User-Role", required = false) String userRole,
+        @Parameter(description = "사용자 이메일", hidden = true)
+        @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+        @Parameter(description = "사용자 역할", hidden = true)
+        @RequestHeader(value = "X-User-Role", required = false) String userRole,
         @Parameter(description = "예약 ID", required = true) @PathVariable("reservationId") UUID reservationId,
         @Parameter(description = "변경할 상태", required = true) @RequestParam ReservationStatus status
     );
@@ -126,8 +134,10 @@ public interface ReservationSwaggerApi {
     @DeleteMapping("/{reservationId}")
     ResponseDto<Void> deleteReservation(
         @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") UUID userId,
-        @Parameter(description = "사용자 이메일", hidden = true) @RequestHeader(value = "X-User-Email", required = false) String userEmail,
-        @Parameter(description = "사용자 역할", hidden = true) @RequestHeader(value = "X-User-Role", required = false) String userRole,
+        @Parameter(description = "사용자 이메일", hidden = true)
+        @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+        @Parameter(description = "사용자 역할", hidden = true)
+        @RequestHeader(value = "X-User-Role", required = false) String userRole,
         @Parameter(description = "예약 ID", required = true) @PathVariable("reservationId") UUID reservationId
     );
 }

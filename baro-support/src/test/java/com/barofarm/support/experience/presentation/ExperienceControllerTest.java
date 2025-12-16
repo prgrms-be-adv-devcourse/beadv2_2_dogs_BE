@@ -44,7 +44,7 @@ class ExperienceControllerTest {
     private UUID farmId;
     private UUID experienceId;
     private UUID userId;
-    private UUID userEmail;
+    private String userEmail;
     private String userRole;
     private ExperienceCreateRequest createRequest;
     private ExperienceUpdateRequest updateRequest;
@@ -55,7 +55,7 @@ class ExperienceControllerTest {
         farmId = UUID.randomUUID();
         experienceId = UUID.randomUUID();
         userId = UUID.randomUUID();
-        userEmail = UUID.randomUUID();
+        userEmail = "test@example.com";
         userRole = "SELLER";
 
         createRequest = new ExperienceCreateRequest(farmId, "딸기 수확 체험", "신선한 딸기를 직접 수확해보세요", BigInteger.valueOf(15000), 20,

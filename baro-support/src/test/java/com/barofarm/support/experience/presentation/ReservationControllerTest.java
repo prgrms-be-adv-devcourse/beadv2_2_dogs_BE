@@ -46,7 +46,7 @@ class ReservationControllerTest {
     private UUID buyerId;
     private UUID reservationId;
     private UUID userId;
-    private UUID userEmail;
+    private String userEmail;
     private String userRole;
     private ReservationRequest request;
     private ReservationServiceResponse serviceResponse;
@@ -57,7 +57,7 @@ class ReservationControllerTest {
         buyerId = UUID.randomUUID();
         reservationId = UUID.randomUUID();
         userId = buyerId; // 기본적으로 buyerId와 동일하게 설정
-        userEmail = UUID.randomUUID();
+        userEmail = "test@example.com";
         userRole = "BUYER";
 
         request = new ReservationRequest(experienceId, buyerId, LocalDate.of(2025, 3, 15), "10:00-12:00", 2,
@@ -115,7 +115,7 @@ class ReservationControllerTest {
                 .thenReturn(servicePage);
 
         // when
-        UUID sellerEmail = UUID.randomUUID();
+        String sellerEmail = "seller@example.com";
         String sellerRole = "SELLER";
         ResponseDto<CustomPage<ReservationResponse>> result = reservationController.getReservations(sellerId, sellerEmail, sellerRole, experienceId, null,
                 pageable);
@@ -185,7 +185,7 @@ class ReservationControllerTest {
                 .thenReturn(updatedServiceResponse);
 
         // when
-        UUID sellerEmail = UUID.randomUUID();
+        String sellerEmail = "seller@example.com";
         String sellerRole = "SELLER";
         ResponseDto<ReservationResponse> result = reservationController.updateReservationStatus(sellerId, sellerEmail, sellerRole, reservationId,
                 ReservationStatus.CONFIRMED);
