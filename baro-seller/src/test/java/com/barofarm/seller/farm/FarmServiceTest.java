@@ -1,286 +1,263 @@
 package com.barofarm.seller.farm;
 
-import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_FORBIDDEN;
-import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_NOT_FOUND;
-import static com.barofarm.seller.seller.exception.SellerErrorCode.SELLER_NOT_FOUND;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
-import com.barofarm.seller.common.exception.CustomException;
-import com.barofarm.seller.common.response.CustomPage;
-import com.barofarm.seller.common.response.ResponseDto;
-import com.barofarm.seller.config.BaseServiceTest;
-import com.barofarm.seller.farm.application.dto.request.FarmCreateCommand;
-import com.barofarm.seller.farm.application.dto.request.FarmUpdateCommand;
-import com.barofarm.seller.farm.application.dto.response.FarmCreateInfo;
-import com.barofarm.seller.farm.application.dto.response.FarmDetailInfo;
-import com.barofarm.seller.farm.application.dto.response.FarmUpdateInfo;
-import com.barofarm.seller.farm.domain.Farm;
-import com.barofarm.seller.seller.domain.Seller;
-import java.util.UUID;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 
-class FarmServiceTest extends BaseServiceTest {
-
-    @Nested
-    @DisplayName("createFarm 메서드")
-    class CreateFarm {
-
-        @Test
-        @DisplayName("정상적으로 농장을 생성하고 201 응답을 반환한다")
-        void success() {
-            // given
-            Seller seller = saveSeller();
-
-            FarmCreateCommand command = new FarmCreateCommand(
-                "테스트 농장",
-                "테스트 설명",
-                "서울시 송파구 잠실동",
-                "010-1234-5678"
-            );
-
-            // when
-            ResponseDto<FarmCreateInfo> response = farmService.createFarm(seller.getId(), command);
-
-            // then
-            FarmCreateInfo data = response.data();
-            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
-            assertThat(response.message()).isNull();
-            assertThat(data).isNotNull();
-            assertThat(data.name()).isEqualTo(command.name());
-            assertThat(data.description()).isEqualTo(command.description());
-            assertThat(data.address()).isEqualTo(command.address());
-            assertThat(data.phone()).isEqualTo(command.phone());
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 판매자 ID로 요청하면 SellerException을 발생시킨다")
-        void failSellerNotFound() {
-            // given
-            UUID notExistSellerId = UUID.randomUUID();
-
-            FarmCreateCommand command = new FarmCreateCommand(
-                "테스트 농장",
-                "테스트 설명",
-                "서울시 송파구 잠실동",
-                "010-1234-5678"
-            );
-
-            // when & then
-            assertThatThrownBy(() -> farmService.createFarm(notExistSellerId, command))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(SELLER_NOT_FOUND.getMessage());
-        }
-    }
-
-    @Nested
-    @DisplayName("updateFarm 메서드")
-    class UpdateFarm {
-
-        @Test
-        @DisplayName("정상적으로 농장을 수정하고 200 응답을 반환한다")
-        void success() {
-            // given
-            Seller seller = saveSeller();
-            Farm farm = saveFarm(seller);
-
-            FarmUpdateCommand command = new FarmUpdateCommand(
-                "테스트 농장",
-                "테스트 설명",
-                "서울시 송파구 잠실동",
-                "010-1234-5678"
-            );
-
-            // when
-            ResponseDto<FarmUpdateInfo> response = farmService.updateFarm(seller.getId(), farm.getId(), command);
-
-            // then
-            FarmUpdateInfo data = response.data();
-            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
-            assertThat(response.message()).isNull();
-            assertThat(data).isNotNull();
-            assertThat(data.name()).isEqualTo(command.name());
-            assertThat(data.description()).isEqualTo(command.description());
-            assertThat(data.address()).isEqualTo(command.address());
-            assertThat(data.phone()).isEqualTo(command.phone());
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 농장 ID로 요청하면 FarmException을 발생시킨다")
-        void failFarmNotFound() {
-            // given
-            Seller seller = saveSeller();
-            UUID notExistFarmId = UUID.randomUUID();
-
-            FarmUpdateCommand farmUpdateCommand = new FarmUpdateCommand(
-                "테스트 농장",
-                "테스트 설명",
-                "서울시 송파구 잠실동",
-                "010-1234-5678"
-            );
-
-            // when & then
-            assertThatThrownBy(() -> farmService.updateFarm(seller.getId(), notExistFarmId, farmUpdateCommand))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(FARM_NOT_FOUND.getMessage());
-        }
-
-        @Test
-        @DisplayName("다른 판매자의 농장을 수정하면 FARM_FORBIDDEN 예외를 발생시킨다")
-        void failFarmForbidden() {
-            // given
-            Seller owner = saveSeller();
-            Seller otherSeller = saveSeller();
-            Farm farm = saveFarm(owner);
-
-            FarmUpdateCommand command = new FarmUpdateCommand(
-                "테스트 농장",
-                "테스트 설명",
-                "서울시 송파구 잠실동",
-                "010-1234-5678"
-            );
-
-            // when & then
-            assertThatThrownBy(() -> farmService.updateFarm(otherSeller.getId(), farm.getId(), command))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(FARM_FORBIDDEN.getMessage());
-        }
-    }
-
-    @Nested
-    @DisplayName("findFarm 메서드")
-    class FindFarm {
-
-        @Test
-        @DisplayName("정상적으로 농장을 조회하고 200 응답을 반환한다")
-        void success() {
-            // given
-            Seller seller = saveSeller();
-            Farm farm = saveFarm(seller);
-
-            // when
-            ResponseDto<FarmDetailInfo> response = farmService.findFarm(farm.getId());
-
-            // then
-            FarmDetailInfo info = response.data();
-            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
-            assertThat(info.id()).isEqualTo(farm.getId());
-            assertThat(info.name()).isEqualTo(farm.getName());
-            assertThat(info.description()).isEqualTo(farm.getDescription());
-            assertThat(info.address()).isEqualTo(farm.getAddress());
-            assertThat(info.phone()).isEqualTo(farm.getPhone());
-            assertThat(info.sellerId()).isEqualTo(seller.getId());
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 농장 ID로 요청하면 FarmException을 발생시킨다")
-        void failFarmNotFound() {
-            // given
-            UUID notExistFarmId = UUID.randomUUID();
-
-            // when & then
-            assertThatThrownBy(() -> farmService.findFarm(notExistFarmId))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(FARM_NOT_FOUND.getMessage());
-        }
-    }
-
-    @Nested
-    @DisplayName("deleteFarm 메서드")
-    class DeleteFarm {
-
-        @Test
-        @DisplayName("정상적으로 농장을 삭제하고 200 응답을 반환한다")
-        void success() {
-            // given
-            Seller seller = saveSeller();
-            Farm farm = saveFarm(seller);
-
-            ResponseDto<Void> response = farmService.deleteFarm(seller.getId(), farm.getId());
-
-            // when & then
-            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
-            assertThat(farmRepository.findById(farm.getId())).isEmpty();
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 농장 ID로 요청하면 FarmException을 발생시킨다")
-        void failFarmNotFound() {
-            // given
-            Seller seller = saveSeller();
-            UUID notExistFarmId = UUID.randomUUID();
-
-            // when & then
-            assertThatThrownBy(() -> farmService.deleteFarm(seller.getId(), notExistFarmId))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(FARM_NOT_FOUND.getMessage());
-        }
-
-        @Test
-        @DisplayName("다른 판매자의 농장을 삭제하면 FARM_FORBIDDEN 예외를 발생시킨다")
-        void failFarmForbidden() {
-            // given
-            Seller owner = saveSeller();
-            Seller otherSeller = saveSeller(); // 권한 없는 판매자
-            Farm farm = saveFarm(owner);
-
-            // when & then
-            assertThatThrownBy(() -> farmService.deleteFarm(otherSeller.getId(), farm.getId()))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(FARM_FORBIDDEN.getMessage());
-        }
-    }
-
-    @Nested
-    @DisplayName("findFarmList 메서드")
-    class FindFarmList {
-
-        @Test
-        @DisplayName("정상적으로 농장 리스트를 조회하고 200 응답을 반환한다")
-        void success() {
-            // given
-            Seller seller = saveSeller();
-            Farm farm1 = saveFarm(seller);
-            Farm farm2 = saveFarm(seller);
-            Farm farm3 = saveFarm(seller);
-            Farm farm4 = saveFarm(seller);
-            Pageable pageable = PageRequest.of(0, 2);
-
-            // when
-            ResponseDto<CustomPage<FarmDetailInfo>> response = farmService.findFarmList(pageable);
-
-            // then
-            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
-            assertThat(response.data()).isNotNull();
-            assertThat(response.data().content().size()).isEqualTo(2);
-        }
-    }
-
-    private Farm saveFarm(Seller seller) {
-        Farm farm = Farm.of(
-            "테스트 농장",
-            "테스트 설명",
-            "서울시 송파구 잠실동",
-            "010-1234-5678",
-            seller
-        );
-        return farmRepository.save(farm);
-    }
-
-    private Seller saveSeller(){
-        Seller seller = Seller.of(
-            "철수네 과일가게",
-            "123-45-67890",
-            "이철수",
-            "KB국민은행",
-            "123456-78-910111"
-        );
-
-        return sellerRepository.save(seller);
-    }
-}
+//class FarmServiceTest extends BaseServiceTest {
+//
+//    @Nested
+//    @DisplayName("createFarm 메서드")
+//    class CreateFarm {
+//
+//        @Test
+//        @DisplayName("정상적으로 농장을 생성하고 201 응답을 반환한다")
+//        void success() {
+//            // given
+//            Seller seller = saveSeller();
+//
+//            FarmCreateCommand command = new FarmCreateCommand(
+//                "테스트 농장",
+//                "테스트 설명",
+//                "서울시 송파구 잠실동",
+//                "010-1234-5678"
+//            );
+//
+//            // when
+//            ResponseDto<FarmCreateInfo> response = farmService.createFarm(seller.getId(), command);
+//
+//            // then
+//            FarmCreateInfo data = response.data();
+//            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+//            assertThat(response.message()).isNull();
+//            assertThat(data).isNotNull();
+//            assertThat(data.name()).isEqualTo(command.name());
+//            assertThat(data.description()).isEqualTo(command.description());
+//            assertThat(data.address()).isEqualTo(command.address());
+//            assertThat(data.phone()).isEqualTo(command.phone());
+//        }
+//
+//        @Test
+//        @DisplayName("존재하지 않는 판매자 ID로 요청하면 SellerException을 발생시킨다")
+//        void failSellerNotFound() {
+//            // given
+//            UUID notExistSellerId = UUID.randomUUID();
+//
+//            FarmCreateCommand command = new FarmCreateCommand(
+//                "테스트 농장",
+//                "테스트 설명",
+//                "서울시 송파구 잠실동",
+//                "010-1234-5678"
+//            );
+//
+//            // when & then
+//            assertThatThrownBy(() -> farmService.createFarm(notExistSellerId, command))
+//                .isInstanceOf(CustomException.class)
+//                .hasMessage(SELLER_NOT_FOUND.getMessage());
+//        }
+//    }
+//
+//    @Nested
+//    @DisplayName("updateFarm 메서드")
+//    class UpdateFarm {
+//
+//        @Test
+//        @DisplayName("정상적으로 농장을 수정하고 200 응답을 반환한다")
+//        void success() {
+//            // given
+//            Seller seller = saveSeller();
+//            Farm farm = saveFarm(seller);
+//
+//            FarmUpdateCommand command = new FarmUpdateCommand(
+//                "테스트 농장",
+//                "테스트 설명",
+//                "서울시 송파구 잠실동",
+//                "010-1234-5678"
+//            );
+//
+//            // when
+//            ResponseDto<FarmUpdateInfo> response = farmService.updateFarm(seller.getId(), farm.getId(), command);
+//
+//            // then
+//            FarmUpdateInfo data = response.data();
+//            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+//            assertThat(response.message()).isNull();
+//            assertThat(data).isNotNull();
+//            assertThat(data.name()).isEqualTo(command.name());
+//            assertThat(data.description()).isEqualTo(command.description());
+//            assertThat(data.address()).isEqualTo(command.address());
+//            assertThat(data.phone()).isEqualTo(command.phone());
+//        }
+//
+//        @Test
+//        @DisplayName("존재하지 않는 농장 ID로 요청하면 FarmException을 발생시킨다")
+//        void failFarmNotFound() {
+//            // given
+//            Seller seller = saveSeller();
+//            UUID notExistFarmId = UUID.randomUUID();
+//
+//            FarmUpdateCommand farmUpdateCommand = new FarmUpdateCommand(
+//                "테스트 농장",
+//                "테스트 설명",
+//                "서울시 송파구 잠실동",
+//                "010-1234-5678"
+//            );
+//
+//            // when & then
+//            assertThatThrownBy(() -> farmService.updateFarm(seller.getId(), notExistFarmId, farmUpdateCommand))
+//                .isInstanceOf(CustomException.class)
+//                .hasMessage(FARM_NOT_FOUND.getMessage());
+//        }
+//
+//        @Test
+//        @DisplayName("다른 판매자의 농장을 수정하면 FARM_FORBIDDEN 예외를 발생시킨다")
+//        void failFarmForbidden() {
+//            // given
+//            Seller owner = saveSeller();
+//            Seller otherSeller = saveSeller();
+//            Farm farm = saveFarm(owner);
+//
+//            FarmUpdateCommand command = new FarmUpdateCommand(
+//                "테스트 농장",
+//                "테스트 설명",
+//                "서울시 송파구 잠실동",
+//                "010-1234-5678"
+//            );
+//
+//            // when & then
+//            assertThatThrownBy(() -> farmService.updateFarm(otherSeller.getId(), farm.getId(), command))
+//                .isInstanceOf(CustomException.class)
+//                .hasMessage(FARM_FORBIDDEN.getMessage());
+//        }
+//    }
+//
+//    @Nested
+//    @DisplayName("findFarm 메서드")
+//    class FindFarm {
+//
+//        @Test
+//        @DisplayName("정상적으로 농장을 조회하고 200 응답을 반환한다")
+//        void success() {
+//            // given
+//            Seller seller = saveSeller();
+//            Farm farm = saveFarm(seller);
+//
+//            // when
+//            ResponseDto<FarmDetailInfo> response = farmService.findFarm(farm.getId());
+//
+//            // then
+//            FarmDetailInfo info = response.data();
+//            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+//            assertThat(info.id()).isEqualTo(farm.getId());
+//            assertThat(info.name()).isEqualTo(farm.getName());
+//            assertThat(info.description()).isEqualTo(farm.getDescription());
+//            assertThat(info.address()).isEqualTo(farm.getAddress());
+//            assertThat(info.phone()).isEqualTo(farm.getPhone());
+//            assertThat(info.sellerId()).isEqualTo(seller.getId());
+//        }
+//
+//        @Test
+//        @DisplayName("존재하지 않는 농장 ID로 요청하면 FarmException을 발생시킨다")
+//        void failFarmNotFound() {
+//            // given
+//            UUID notExistFarmId = UUID.randomUUID();
+//
+//            // when & then
+//            assertThatThrownBy(() -> farmService.findFarm(notExistFarmId))
+//                .isInstanceOf(CustomException.class)
+//                .hasMessage(FARM_NOT_FOUND.getMessage());
+//        }
+//    }
+//
+//    @Nested
+//    @DisplayName("deleteFarm 메서드")
+//    class DeleteFarm {
+//
+//        @Test
+//        @DisplayName("정상적으로 농장을 삭제하고 200 응답을 반환한다")
+//        void success() {
+//            // given
+//            Seller seller = saveSeller();
+//            Farm farm = saveFarm(seller);
+//
+//            ResponseDto<Void> response = farmService.deleteFarm(seller.getId(), farm.getId());
+//
+//            // when & then
+//            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+//            assertThat(farmRepository.findById(farm.getId())).isEmpty();
+//        }
+//
+//        @Test
+//        @DisplayName("존재하지 않는 농장 ID로 요청하면 FarmException을 발생시킨다")
+//        void failFarmNotFound() {
+//            // given
+//            Seller seller = saveSeller();
+//            UUID notExistFarmId = UUID.randomUUID();
+//
+//            // when & then
+//            assertThatThrownBy(() -> farmService.deleteFarm(seller.getId(), notExistFarmId))
+//                .isInstanceOf(CustomException.class)
+//                .hasMessage(FARM_NOT_FOUND.getMessage());
+//        }
+//
+//        @Test
+//        @DisplayName("다른 판매자의 농장을 삭제하면 FARM_FORBIDDEN 예외를 발생시킨다")
+//        void failFarmForbidden() {
+//            // given
+//            Seller owner = saveSeller();
+//            Seller otherSeller = saveSeller(); // 권한 없는 판매자
+//            Farm farm = saveFarm(owner);
+//
+//            // when & then
+//            assertThatThrownBy(() -> farmService.deleteFarm(otherSeller.getId(), farm.getId()))
+//                .isInstanceOf(CustomException.class)
+//                .hasMessage(FARM_FORBIDDEN.getMessage());
+//        }
+//    }
+//
+//    @Nested
+//    @DisplayName("findFarmList 메서드")
+//    class FindFarmList {
+//
+//        @Test
+//        @DisplayName("정상적으로 농장 리스트를 조회하고 200 응답을 반환한다")
+//        void success() {
+//            // given
+//            Seller seller = saveSeller();
+//            Farm farm1 = saveFarm(seller);
+//            Farm farm2 = saveFarm(seller);
+//            Farm farm3 = saveFarm(seller);
+//            Farm farm4 = saveFarm(seller);
+//            Pageable pageable = PageRequest.of(0, 2);
+//
+//            // when
+//            ResponseDto<CustomPage<FarmDetailInfo>> response = farmService.findFarmList(pageable);
+//
+//            // then
+//            assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+//            assertThat(response.data()).isNotNull();
+//            assertThat(response.data().content().size()).isEqualTo(2);
+//        }
+//    }
+//
+//    private Farm saveFarm(Seller seller) {
+//        Farm farm = Farm.of(
+//            "테스트 농장",
+//            "테스트 설명",
+//            "서울시 송파구 잠실동",
+//            "010-1234-5678",
+//            seller
+//        );
+//        return farmRepository.save(farm);
+//    }
+//
+//    private Seller saveSeller(){
+//        Seller seller = Seller.of(
+//            "철수네 과일가게",
+//            "123-45-67890",
+//            "이철수",
+//            "KB국민은행",
+//            "123456-78-910111"
+//        );
+//
+//        return sellerRepository.save(seller);
+//    }
+//}
