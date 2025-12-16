@@ -7,6 +7,7 @@ import com.barofarm.support.experience.application.dto.ExperienceServiceResponse
 import com.barofarm.support.experience.domain.Experience;
 import com.barofarm.support.experience.domain.ExperienceRepository;
 import com.barofarm.support.experience.exception.ExperienceErrorCode;
+import feign.FeignException;
 import java.math.BigInteger;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -78,6 +79,26 @@ public class ExperienceService {
     }
 
     /**
+     * 사용자 ID로 농장 ID 조회
+     *
+     * <p>seller-service에서 404를 반환하면 농장이 없다고 보고 null을 반환한다.
+     * 그 외 상태 코드는 그대로 예외를 전파한다.</p>
+     *
+     * @param userId 사용자 ID
+     * @return 농장 ID 또는 null
+     */
+    private UUID getUserFarmIdOrNull(UUID userId) {
+        try {
+            return farmClient.getFarmIdByUserId(userId);
+        } catch (FeignException e) {
+            if (e.status() == 404) {
+                return null;
+            }
+            throw e;
+        }
+    }
+
+    /**
      * 체험 프로그램 생성
      *
      * @param userId 사용자 ID
@@ -87,8 +108,11 @@ public class ExperienceService {
     @Transactional
     public ExperienceServiceResponse createExperience(UUID userId, ExperienceServiceRequest request) {
         // Feign 클라이언트를 통해 사용자가 소유한 farmId 조회
-        // 현재 통신은 구현/테스트되지 않았음, Mock으로 테스트 진행
-        UUID userFarmId = farmClient.getFarmIdByUserId(userId);
+        UUID userFarmId = getUserFarmIdOrNull(userId);
+        if (userFarmId == null) {
+            // 농장이 없으면 권한이 없는 것으로 처리
+            throw new CustomException(ExperienceErrorCode.ACCESS_DENIED);
+        }
 
         Experience experience = request.toEntity();
         validateAccess(experience, userFarmId);
@@ -131,8 +155,11 @@ public class ExperienceService {
      */
     public Page<ExperienceServiceResponse> getMyExperiences(UUID userId, Pageable pageable) {
         // Feign 클라이언트를 통해 사용자가 소유한 farmId 조회
-        // 현재 통신은 구현/테스트되지 않았음, Mock으로 테스트 진행
-        UUID farmId = farmClient.getFarmIdByUserId(userId);
+        UUID farmId = getUserFarmIdOrNull(userId);
+        // seller-service에 농장이 없거나 API에서 404를 반환하는 경우 빈 페이지를 반환한다.
+        if (farmId == null) {
+            return Page.empty(pageable);
+        }
 
         // farmId로 체험 목록 조회
         Page<Experience> experiences = experienceRepository.findByFarmId(farmId, pageable);
@@ -165,8 +192,10 @@ public class ExperienceService {
         Experience existingExperience = findExperienceById(experienceId);
 
         // Feign 클라이언트를 통해 사용자가 소유한 farmId 조회
-        // 현재 통신은 구현/테스트되지 않았음, Mock으로 테스트 진행
-        UUID userFarmId = farmClient.getFarmIdByUserId(userId);
+        UUID userFarmId = getUserFarmIdOrNull(userId);
+        if (userFarmId == null) {
+            throw new CustomException(ExperienceErrorCode.ACCESS_DENIED);
+        }
 
         validateAccess(existingExperience, userFarmId);
 
@@ -199,8 +228,10 @@ public class ExperienceService {
         Experience experience = findExperienceById(experienceId);
 
         // Feign 클라이언트를 통해 사용자가 소유한 farmId 조회
-        // 현재 통신은 구현/테스트되지 않았음, Mock으로 테스트 진행
-        UUID userFarmId = farmClient.getFarmIdByUserId(userId);
+        UUID userFarmId = getUserFarmIdOrNull(userId);
+        if (userFarmId == null) {
+            throw new CustomException(ExperienceErrorCode.ACCESS_DENIED);
+        }
 
         validateAccess(experience, userFarmId);
 
