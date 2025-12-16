@@ -209,6 +209,34 @@ public interface FarmSwaggerApi {
         @PathVariable("id") UUID id
     );
 
+    @Operation(
+            summary = "내 농장 목록 조회",
+            description = "로그인한 판매자(X-User-Id)가 등록한 농장 목록을 조회한다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "내 농장 목록 조회 성공",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "판매자를 찾을 수 없음 (SELLER_NOT_FOUND)",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
+    @GetMapping("/me")
+    ResponseDto<CustomPage<FarmListInfo>> findMyFarmList(
+            @Parameter(
+                    description = "요청 사용자 ID (판매자 ID)",
+                    required = true,
+                    example = "550e8400-e29b-41d4-a716-446655440000"
+            )
+            @RequestHeader("X-User-Id") UUID userId,
+
+            @ParameterObject Pageable pageable
+    );
+
     @Operation(summary = "농장 목록 조회", description = "농장 정보를 페이지 단위로 조회한다.")
     @ApiResponses({
         @ApiResponse(

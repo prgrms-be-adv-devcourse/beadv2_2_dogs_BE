@@ -132,6 +132,7 @@ public class FarmService {
         return ResponseDto.ok(FarmDetailInfo.from(farm));
     }
 
+
     @Transactional
     public ResponseDto<Void> deleteFarm(UUID sellerId, UUID farmId) {
         Farm farm = farmRepository.findById(farmId)
@@ -149,6 +150,17 @@ public class FarmService {
     public ResponseDto<CustomPage<FarmListInfo>> findFarmList(Pageable pageable) {
         Page<Farm> page = farmRepository.findAll(pageable);
         Page<FarmListInfo> dtoPage = page.map(FarmListInfo::from);
+        return ResponseDto.ok(CustomPage.from(dtoPage));
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseDto<CustomPage<FarmListInfo>> findMyFarmList(UUID sellerId, Pageable pageable) {
+        Seller seller = sellerRepository.findById(sellerId)
+            .orElseThrow(() -> new CustomException(SELLER_NOT_FOUND));
+
+        Page<Farm> page = farmRepository.findBySeller(seller, pageable);
+        Page<FarmListInfo> dtoPage = page.map(FarmListInfo::from);
+
         return ResponseDto.ok(CustomPage.from(dtoPage));
     }
 }

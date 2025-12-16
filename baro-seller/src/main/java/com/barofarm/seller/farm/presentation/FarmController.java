@@ -28,7 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("${api.v1}/farms")
 @RequiredArgsConstructor
-public class FarmController  implements FarmSwaggerApi{
+public class FarmController {
 
     private final FarmService farmService;
 
@@ -52,6 +52,14 @@ public class FarmController  implements FarmSwaggerApi{
     @GetMapping("/{id}")
     public ResponseDto<FarmDetailInfo> findFarm(@PathVariable("id") UUID id) {
         return farmService.findFarm(id);
+    }
+
+    @GetMapping("/me")
+    public ResponseDto<CustomPage<FarmListInfo>> findMyFarmList(
+            @RequestHeader("X-User-Id") UUID userId,
+            Pageable pageable
+    ) {
+        return farmService.findMyFarmList(userId, pageable);
     }
 
     @GetMapping

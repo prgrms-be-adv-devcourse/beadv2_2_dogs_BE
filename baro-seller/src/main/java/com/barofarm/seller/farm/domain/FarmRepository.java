@@ -1,5 +1,6 @@
 package com.barofarm.seller.farm.domain;
 
+import com.barofarm.seller.seller.domain.Seller;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -11,4 +12,5 @@ public interface FarmRepository {
     Optional<Farm> findById(UUID id);
     void delete(Farm farm);
     Page<Farm> findAll(Pageable pageable);
+    Page<Farm> findBySeller(Seller seller, Pageable pageable);
 }
