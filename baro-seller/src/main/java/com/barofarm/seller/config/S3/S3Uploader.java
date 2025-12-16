@@ -1,6 +1,11 @@
 package com.barofarm.seller.config.S3;
 
-import static com.barofarm.seller.farm.exception.FarmErrorCode.*;
+import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_IMAGE_DELETE_FAIL;
+import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_IMAGE_EMPTY_FILE;
+import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_IMAGE_INVALID_TYPE;
+import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_IMAGE_REQUIRED;
+import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_IMAGE_TOO_LARGE;
+import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_IMAGE_UPLOAD_FAIL;
 
 import com.barofarm.seller.common.exception.CustomException;
 import java.io.IOException;
@@ -61,7 +66,6 @@ public class S3Uploader {
 
             s3Client.deleteObject(deleteReq);
         } catch (Exception e) {
-            // 실무에서는 로그만 남기고 흘리는 경우가 많음
             throw new CustomException(FARM_IMAGE_DELETE_FAIL);
         }
     }
@@ -87,7 +91,9 @@ public class S3Uploader {
     }
 
     private String extractExt(String filename) {
-        if (filename == null || !filename.contains(".")) return "jpg";
+        if (filename == null || !filename.contains(".")) {
+            return "jpg";
+        }
         return filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
     }
 
