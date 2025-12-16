@@ -98,6 +98,8 @@ public interface ExperienceSwaggerApi {
         @RequestHeader(value = "X-User-Email", required = false) String userEmail,
         @Parameter(description = "사용자 역할", hidden = true)
         @RequestHeader(value = "X-User-Role", required = false) String userRole,
+        @Parameter(description = "농장 ID (선택사항, 지정 시 해당 농장 기준으로 조회)", required = false)
+        @RequestParam(required = false) UUID farmId,
         Pageable pageable
     );
 

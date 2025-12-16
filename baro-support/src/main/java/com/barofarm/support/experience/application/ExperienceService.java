@@ -149,19 +149,20 @@ public class ExperienceService {
      * 사용자 ID로 본인 농장의 체험 프로그램 목록 조회 (페이지네이션)
      *
      * @param userId 사용자 ID
+     * @param farmId 선택적으로 전달되는 농장 ID (null이면 사용자 ID로 조회)
      * @param pageable 페이지 정보
      * @return 체험 프로그램 페이지
      */
-    public Page<ExperienceServiceResponse> getMyExperiences(UUID userId, Pageable pageable) {
-        // Feign 클라이언트를 통해 사용자가 소유한 farmId 조회
-        UUID farmId = getUserFarmIdOrNull(userId);
+    public Page<ExperienceServiceResponse> getMyExperiences(UUID userId, UUID farmId, Pageable pageable) {
+        // 선택적으로 전달된 farmId가 있으면 우선 사용하고, 없으면 Feign 클라이언트를 통해 조회
+        UUID effectiveFarmId = farmId != null ? farmId : getUserFarmIdOrNull(userId);
         // seller-service에 농장이 없거나 API에서 404를 반환하는 경우 빈 페이지를 반환한다.
-        if (farmId == null) {
+        if (effectiveFarmId == null) {
             return Page.empty(pageable);
         }
 
         // farmId로 체험 목록 조회
-        Page<Experience> experiences = experienceRepository.findByFarmId(farmId, pageable);
+        Page<Experience> experiences = experienceRepository.findByFarmId(effectiveFarmId, pageable);
         return experiences.map(ExperienceServiceResponse::from);
     }
 

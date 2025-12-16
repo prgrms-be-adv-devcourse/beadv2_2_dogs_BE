@@ -185,10 +185,11 @@ class ExperienceServiceTest {
     }
 
     @Test
-    @DisplayName("사용자 ID로 본인 농장의 체험 프로그램 목록을 조회할 수 있다 (페이지네이션)")
+    @DisplayName("사용자 ID와 선택적 farmId로 체험 프로그램 목록을 조회할 수 있다 (페이지네이션)")
     void getMyExperiences() {
         // given
         UUID userId = UUID.randomUUID();
+        UUID customFarmId = farmId; // 선택적으로 전달되는 farmId
         UUID experienceId2 = UUID.randomUUID();
         Experience experience2 = new Experience(experienceId2, farmId, "블루베리 수확 체험", "달콤한 블루베리",
                 BigInteger.valueOf(20000), 15, 90, LocalDateTime.of(2025, 6, 1, 9, 0), LocalDateTime.of(2025, 8, 31, 18, 0),
@@ -198,19 +199,18 @@ class ExperienceServiceTest {
         Page<Experience> experiencePage = new PageImpl<>(
                 Arrays.asList(validExperience, experience2), pageable, 2);
 
-        // FarmClient Mock: userId로 farmId 반환
-        when(farmClient.getFarmIdByUserId(userId)).thenReturn(farmId);
         // ExperienceRepository Mock: farmId로 체험 목록 반환
-        when(experienceRepository.findByFarmId(farmId, pageable)).thenReturn(experiencePage);
+        when(experienceRepository.findByFarmId(customFarmId, pageable)).thenReturn(experiencePage);
 
-        // when
-        Page<ExperienceServiceResponse> responsePage = experienceService.getMyExperiences(userId, pageable);
+        // when - 명시적으로 farmId를 전달하여 호출
+        Page<ExperienceServiceResponse> responsePage = experienceService.getMyExperiences(userId, customFarmId, pageable);
 
         // then
         assertThat(responsePage).isNotNull();
         assertThat(responsePage.getContent()).hasSize(2);
         assertThat(responsePage.getContent()).extracting("title").contains("딸기 수확 체험", "블루베리 수확 체험");
-        verify(farmClient, times(1)).getFarmIdByUserId(userId);
-        verify(experienceRepository, times(1)).findByFarmId(farmId, pageable);
+        // FarmClient는 호출되지 않아야 한다 (farmId를 직접 전달했기 때문)
+        verify(farmId, never());
+        verify(experienceRepository, times(1)).findByFarmId(customFarmId, pageable);
     }
 }
