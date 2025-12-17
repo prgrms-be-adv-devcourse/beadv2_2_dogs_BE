@@ -15,7 +15,8 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE_ORDER:-baroorder}
       - MYSQL_USER=${MYSQL_USER:-barouser}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
-      - TOSS_SECRET_KEY=${TOSS_SECRET_KEY}
+      # Toss Secret Key (Spring relaxed binding: PAYMENT_TOSS_SECRET_KEY -> payment.toss.secret-key)
+      - PAYMENT_TOSS_SECRET_KEY=${TOSS_SECRET_KEY}
       - JAVA_OPTS=-Xms256m -Xmx384m
     restart: unless-stopped
     networks:

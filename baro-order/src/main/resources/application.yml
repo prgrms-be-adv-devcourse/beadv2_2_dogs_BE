@@ -53,7 +53,8 @@ spring:
 
 payment:
   toss:
-    secret-key: ${TOSS_SECRET_KEY:}
+    # 도커/CI에서 PAYMENT_TOSS_SECRET_KEY로 주입 (없으면 비움)
+    secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
     # success-url: ${TOSS_SUCCESS_URL:http://localhost:8080/payments/success.html}
     # fail-url: ${TOSS_FAIL_URL:http://localhost:8080/payments/fail.html}
 
