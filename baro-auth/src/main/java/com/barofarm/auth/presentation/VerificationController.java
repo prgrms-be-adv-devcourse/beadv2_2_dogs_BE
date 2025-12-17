@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 // 코드 발송 및 검증하기(이메일 코드 발송, 인증 코드)
 @RestController
-@RequestMapping("auth/verification")
+@RequestMapping("/api/v1/auth/verification")
 @RequiredArgsConstructor
 public class VerificationController implements VerificationSwaggerApi {
 
@@ -25,7 +25,7 @@ public class VerificationController implements VerificationSwaggerApi {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/email/verify")
+    @PostMapping("/email/verify-code")
     public ResponseEntity<Void> verify(@RequestBody VerifyCodeRequest request) {
         emailVerificationService.verifyCode(request.email(), request.code());
         return ResponseEntity.ok().build();
