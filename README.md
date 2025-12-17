@@ -1,8 +1,8 @@
 # Baro Farm - 마이크로서비스 백엔드
 
-Spring Boot 4.0.0 + JDK 21 기반 멀티 모듈 프로젝트
+Spring Boot 3.5.8 + JDK 21 기반 멀티 모듈 프로젝트
 
-## 📦 프로젝트 구조 (모듈러 모놀리스)
+## 📦 프로젝트 구조 (MSA 구조)
 
 > 자세한 구조는 [BARO_FARM_STRUCTURE.md](docs/BARO_FARM_STRUCTURE.md) 참고
 
@@ -11,15 +11,15 @@ baro-farm/
 ├── baro-auth/                    # A. 인증 모듈
 │   ├── src/main/java/com/barofarm/auth/
 │   │   ├── AuthApplication.java
-│   │   └── auth/                 # 인증/인가 도메인
+│   │   └── auth/                 # 인증/인가 도메인, 구매자 및 회원관리 통합
 │   └── build.gradle
 │
 ├── baro-buyer/                   # B. 구매자 모듈
 │   ├── src/main/java/com/barofarm/buyer/
 │   │   ├── BuyerApplication.java
-│   │   ├── buyer/                # 구매자 회원 관리
 │   │   ├── cart/                 # 장바구니 관리
-│   │   └── product/              # 상품 관리
+│   │   ├── product/              # 상품 관리
+│   │   └── inventory/            # 재고 관리
 │   └── build.gradle
 │
 ├── baro-seller/                  # C. 판매자 모듈
@@ -33,7 +33,8 @@ baro-farm/
 │   ├── src/main/java/com/barofarm/order/
 │   │   ├── OrderApplication.java
 │   │   ├── order/                # 주문 관리
-│   │   └── payment/              # 결제 관리
+│   │   ├── payment/              # 결제 관리
+│   │   └── deposit/              # 예치금 관리
 │   └── build.gradle
 │
 ├── baro-support/                 # E. 지원 모듈
@@ -55,10 +56,10 @@ baro-farm/
 
 ## 🚀 기술 스택
 
-- **Framework**: Spring Boot 4.0.0
+- **Framework**: Spring Boot 3.5.8
 - **Java**: JetBrains JDK 21
 - **Build Tool**: Gradle 8.14
-- **Spring Cloud**: 2025.1.0
+- **Spring Cloud**: 2025.0.0
   - Netflix Eureka (Service Discovery)
   - Spring Cloud Gateway
   - Spring Cloud Config
@@ -127,9 +128,9 @@ Git hooks가 설치되어 있으면 커밋할 때 자동으로 검사합니다.
 
 # 4. 비즈니스 모듈 실행
 ./gradlew :baro-auth:bootRun      # 인증 모듈
-./gradlew :baro-buyer:bootRun     # 구매자 모듈 (buyer + cart + product)
+./gradlew :baro-buyer:bootRun     # 구매자 모듈 (cart + product + inventory)
 ./gradlew :baro-seller:bootRun    # 판매자 모듈 (seller + farm)
-./gradlew :baro-order:bootRun     # 주문 모듈 (order + payment)
+./gradlew :baro-order:bootRun     # 주문 모듈 (order + payment + deposit)
 ./gradlew :baro-support:bootRun   # 지원 모듈 (6개 도메인)
 ```
 
@@ -171,7 +172,7 @@ java -jar baro-support/build/libs/baro-support-0.0.1-SNAPSHOT.jar
 
 ## 📋 API 경로
 
-모든 API는 Gateway를 통해 접근합니다:
+모든 API는 Gateway를 통해 접근합니다: (Port: 8080)
 
 | 서비스 | 경로 |
 |--------|------|
