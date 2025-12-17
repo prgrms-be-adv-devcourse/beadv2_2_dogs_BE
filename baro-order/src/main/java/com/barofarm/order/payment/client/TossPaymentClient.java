@@ -37,6 +37,7 @@ public class TossPaymentClient {
         if (properties.getSecretKey() == null || properties.getSecretKey().isBlank()) {
             throw new CustomException(PaymentErrorCode.INVALID_SECRET_KEY);
         }
+        log.info("Toss secret key (masked) for confirm: {}", maskSecret(properties.getSecretKey()));
         HttpHeaders headers = createHeaders();
 
         Map<String, Object> body = new HashMap<>();
@@ -75,6 +76,7 @@ public class TossPaymentClient {
         if (properties.getSecretKey() == null || properties.getSecretKey().isBlank()) {
             throw new CustomException(PaymentErrorCode.INVALID_SECRET_KEY);
         }
+        log.info("Toss secret key (masked) for refund: {}", maskSecret(properties.getSecretKey()));
 
         HttpHeaders headers = createHeaders();
 
@@ -115,5 +117,21 @@ public class TossPaymentClient {
         String encoded = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
         headers.set(HttpHeaders.AUTHORIZATION, "Basic " + encoded);
         return headers;
+    }
+
+    private String maskSecret(String key) {
+        if (key == null) {
+            return "null";
+        }
+        String trimmed = key.trim();
+        int len = trimmed.length();
+        if (len <= 4) {
+            return "***";
+        }
+        int prefixLen = Math.min(4, len);
+        int suffixLen = Math.min(2, len - prefixLen);
+        String prefix = trimmed.substring(0, prefixLen);
+        String suffix = trimmed.substring(len - suffixLen);
+        return prefix + "***" + suffix + "(len=" + len + ")";
     }
 }
