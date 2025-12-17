@@ -10,7 +10,9 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]': # 모든 경로에 대해 CORS 허용
-            allowedOrigins: "http://localhost:3000" # 프론트 로컬 도메인(추가 도메인은 콤마로 추가)
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://3.34.14.73:3000"
             allowedMethods: "*"   # 허용 HTTP 메서드 (GET/POST/PUT/DELETE 등)
             allowedHeaders: "*"   # 허용 요청 헤더 (Authorization 등)
             allowCredentials: true # 쿠키/인증 헤더 전달 허용 시 true
