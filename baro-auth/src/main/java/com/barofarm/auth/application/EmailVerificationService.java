@@ -5,6 +5,7 @@ import com.barofarm.auth.common.exception.CustomException;
 import com.barofarm.auth.domain.verification.EmailVerification;
 import com.barofarm.auth.exception.VerificationErrorCode;
 import com.barofarm.auth.infrastructure.jpa.EmailVerificationJpaRepository;
+import com.barofarm.auth.infrastructure.mail.ConsoleEmailCodeSender;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -23,12 +24,12 @@ public class EmailVerificationService {
     private final EmailVerificationJpaRepository repository;
     private final EmailCodeSender emailCodeSender;
     private final Clock clock;
+    private final ConsoleEmailCodeSender consoleEmailCodeSender;
 
     public void sendVerification(String email) {
         String code = generateCode();
         EmailVerification verification = EmailVerification.createNew(email, code, DEFAULT_TTL);
         repository.save(verification);
-
         emailCodeSender.send(email, code);
     }
 
