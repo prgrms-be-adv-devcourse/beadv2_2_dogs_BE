@@ -24,16 +24,15 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         use_sql_comments: true
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
+    host: smtp.naver.com
+    port: 465
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
     properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+      mail.smtp.auth: true
+      mail.smtp.ssl.enable: true
+      mail.smtp.ssl.trust: smtp.naver.com
+      
   elasticsearch:
     uris: ${SPRING_ELASTICSEARCH_URIS:http://elasticsearch:9200}
   kafka:
@@ -104,3 +103,13 @@ springdoc:
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
 
+# AWS 및 S3 설정
+cloud:
+  aws:
+    s3:
+      bucket: ${AWS_S3_BUCKET_NAME}
+      public-base-url: https://${AWS_S3_BUCKET_NAME}.s3.ap-northeast-2.amazonaws.com
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region: ap-northeast-2

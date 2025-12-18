@@ -17,6 +17,9 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
       # Toss Secret Key (Spring relaxed binding: PAYMENT_TOSS_SECRET_KEY -> payment.toss.secret-key)
       - PAYMENT_TOSS_SECRET_KEY=${TOSS_SECRET_KEY}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
       - JAVA_OPTS=-Xms256m -Xmx384m
     restart: unless-stopped
     networks:
