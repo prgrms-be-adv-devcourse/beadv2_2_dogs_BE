@@ -12,10 +12,14 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
       # - SPRING_DATA_REDIS_HOST=redis
       # - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_DATASOURCE_URL=jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE_BUYER:-barobuyer}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true
       - MYSQL_DATABASE=${MYSQL_DATABASE_BUYER:-barobuyer}
       - MYSQL_USER=${MYSQL_USER:-barouser}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
       - JAVA_OPTS=-Xms256m -Xmx384m
     restart: unless-stopped
     networks:
