@@ -44,9 +44,21 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             try {
                 Claims claims = validateToken(token);
 
-                ServerHttpRequest modifiedRequest = request.mutate().header("X-User-Id", claims.getSubject())
-                        .header("X-User-Email", claims.get("email", String.class))
-                        .header("X-User-Role", claims.get("role", String.class)).build();
+                // Auth 서비스에 만든 토큰 구조에 맞게 변경
+                String email = claims.getSubject();
+                String userId = claims.get("uid", String.class);
+                String userType = claims.get("ut", String.class);
+
+                ServerHttpRequest modifiedRequest = request.mutate()
+                    .headers(h->{
+                        h.remove("X-User-Email");
+                        h.remove("X-User-Id");
+                        h.remove("X-User-Role");
+                    })
+                    .header("X-User-Email", email)
+                    .header("X-User-Id", userId)
+                    .header("X-User-Role", userType)
+                    .build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
             } catch (Exception e) {

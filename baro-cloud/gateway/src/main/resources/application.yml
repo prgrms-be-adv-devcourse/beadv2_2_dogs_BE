@@ -4,55 +4,105 @@ server:
 spring:
   application:
     name: gateway-service
+
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]': # 모든 경로에 대해 CORS 허용
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://3.34.14.73:3000"
+            allowedMethods: "*"   # 허용 HTTP 메서드 (GET/POST/PUT/DELETE 등)
+            allowedHeaders: "*"   # 허용 요청 헤더 (Authorization 등)
+            allowCredentials: true # 쿠키/인증 헤더 전달 허용 시 true
+            maxAge: 3600          # 프리플라이트(OPTIONS) 결과를 캐시할 시간(초)
       discovery:
         locator:
           enabled: true
           lower-case-service-id: true
-      routes:
-        # Auth Service
-        - id: auth-service
-          uri: lb://auth-service
-          predicates:
-            - Path=/api/auth/**
-          filters:
-            - RewritePath=/api/auth/(?<segment>.*), /${segment}
+      server:
+        webflux:
+          routes:
+            # Auth Service
+            - id: auth-service
+              uri: lb://auth-service
+              predicates:
+                - Path=/auth-service/**
+              filters:
+                - RewritePath=/auth-service/(?<segment>.*), /${segment}
 
-        # Buyer Service
-        - id: buyer-service
-          uri: lb://buyer-service
-          predicates:
-            - Path=/api/buyers/**,/api/carts/**,/api/products/**
-          filters:
-            - RewritePath=/api/(?<segment>.*), /${segment}
-            - AuthenticationFilter
+            # Buyer Service
+            - id: buyer-service
+              uri: lb://buyer-service
+              predicates:
+                - Path=/buyer-service/**
+              filters:
+                - RewritePath=/buyer-service/(?<segment>.*), /${segment}
 
-        # Seller Service
-        - id: seller-service
-          uri: lb://seller-service
-          predicates:
-            - Path=/api/sellers/**,/api/farms/**
-          filters:
-            - RewritePath=/api/(?<segment>.*), /${segment}
-            - AuthenticationFilter
+            # Seller Service
+            - id: seller-service
+              uri: lb://seller-service
+              predicates:
+                - Path=/seller-service/**
+              filters:
+                - RewritePath=/seller-service/(?<segment>.*), /${segment}
 
-        # Order Service
-        - id: order-service
-          uri: lb://order-service
-          predicates:
-            - Path=/api/orders/**,/api/payments/**
-          filters:
-            - RewritePath=/api/(?<segment>.*), /${segment}
-            - AuthenticationFilter
+            # Order Service
+            - id: order-service
+              uri: lb://order-service
+              predicates:
+                - Path=/order-service/**,/api/payments/**
+              filters:
+                - RewritePath=/order-service/(?<segment>.*), /${segment}
 
-        # Support Service
-        - id: support-service
-          uri: lb://support-service
-          predicates:
-            - Path=/api/settlements/**,/api/deliveries/**,/api/notifications/**,/api/experiences/**,/api/search/**,/api/reviews/**
-          filters:
-            - RewritePath=/api/(?<segment>.*), /${segment}
+            # Support Service
+            - id: support-service
+              uri: lb://support-service
+              predicates:
+                - Path=/support-service/**
+              filters:
+                - RewritePath=/support-service/(?<segment>.*), /${segment}
+
+            # Auth Service API 문서 프록시
+            - id: auth-service-openapi
+              uri: lb://AUTH-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
+              predicates:
+                - Path=/openapi/auth/v3/api-docs
+              filters:
+                - RewritePath=/openapi/auth/(?<segment>.*), /${segment}
+
+            # Buyer Service API 문서 프록시
+            - id: buyer-service-openapi
+              uri: lb://BUYER-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
+              predicates:
+                - Path=/openapi/buyer/v3/api-docs
+              filters:
+                - RewritePath=/openapi/buyer/(?<segment>.*), /${segment}
+
+            # Seller Service API 문서 프록시
+            - id: seller-service-openapi
+              uri: lb://SELLER-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
+              predicates:
+                - Path=/openapi/seller/v3/api-docs
+              filters:
+                - RewritePath=/openapi/seller/(?<segment>.*), /${segment}
+
+            # Order Service API 문서 프록시
+            - id: order-service-openapi
+              uri: lb://ORDER-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
+              predicates:
+                - Path=/openapi/order/v3/api-docs
+              filters:
+                - RewritePath=/openapi/order/(?<segment>.*), /${segment}
+
+            # Support Service API 문서 프록시
+            - id: support-service-openapi
+              uri: lb://SUPPORT-SERVICE  # 대문자로 (Eureka에 등록된 이름과 동일하게)
+              predicates:
+                - Path=/openapi/support/v3/api-docs
+              filters:
+                - RewritePath=/openapi/support/(?<segment>.*), /${segment}
 
 eureka:
   client:
@@ -64,7 +114,7 @@ eureka:
     prefer-ip-address: true
 
 jwt:
-  secret: barofarm-secret-key-for-jwt-authentication-must-be-256-bits-long
+  secret: "너무_짧지_않은_랜덤_시크릿_문자열_최소32바이트_나중에_env로_옮길예정"
 
 management:
   endpoints:
@@ -73,3 +123,22 @@ management:
         include: health, info, gateway
 
 
+# Swagger/OpenAPI 통합 설정 - 모든 서비스의 Swagger를 Gateway에서 통합 제공
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    use-root-path: false
+    urls:
+      - name: Auth Service
+        url: /openapi/auth/v3/api-docs
+      - name: Buyer Service
+        url: /openapi/buyer/v3/api-docs
+      - name: Seller Service
+        url: /openapi/seller/v3/api-docs
+      - name: Order Service
+        url: /openapi/order/v3/api-docs
+      - name: Support Service
+        url: /openapi/support/v3/api-docs
+  api-docs:
+    enabled: true
+  enable-native-support: true
