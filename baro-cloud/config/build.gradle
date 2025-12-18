@@ -1,6 +1,7 @@
 dependencies {
-    implementation 'org.springframework.cloud:spring-cloud-config-server'
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.cloud:spring-cloud-config-server' // [1] 중앙 설정 저장소(URI 기반)로 동작하게 하는 핵심 스타터
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client' // [2] Eureka에 등록되어 다른 서비스가 Config Server 위치를 자동으로 찾도록 함
+    implementation 'org.springframework.boot:spring-boot-starter-actuator' // [3] 헬스/메트릭 노출로 장애 감지 및 모니터링
 }
 
 bootJar {

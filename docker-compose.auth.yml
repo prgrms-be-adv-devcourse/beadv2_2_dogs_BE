@@ -1,0 +1,29 @@
+# Auth 모듈
+# 인증/인가 서비스
+
+services:
+  baro-auth:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/baro-auth:${IMAGE_TAG:-latest}
+    container_name: baro-auth
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      # - SPRING_DATA_REDIS_HOST=redis
+      # - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
+      - MYSQL_DATABASE=${MYSQL_DATABASE_AUTH:-baroauth}
+      - MYSQL_USER=${MYSQL_USER:-barouser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+      - SPRING_MAIL_USERNAME=${SPRING_MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
+      - JAVA_OPTS=-Xms256m -Xmx384m
+    restart: unless-stopped
+    networks:
+      - baro-network
+
+networks:
+  baro-network:
+    name: be_baro-network  # 네트워크 이름 명시적으로 지정
+    external: true
+

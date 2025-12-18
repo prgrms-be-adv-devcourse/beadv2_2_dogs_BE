@@ -1,0 +1,31 @@
+# Order 모듈
+# 주문, 결제 관리
+
+services:
+  baro-order:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/baro-order:${IMAGE_TAG:-latest}
+    container_name: baro-order
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_DATASOURCE_URL=jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE_ORDER:-baroorder}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true
+      - MYSQL_DATABASE=${MYSQL_DATABASE_ORDER:-baroorder}
+      - MYSQL_USER=${MYSQL_USER:-barouser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
+      - TOSS_SECRET_KEY=${TOSS_SECRET_KEY}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      - JAVA_OPTS=-Xms256m -Xmx384m
+    restart: unless-stopped
+    networks:
+      - baro-network
+
+networks:
+  baro-network:
+    name: be_baro-network  # 네트워크 이름 명시적으로 지정
+    external: true
+
