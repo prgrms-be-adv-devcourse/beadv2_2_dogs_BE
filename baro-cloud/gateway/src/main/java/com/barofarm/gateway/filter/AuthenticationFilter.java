@@ -45,6 +45,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 Claims claims = validateToken(token);
 
                 ServerHttpRequest modifiedRequest = request.mutate().header("X-User-Id", claims.getSubject())
+                        .header("X-User-Email", claims.get("email", String.class))
                         .header("X-User-Role", claims.get("role", String.class)).build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
