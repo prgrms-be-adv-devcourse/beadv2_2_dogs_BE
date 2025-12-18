@@ -483,6 +483,7 @@ jobs:
           USER: ${{ secrets.EC2_USERNAME }}
           MODULE_NAME: ${{ steps.module.outputs.name }}
           BRANCH_NAME: ${{ steps.module.outputs.branch }}
+          TOSS_SECRET_KEY: ${{ secrets.TOSS_SECRET_KEY }}
         timeout-minutes: 10  # 배포 타임아웃 설정
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
@@ -567,7 +568,7 @@ jobs:
           # 배포 스크립트를 백그라운드로 실행하고 로그 파일에 저장
           ssh $SSH_OPTS ${USER}@${HOST} \
             "cd /home/${USER}/apps/BE && \
-             nohup bash -c 'GITHUB_TOKEN=${GHCR_TOKEN} IMAGE_TAG=${IMAGE_TAG} bash ./deploy-module.sh ${MODULE_NAME}' > ${DEPLOY_LOG} 2>&1 & \
+             nohup bash -c 'GITHUB_TOKEN=${GHCR_TOKEN} IMAGE_TAG=${IMAGE_TAG} TOSS_SECRET_KEY=${TOSS_SECRET_KEY} bash ./deploy-module.sh ${MODULE_NAME}' > ${DEPLOY_LOG} 2>&1 & \
              echo \$! > /tmp/deploy-${MODULE_NAME}.pid"
           
           echo "⏳ Deployment started in background. PID saved to /tmp/deploy-${MODULE_NAME}.pid"

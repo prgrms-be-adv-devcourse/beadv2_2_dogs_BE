@@ -9,6 +9,16 @@ spring:
     name: order-service
   main:
     allow-bean-definition-overriding: true
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            decode404: true
+            loggerLevel: basic
+      # Feign Jackson 자동 설정 비활성화 (tools.jackson 오류 방지)
+      jackson:
+        enabled: false
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE:-baroorder}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -37,10 +47,17 @@ spring:
         spring.json.value.default.type: com.barofarm.support.event.ProductEvent
       auto-offset-reset: latest  # earliest에서 latest로 변경하여 오래된 메시지 건너뛰기
       # auto-offset-reset: earliest
-    producer:
+    # producer:
       # key-serializer: org.apache.kafka.common.serialization.StringSerializer
       # value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-  
+
+payment:
+  toss:
+    # 도커/CI에서 PAYMENT_TOSS_SECRET_KEY로 주입 (없으면 비움)
+    secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
+    # success-url: ${TOSS_SUCCESS_URL:http://localhost:8080/payments/success.html}
+    # fail-url: ${TOSS_FAIL_URL:http://localhost:8080/payments/fail.html}
+
 eureka:
   client:
     service-url:
