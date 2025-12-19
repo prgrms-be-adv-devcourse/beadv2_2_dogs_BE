@@ -519,21 +519,32 @@ jobs:
           fi
           
           # k8s 배포 파일 복사 (스크립트가 k8s/ 상대 경로를 사용하므로 /home/ubuntu/apps/k8s 구조로 복사)
-          if [ -f "$REPO_ROOT/scripts/deploy-k8s.sh" ]; then
+          # 이미 존재하는 스크립트가 있으면 사용, 없으면 복사
+          if [ -f "/home/ubuntu/apps/k8s/scripts/deploy-k8s.sh" ]; then
+            echo "✅ 기존 deploy-k8s.sh 스크립트 사용: /home/ubuntu/apps/k8s/scripts/deploy-k8s.sh"
+            chmod +x /home/ubuntu/apps/k8s/scripts/deploy-k8s.sh
+          elif [ -f "$REPO_ROOT/scripts/deploy-k8s.sh" ]; then
             cp "$REPO_ROOT/scripts/deploy-k8s.sh" /home/ubuntu/apps/k8s/scripts/
             chmod +x /home/ubuntu/apps/k8s/scripts/deploy-k8s.sh
             echo "✅ deploy-k8s.sh 복사 완료"
           else
-            echo "❌ deploy-k8s.sh 파일을 찾을 수 없습니다: $REPO_ROOT/scripts/deploy-k8s.sh"
+            echo "❌ deploy-k8s.sh 파일을 찾을 수 없습니다."
+            echo "   확인한 경로:"
+            echo "   - /home/ubuntu/apps/k8s/scripts/deploy-k8s.sh"
+            echo "   - $REPO_ROOT/scripts/deploy-k8s.sh"
             exit 1
           fi
           
-          if [ -d "$REPO_ROOT/k8s" ]; then
+          # k8s 디렉토리도 마찬가지로 이미 있으면 사용, 없으면 복사
+          if [ -d "/home/ubuntu/apps/k8s/apps" ] || [ -d "/home/ubuntu/apps/k8s/cloud" ]; then
+            echo "✅ 기존 k8s 디렉토리 사용: /home/ubuntu/apps/k8s"
+          elif [ -d "$REPO_ROOT/k8s" ]; then
             cp -r "$REPO_ROOT/k8s" /home/ubuntu/apps/ 2>/dev/null || true
             echo "✅ k8s 디렉토리 복사 완료"
           else
-            echo "❌ k8s 디렉토리를 찾을 수 없습니다: $REPO_ROOT/k8s"
-            exit 1
+            echo "⚠️  k8s 디렉토리를 찾을 수 없습니다: $REPO_ROOT/k8s"
+            echo "   기존 k8s 디렉토리가 있는지 확인 중..."
+            ls -la /home/ubuntu/apps/k8s/ 2>&1 || echo "   k8s 디렉토리가 없습니다."
           fi
 
       - name: Check k3s availability
