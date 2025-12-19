@@ -16,92 +16,49 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'java'
-    apply plugin: 'org.springframework.boot'
-    apply plugin: 'io.spring.dependency-management'
-    apply plugin: 'com.diffplug.spotless'
-    apply plugin: 'checkstyle'
-
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
-            // CI/CD 환경(GitHub Actions 등)에서는 vendor 체크를 건너뛰어
-            // temurin(OpenJDK) 등 모든 JDK를 허용
-            // 로컬 개발 환경에서만 JetBrains JDK 사용
-            if (!System.getenv('CI') && !System.getenv('GITHUB_ACTIONS')) {
-                vendor = JvmVendorSpec.JETBRAINS
-            }
-        }
-    }
-
-    ext {
-        set('springCloudVersion', "2025.0.0")
-    }
-
-    dependencyManagement {
-        imports {
-            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-        }
-    }
-
-    dependencies {
-        // Lombok
-        compileOnly 'org.projectlombok:lombok'
-        annotationProcessor 'org.projectlombok:lombok'
-
-        // Test(추후 불필요한 의존성 제거해야 함)
-        testImplementation 'org.springframework.boot:spring-boot-starter-test'
-        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-        testRuntimeOnly 'com.h2database:h2'
-        testImplementation 'io.rest-assured:rest-assured:5.5.5'
-        testImplementation "org.springframework.boot:spring-boot-testcontainers"
-        testImplementation "org.testcontainers:junit-jupiter"
-        testImplementation "org.testcontainers:testcontainers"
-        testImplementation 'org.mockito:mockito-junit-jupiter'
-        testImplementation 'org.assertj:assertj-core'
-        testImplementation platform("org.testcontainers:testcontainers-bom:1.19.7")
-
-        // swagger
-        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
-    }
-
-    tasks.named('test') {
-        useJUnitPlatform()
-    }
-
-    // ============================================
+    // NOTE:
+    // - 각 서비스 모듈(auth/buyer/seller/order/support)은 자체 build.gradle 로
+    //   plugins, 의존성, JDK 설정 등을 모두 관리하는 자립형 MSA 서비스로 구성되어 있다.
+    // - 이 루트 build.gradle 은 멀티모듈(단일 레포) 구조의 루트 프로젝트를 유지하고,
+    //   전역 코드 스타일 규칙(spotless/checkstyle)과 공통 lint/format 태스크만 제공하는
+    //   "얇은 부모" 역할로 남겨둔다.
+    //
     // Spotless - 코드 자동 포맷팅 (like Python black)
-    // ============================================
-    spotless {
-        java {
-            target 'src/*/java/**/*.java'
-            importOrder()
-            removeUnusedImports()
-            // eclipse() 제거: 메서드 체이닝과 파라미터 포맷팅이 자동으로 변경되지 않도록
-            leadingTabsToSpaces(4)  // 탭을 4칸 스페이스로 변환
-            trimTrailingWhitespace()
-            endWithNewline()
+    // 각 서브프로젝트에서 com.diffplug.spotless 플러그인을 사용하는 경우에만 설정 적용
+    plugins.withId('com.diffplug.spotless') {
+        spotless {
+            java {
+                target 'src/*/java/**/*.java'
+                importOrder()
+                removeUnusedImports()
+                // eclipse() 제거: 메서드 체이닝과 파라미터 포맷팅이 자동으로 변경되지 않도록
+                leadingTabsToSpaces(4)  // 탭을 4칸 스페이스로 변환
+                trimTrailingWhitespace()
+                endWithNewline()
+            }
         }
     }
 
     // ============================================
     // Checkstyle - 코드 스타일 검사 (lint)
     // ============================================
-    checkstyle {
-        toolVersion = '10.21.4'
-        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
-        configDirectory = rootProject.file('config/checkstyle')
-        configProperties = [
-            'suppressionFile': rootProject.file('config/checkstyle/suppressions.xml').absolutePath
-        ]
-        ignoreFailures = false
-        maxWarnings = 0
-    }
+    // 각 서브프로젝트에서 checkstyle 플러그인을 사용하는 경우에만 설정 적용
+    plugins.withId('checkstyle') {
+        checkstyle {
+            toolVersion = '10.21.4'
+            configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+            configProperties = [
+                'suppressionFile': rootProject.file('config/checkstyle/suppressions.xml').absolutePath
+            ]
+            ignoreFailures = false
+            maxWarnings = 0
+        }
 
-    tasks.withType(Checkstyle).configureEach {
-        reports {
-            xml.required = true
-            html.required = true
+        tasks.withType(Checkstyle).configureEach {
+            reports {
+                xml.required = true
+                html.required = true
+            }
         }
     }
 }
@@ -124,10 +81,4 @@ tasks.register('format') {
     group = 'verification'
     description = '코드 자동 포맷팅'
     dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'spotlessApply' } }
-}
-
-// baro-cloud 부모 모듈은 빌드 제외
-project(':baro-cloud') {
-    bootJar.enabled = false
-    jar.enabled = false
 }

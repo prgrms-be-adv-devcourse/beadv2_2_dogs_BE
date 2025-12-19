@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baro-seller
+  namespace: baro-prod
+  labels:
+    app: baro-seller
+    component: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: baro-seller
+  template:
+    metadata:
+      labels:
+        app: baro-seller
+        component: app
+    spec:
+      containers:
+        - name: baro-seller
+          image: ghcr.io/do-develop-space/baro-seller:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8085
+              name: http
+              protocol: TCP
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: "http://eureka:8761/eureka/"
+            - name: JAVA_OPTS
+              value: "-Xms256m -Xmx384m"
+            # MySQL 설정
+            - name: MYSQL_DATABASE
+              value: "baroseller"
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: MYSQL_PASSWORD
+            # MySQL 호스트 (EC2 Private IP)
+            - name: EC2_IP
+              value: "CHANGE_ME_TO_EC2_IP"  # 실제 EC2 Private IP로 변경 필요
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://$(EC2_IP):3306/baroseller?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
+            # Kafka 설정
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "$(EC2_IP):29092"
+            # AWS 설정
+            - name: AWS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: AWS_ACCESS_KEY
+            - name: AWS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: AWS_SECRET_KEY
+            - name: AWS_S3_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: AWS_S3_BUCKET_NAME
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "384Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 20
+
