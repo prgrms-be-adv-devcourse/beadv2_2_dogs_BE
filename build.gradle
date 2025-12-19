@@ -42,21 +42,23 @@ subprojects {
     // ============================================
     // Checkstyle - 코드 스타일 검사 (lint)
     // ============================================
-    checkstyle {
-        toolVersion = '10.21.4'
-        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
-        configDirectory = rootProject.file('config/checkstyle')
-        configProperties = [
-            'suppressionFile': rootProject.file('config/checkstyle/suppressions.xml').absolutePath
-        ]
-        ignoreFailures = false
-        maxWarnings = 0
-    }
+    // 각 서브프로젝트에서 checkstyle 플러그인을 사용하는 경우에만 설정 적용
+    plugins.withId('checkstyle') {
+        checkstyle {
+            toolVersion = '10.21.4'
+            configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+            configProperties = [
+                'suppressionFile': rootProject.file('config/checkstyle/suppressions.xml').absolutePath
+            ]
+            ignoreFailures = false
+            maxWarnings = 0
+        }
 
-    tasks.withType(Checkstyle).configureEach {
-        reports {
-            xml.required = true
-            html.required = true
+        tasks.withType(Checkstyle).configureEach {
+            reports {
+                xml.required = true
+                html.required = true
+            }
         }
     }
 }
