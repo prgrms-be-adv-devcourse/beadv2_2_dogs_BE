@@ -5,7 +5,7 @@ on:
     branches:
       # - main
       - main-*
-      - dev-*
+      # - dev-*
   pull_request:
     branches:
       # - main
@@ -459,14 +459,37 @@ jobs:
             cp -r $GITHUB_WORKSPACE/docker/baro-es/* ./docker/baro-es/ 2>/dev/null || true
           fi
 
-      - name: Deploy module
+      - name: Check k3s availability
+        id: k3s-check
+        run: |
+          if command -v kubectl &> /dev/null && kubectl get nodes &> /dev/null; then
+            echo "k3s_available=true" >> $GITHUB_OUTPUT
+            echo "✅ k3s가 사용 가능합니다. k8s 배포를 진행합니다."
+          else
+            echo "k3s_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️  k3s가 사용 불가능합니다. docker-compose 배포를 진행합니다."
+          fi
+
+      - name: Deploy to k8s (if available)
+        if: steps.k3s-check.outputs.k3s_available == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
+          IMAGE_TAG: ${{ needs.determine-service.outputs.image_tag }}
+          MODULE_NAME: ${{ steps.module.outputs.name }}
+        run: |
+          cd $GITHUB_WORKSPACE
+          echo "🚀 k8s 배포 시작: ${MODULE_NAME} (이미지 태그: ${IMAGE_TAG})"
+          bash ./scripts/deploy-k8s.sh ${MODULE_NAME} ${IMAGE_TAG}
+
+      - name: Deploy to docker-compose (fallback)
+        if: steps.k3s-check.outputs.k3s_available == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
           IMAGE_TAG: ${{ needs.determine-service.outputs.image_tag }}
           MODULE_NAME: ${{ steps.module.outputs.name }}
         run: |
           cd /home/ubuntu/apps/BE
-          echo "Deploying module: ${MODULE_NAME} with image tag: ${IMAGE_TAG}"
+          echo "🐳 docker-compose 배포 시작: ${MODULE_NAME} (이미지 태그: ${IMAGE_TAG})"
           GITHUB_TOKEN=${GITHUB_TOKEN} IMAGE_TAG=${IMAGE_TAG} bash ./deploy-module.sh ${MODULE_NAME}
 
   # ==================================================
