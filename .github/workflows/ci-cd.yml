@@ -498,12 +498,27 @@ jobs:
       - name: Check k3s availability
         id: k3s-check
         run: |
-          if command -v kubectl &> /dev/null && kubectl get nodes &> /dev/null; then
+          # kubectl 명령어 확인 (일반 kubectl 또는 sudo k3s kubectl)
+          KUBECTL_CMD=""
+          if command -v kubectl &> /dev/null; then
+            KUBECTL_CMD="kubectl"
+          elif command -v k3s &> /dev/null; then
+            KUBECTL_CMD="sudo k3s kubectl"
+          else
+            echo "k3s_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️  kubectl 또는 k3s가 설치되어 있지 않습니다. docker-compose 배포를 진행합니다."
+            exit 0
+          fi
+          
+          # 클러스터 연결 확인
+          if $KUBECTL_CMD get nodes &> /dev/null; then
             echo "k3s_available=true" >> $GITHUB_OUTPUT
+            echo "kubectl_cmd=$KUBECTL_CMD" >> $GITHUB_OUTPUT
             echo "✅ k3s가 사용 가능합니다. k8s 배포를 진행합니다."
           else
             echo "k3s_available=false" >> $GITHUB_OUTPUT
-            echo "⚠️  k3s가 사용 불가능합니다. docker-compose 배포를 진행합니다."
+            echo "⚠️  kubectl은 있지만 클러스터에 연결할 수 없습니다. docker-compose 배포를 진행합니다."
+            $KUBECTL_CMD get nodes 2>&1 || true
           fi
 
       - name: Deploy to k8s (if available)
