@@ -6,11 +6,13 @@ on:
       # - main
       - main-*
       # dev-*, feature, fix, hotfix 브랜치는 제외
+  # PR은 main-* 브랜치로만 허용하되, feature/fix/hotfix/dev-* 브랜치에서 오는 PR은 제외
   pull_request:
     branches:
       # - main
       - main-*
       # dev-*, feature, fix, hotfix 브랜치는 제외
+    types: [opened, synchronize, reopened]
 
 # GITHUB_TOKEN에 패키지 쓰기 권한 부여
 permissions:
@@ -30,10 +32,17 @@ jobs:
     name: Build and Test
     runs-on: ubuntu-latest
     # dev-*, feature, fix, hotfix 브랜치는 CI/CD 실행 안 함
+    # PR의 경우 head 브랜치가 feature/fix/hotfix/dev-*로 시작하면 즉시 종료
     if: |
       (github.event_name == 'push' && 
-       startsWith(github.ref, 'refs/heads/main-')) ||
+       startsWith(github.ref, 'refs/heads/main-') &&
+       !startsWith(github.ref, 'refs/heads/feature/') &&
+       !startsWith(github.ref, 'refs/heads/fix/') &&
+       !startsWith(github.ref, 'refs/heads/hotfix/') &&
+       !startsWith(github.ref, 'refs/heads/dev-')) ||
       (github.event_name == 'pull_request' && 
+       startsWith(github.base_ref, 'main-') &&
+       github.head_ref != null &&
        !startsWith(github.head_ref, 'dev-') &&
        !startsWith(github.head_ref, 'feature/') && 
        !startsWith(github.head_ref, 'fix/') && 
@@ -211,6 +220,21 @@ jobs:
   determine-service:
     name: Determine Service to Build
     runs-on: ubuntu-latest
+    # dev-*, feature, fix, hotfix 브랜치는 제외
+    if: |
+      (github.event_name == 'push' && 
+       startsWith(github.ref, 'refs/heads/main-') &&
+       !startsWith(github.ref, 'refs/heads/feature/') &&
+       !startsWith(github.ref, 'refs/heads/fix/') &&
+       !startsWith(github.ref, 'refs/heads/hotfix/') &&
+       !startsWith(github.ref, 'refs/heads/dev-')) ||
+      (github.event_name == 'pull_request' && 
+       startsWith(github.base_ref, 'main-') &&
+       github.head_ref != null &&
+       !startsWith(github.head_ref, 'dev-') &&
+       !startsWith(github.head_ref, 'feature/') && 
+       !startsWith(github.head_ref, 'fix/') && 
+       !startsWith(github.head_ref, 'hotfix/'))
     outputs:
       service: ${{ steps.module.outputs.service }}
       module: ${{ steps.module.outputs.module }}
