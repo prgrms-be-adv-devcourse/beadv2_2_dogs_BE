@@ -498,27 +498,47 @@ jobs:
       - name: Check k3s availability
         id: k3s-check
         run: |
-          # kubectl 명령어 확인 (일반 kubectl 또는 sudo k3s kubectl)
+          # kubectl 명령어 확인 (일반 kubectl 먼저 시도, 실패하면 sudo k3s kubectl)
           KUBECTL_CMD=""
+          
+          # 1. 일반 kubectl 시도
           if command -v kubectl &> /dev/null; then
-            KUBECTL_CMD="kubectl"
+            if kubectl get nodes &> /dev/null 2>&1; then
+              KUBECTL_CMD="kubectl"
+              echo "✅ 일반 kubectl로 클러스터 연결 성공"
+            elif command -v k3s &> /dev/null; then
+              # kubectl이 있지만 연결 실패, sudo k3s kubectl 시도
+              if sudo k3s kubectl get nodes &> /dev/null 2>&1; then
+                KUBECTL_CMD="sudo k3s kubectl"
+                echo "✅ sudo k3s kubectl로 클러스터 연결 성공"
+              fi
+            fi
+          # 2. kubectl이 없으면 sudo k3s kubectl 시도
           elif command -v k3s &> /dev/null; then
-            KUBECTL_CMD="sudo k3s kubectl"
-          else
-            echo "k3s_available=false" >> $GITHUB_OUTPUT
-            echo "⚠️  kubectl 또는 k3s가 설치되어 있지 않습니다. docker-compose 배포를 진행합니다."
-            exit 0
+            if sudo k3s kubectl get nodes &> /dev/null 2>&1; then
+              KUBECTL_CMD="sudo k3s kubectl"
+              echo "✅ sudo k3s kubectl로 클러스터 연결 성공"
+            fi
           fi
           
-          # 클러스터 연결 확인
-          if $KUBECTL_CMD get nodes &> /dev/null; then
+          # 최종 확인
+          if [ -n "$KUBECTL_CMD" ]; then
             echo "k3s_available=true" >> $GITHUB_OUTPUT
             echo "kubectl_cmd=$KUBECTL_CMD" >> $GITHUB_OUTPUT
-            echo "✅ k3s가 사용 가능합니다. k8s 배포를 진행합니다."
+            echo "✅ k3s가 사용 가능합니다. k8s 배포를 진행합니다. (사용 명령어: $KUBECTL_CMD)"
           else
             echo "k3s_available=false" >> $GITHUB_OUTPUT
-            echo "⚠️  kubectl은 있지만 클러스터에 연결할 수 없습니다. docker-compose 배포를 진행합니다."
-            $KUBECTL_CMD get nodes 2>&1 || true
+            echo "⚠️  kubectl 또는 k3s가 설치되어 있지 않거나 클러스터에 연결할 수 없습니다."
+            echo "⚠️  docker-compose 배포를 진행합니다."
+            # 디버깅 정보 출력
+            if command -v kubectl &> /dev/null; then
+              echo "디버깅: kubectl get nodes 시도..."
+              kubectl get nodes 2>&1 || true
+            fi
+            if command -v k3s &> /dev/null; then
+              echo "디버깅: sudo k3s kubectl get nodes 시도..."
+              sudo k3s kubectl get nodes 2>&1 || true
+            fi
           fi
 
       - name: Deploy to k8s (if available)
