@@ -5,12 +5,27 @@ spring:
   application:
     name: config-server
   profiles:
-    active: native
+    # 기본값은 git (프로덕션용)
+    # 로컬 개발 시에는 local 프로파일 사용 (application-local.yml)
+    active: git
   cloud:
     config:
       server:
-        native:
-          search-locations: classpath:/config
+        git:
+          # Git 저장소 URL (환경 변수로 오버라이드 가능)
+          uri: ${CONFIG_GIT_URI:https://github.com/prgrms-be-adv-devcourse/beadv2_2_dogs_BE}
+          # 기본 브랜치
+          default-label: ${CONFIG_GIT_BRANCH:main}
+          # Git 저장소 클론 디렉토리
+          basedir: /tmp/config-repo
+          # 강제 Pull (항상 최신 버전 가져오기)
+          force-pull: true
+          # 시작 시 클론 (성능 향상을 위해 false 권장)
+          clone-on-start: false
+          # Git 저장소 검색 경로
+          # 각 모듈 디렉토리의 src/main/resources/에서 설정 파일을 찾음
+          search-paths:
+            - '**/src/main/resources'
 
 eureka:
   client:
@@ -20,5 +35,18 @@ eureka:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka:8761/eureka/}
   instance:
     prefer-ip-address: true
+
+# Actuator 설정 (Git 정보 노출)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,env
+  info:
+    git:
+      enabled: true
+      mode: full
+    env:
+      enabled: true
 
 

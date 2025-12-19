@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config
+  namespace: baro-prod
+  labels:
+    app: config
+    component: cloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config
+  template:
+    metadata:
+      labels:
+        app: config
+        component: cloud
+    spec:
+      containers:
+        - name: config
+          image: ghcr.io/do-develop-space/config:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8888
+              name: http
+              protocol: TCP
+          env:
+            # SPRING_PROFILES_ACTIVE는 설정하지 않음 (기본값 application.yml 사용)
+            # 로컬 개발 시에만 SPRING_PROFILES_ACTIVE=local로 설정하여 application-local.yml 사용
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: "http://eureka:8761/eureka/"
+            - name: JAVA_OPTS
+              value: "-Xms128m -Xmx256m"
+            # Git 저장소 설정 (선택사항, 기본값 사용 시 생략 가능)
+            - name: CONFIG_GIT_URI
+              value: "https://github.com/prgrms-be-adv-devcourse/beadv2_2_dogs_BE"
+            - name: CONFIG_GIT_BRANCH
+              value: "main"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+
