@@ -479,6 +479,7 @@ jobs:
         run: |
           MODULE="${{ steps.module.outputs.name }}"
           mkdir -p /home/ubuntu/apps/BE
+          mkdir -p /home/ubuntu/apps/k8s/scripts
           cd /home/ubuntu/apps/BE
 
           # 배포 스크립트 및 모듈별 docker-compose 파일 복사
@@ -494,6 +495,12 @@ jobs:
             mkdir -p ./docker/baro-es
             cp -r $GITHUB_WORKSPACE/docker/baro-es/* ./docker/baro-es/ 2>/dev/null || true
           fi
+          
+          # k8s 배포 파일 복사 (스크립트가 k8s/ 상대 경로를 사용하므로 /home/ubuntu/apps/k8s 구조로 복사)
+          mkdir -p /home/ubuntu/apps/k8s/scripts
+          cp $GITHUB_WORKSPACE/scripts/deploy-k8s.sh /home/ubuntu/apps/k8s/scripts/
+          chmod +x /home/ubuntu/apps/k8s/scripts/deploy-k8s.sh
+          cp -r $GITHUB_WORKSPACE/k8s /home/ubuntu/apps/ 2>/dev/null || true
 
       - name: Check k3s availability
         id: k3s-check
@@ -547,10 +554,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
           IMAGE_TAG: ${{ needs.determine-service.outputs.image_tag }}
           MODULE_NAME: ${{ steps.module.outputs.name }}
+          KUBECTL_CMD: ${{ steps.k3s-check.outputs.kubectl_cmd }}
         run: |
-          cd $GITHUB_WORKSPACE
           echo "🚀 k8s 배포 시작: ${MODULE_NAME} (이미지 태그: ${IMAGE_TAG})"
-          bash ./scripts/deploy-k8s.sh ${MODULE_NAME} ${IMAGE_TAG}
+          cd /home/ubuntu/apps
+          bash ./k8s/scripts/deploy-k8s.sh ${MODULE_NAME} ${IMAGE_TAG}
 
       - name: Deploy to docker-compose (fallback)
         if: steps.k3s-check.outputs.k3s_available == 'false'
