@@ -5,12 +5,12 @@ on:
     branches:
       # - main
       - main-*
-      # - dev-*
+      # dev-*, feature, fix, hotfix 브랜치는 제외
   pull_request:
     branches:
       # - main
       - main-*
-      # - dev-*
+      # dev-*, feature, fix, hotfix 브랜치는 제외
 
 # GITHUB_TOKEN에 패키지 쓰기 권한 부여
 permissions:
@@ -29,6 +29,15 @@ jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
+    # dev-*, feature, fix, hotfix 브랜치는 CI/CD 실행 안 함
+    if: |
+      (github.event_name == 'push' && 
+       startsWith(github.ref, 'refs/heads/main-')) ||
+      (github.event_name == 'pull_request' && 
+       !startsWith(github.head_ref, 'dev-') &&
+       !startsWith(github.head_ref, 'feature/') && 
+       !startsWith(github.head_ref, 'fix/') && 
+       !startsWith(github.head_ref, 'hotfix/'))
     
     steps:
       - name: Checkout code
@@ -260,13 +269,16 @@ jobs:
     # 브랜치에서 추출한 서비스가 있을 때만 실행
     # data는 이미지 빌드 없이 배포만 하므로 제외
     # infra는 여러 서비스를 포함하므로 제외
+    # dev-*, feature, fix, hotfix 브랜치는 제외
     if: |
       github.event_name == 'push' && 
-      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/main-') || 
-      startsWith(github.ref, 'refs/heads/dev-')) &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/main-')) &&
+      !startsWith(github.ref, 'refs/heads/dev-') &&
+      !startsWith(github.ref, 'refs/heads/feature/') &&
+      !startsWith(github.ref, 'refs/heads/fix/') &&
+      !startsWith(github.ref, 'refs/heads/hotfix/') &&
       !contains(github.ref, 'main-data') && 
       !contains(github.ref, 'main-infra') &&
-      !contains(github.ref, 'dev-infra') &&
       needs.determine-service.outputs.service != '' &&
       needs.determine-service.outputs.service != 'infra' &&
       needs.determine-service.outputs.service != 'data'
@@ -413,11 +425,11 @@ jobs:
     runs-on: self-hosted
     # docker-build가 실행되는 경우에만 기다림 (data, infra는 제외)
     needs: [build-and-test, determine-service, docker-build]
+    # 배포는 main-* 브랜치에서만 수행 (dev-* 는 배포 X)
+    # config(baro-cloud:config)는 당분간 이미지 빌드만 하고 배포는 수행하지 않음
     if: |
-      # 배포는 main-* 브랜치에서만 수행 (dev-* 는 배포 X)
       startsWith(github.ref, 'refs/heads/main-') &&
       needs.determine-service.outputs.module != '' &&
-      # config(baro-cloud:config)는 당분간 이미지 빌드만 하고 배포는 수행하지 않음
       needs.determine-service.outputs.module != 'config' &&
       always() && (needs.docker-build.result == 'success' || needs.docker-build.result == 'skipped')
     
