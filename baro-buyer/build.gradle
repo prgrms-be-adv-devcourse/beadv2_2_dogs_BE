@@ -1,4 +1,45 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+    id 'com.diffplug.spotless'
+    id 'checkstyle'
+}
+
+group = 'com.barofarm'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+ext {
+    set('springCloudVersion', "2025.0.0")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
 dependencies {
+    // ========= 공통 유틸 / 개발 편의 =========
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Swagger(OpenAPI)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+
+    // ========= 테스트 =========
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'com.h2database:h2'
+
+    // ========= Buyer 서비스 의존성 =========
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
@@ -10,11 +51,14 @@ dependencies {
 
     // Database
     runtimeOnly 'com.mysql:mysql-connector-j'
-    runtimeOnly 'com.h2database:h2'
 
-    // Openfeigh(HttpURLConnection, Apache HttpClient, OkHttp 중 OkHttp가 가장 좋아보임)
+    // Openfeign(HttpURLConnection, Apache HttpClient, OkHttp 중 OkHttp가 가장 좋아보임)
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'io.github.openfeign:feign-okhttp:13.6'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
 
 bootJar {
@@ -25,3 +69,4 @@ bootJar {
 jar {
     enabled = false
 }
+

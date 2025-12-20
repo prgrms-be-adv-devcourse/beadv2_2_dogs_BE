@@ -1,22 +1,68 @@
 plugins {
-    id "io.spring.dependency-management"
+    id 'java'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+    id 'com.diffplug.spotless'
+    id 'checkstyle'
+}
+
+group = 'com.barofarm'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+ext {
+    set('springCloudVersion', "2025.0.0")
+    set('awsSdkVersion', "2.25.60")
 }
 
 dependencyManagement {
     imports {
-        mavenBom "software.amazon.awssdk:bom:2.25.60"
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        mavenBom "software.amazon.awssdk:bom:${awsSdkVersion}"
     }
 }
 
 dependencies {
-    implementation "software.amazon.awssdk:s3"
+    // ========= 공통 유틸 / 개발 편의 =========
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
+    // Swagger(OpenAPI)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+
+    // ========= 테스트 =========
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'com.h2database:h2'
+
+    // ========= Seller 서비스 의존성 =========
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 
+    // AWS S3
+    implementation "software.amazon.awssdk:s3"
+
     runtimeOnly 'com.mysql:mysql-connector-j'
-    runtimeOnly 'com.h2database:h2'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+bootJar {
+    enabled = true
+    mainClass = 'com.barofarm.seller.SellerApplication'
+}
+
+jar {
+    enabled = false
 }
