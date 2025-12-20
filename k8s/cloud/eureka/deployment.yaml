@@ -17,6 +17,7 @@ spec:
         app: eureka
         component: cloud
     spec:
+      hostNetwork: true  # 호스트 네트워크 사용 (같은 EC2의 Docker 컨테이너 접근)
       containers:
         - name: eureka
           image: ghcr.io/do-develop-space/eureka:latest
@@ -31,13 +32,13 @@ spec:
             - name: EUREKA_INSTANCE_HOSTNAME
               value: "eureka"
             - name: JAVA_OPTS
-              value: "-Xms128m -Xmx256m"
+              value: "-Xms256m -Xmx512m"
           resources:
             requests:
-              memory: "128Mi"
+              memory: "256Mi"
               cpu: "100m"
             limits:
-              memory: "256Mi"
+              memory: "512Mi"
               cpu: "500m"
           livenessProbe:
             httpGet:
@@ -59,8 +60,8 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
-            failureThreshold: 12
+            failureThreshold: 20
 

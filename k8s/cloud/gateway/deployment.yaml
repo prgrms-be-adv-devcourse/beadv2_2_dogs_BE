@@ -17,6 +17,7 @@ spec:
         app: gateway
         component: cloud
     spec:
+      hostNetwork: true  # 호스트 네트워크 사용 (같은 EC2의 Docker 컨테이너 접근)
       containers:
         - name: gateway
           image: ghcr.io/do-develop-space/gateway:latest

@@ -17,6 +17,7 @@ spec:
         app: baro-support
         component: app
     spec:
+      hostNetwork: true  # 호스트 네트워크 사용 (같은 EC2의 Docker 컨테이너 접근)
       containers:
         - name: baro-support
           image: ghcr.io/do-develop-space/baro-support:latest
@@ -49,13 +50,13 @@ spec:
             - name: EC2_IP
               value: "CHANGE_ME_TO_EC2_IP"  # 실제 EC2 Private IP로 변경 필요
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://$(EC2_IP):3306/barosupport?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
+              value: "jdbc:mysql://127.0.0.1:3306/barosupport?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
             # Kafka 설정
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
-              value: "$(EC2_IP):29092"
+              value: "127.0.0.1:29092"
             # Elasticsearch 설정
             - name: SPRING_ELASTICSEARCH_URIS
-              value: "http://$(EC2_IP):9200"
+              value: "http://127.0.0.1:9200"
             # AWS 설정
             - name: AWS_ACCESS_KEY
               valueFrom:
