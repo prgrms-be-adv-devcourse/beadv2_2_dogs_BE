@@ -51,9 +51,7 @@ if [ -z "$MODULE_NAME" ]; then
     echo "  - order   (주문 모듈)"
     echo "  - support (지원 모듈)"
     echo "  - redis   (Redis 캐시)"
-    echo ""
-    echo "Note: 'data' 모듈(MySQL, Kafka, Elasticsearch)은 docker-compose로 배포해야 합니다."
-    echo "      사용법: bash deploy-module.sh data"
+    echo "  - data    (데이터 인프라: MySQL, Kafka, Elasticsearch - docker-compose로 배포)"
     exit 1
 fi
 
@@ -189,15 +187,31 @@ case "$MODULE_NAME" in
         APP_NAME="baro-support"
         ;;
     data)
-        log_error "❌ 'data' 모듈은 k8s에서 지원하지 않습니다."
-        log_info "💡 'data' 모듈(MySQL, Kafka, Elasticsearch)은 docker-compose로 배포해야 합니다."
-        log_info "   사용법: bash deploy-module.sh data"
-        log_info "   또는: docker-compose -f docker-compose.data.yml up -d"
-        exit 1
+        # data 모듈은 docker-compose로 배포
+        log_step "📦 'data' 모듈 배포 (docker-compose 사용)"
+        log_info "💡 'data' 모듈(MySQL, Kafka, Elasticsearch)은 docker-compose로 배포됩니다."
+        
+        # deploy-module.sh 스크립트 찾기
+        DEPLOY_MODULE_SCRIPT=""
+        if [ -f "$SCRIPT_DIR/deploy-module.sh" ]; then
+            DEPLOY_MODULE_SCRIPT="$SCRIPT_DIR/deploy-module.sh"
+        elif [ -f "/home/ubuntu/apps/BE/deploy-module.sh" ]; then
+            DEPLOY_MODULE_SCRIPT="/home/ubuntu/apps/BE/deploy-module.sh"
+        elif [ -f "./scripts/deploy-module.sh" ]; then
+            DEPLOY_MODULE_SCRIPT="./scripts/deploy-module.sh"
+        else
+            log_error "deploy-module.sh 스크립트를 찾을 수 없습니다."
+            exit 1
+        fi
+        
+        log_info "🚀 docker-compose 배포 시작..."
+        bash "$DEPLOY_MODULE_SCRIPT" data
+        log_info "✅ 'data' 모듈 배포 완료"
+        exit 0
         ;;
     *)
         log_error "알 수 없는 모듈: $MODULE_NAME"
-        log_info "사용 가능한 모듈: cloud, eureka, config, gateway, redis, auth, buyer, seller, order, support"
+        log_info "사용 가능한 모듈: cloud, eureka, config, gateway, redis, auth, buyer, seller, order, support, data"
         exit 1
         ;;
 esac
