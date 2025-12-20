@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baro-auth
+  namespace: baro-prod
+  labels:
+    app: baro-auth
+    component: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: baro-auth
+  template:
+    metadata:
+      labels:
+        app: baro-auth
+        component: app
+    spec:
+      containers:
+        - name: baro-auth
+          image: ghcr.io/do-develop-space/baro-auth:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8081
+              name: http
+              protocol: TCP
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: "http://eureka:8761/eureka/"
+            - name: JAVA_OPTS
+              value: "-Xms256m -Xmx384m"
+            # MySQL 설정
+            - name: MYSQL_DATABASE
+              value: "baroauth"
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: MYSQL_PASSWORD
+            # MySQL 호스트 (EC2 Private IP)
+            # 실제 배포 시 EC2_IP 환경 변수를 설정하거나 아래 value를 직접 수정
+            # EC2 IP 확인: curl -s http://169.254.169.254/latest/meta-data/local-ipv4
+            - name: EC2_IP
+              value: "CHANGE_ME_TO_EC2_IP"  # 실제 EC2 Private IP로 변경 필요
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://$(EC2_IP):3306/baroauth?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
+            # 이메일 설정
+            - name: SPRING_MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: SPRING_MAIL_USERNAME
+            - name: SPRING_MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: SPRING_MAIL_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "384Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 20
+
