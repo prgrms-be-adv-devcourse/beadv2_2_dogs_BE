@@ -33,9 +33,34 @@ spec:
               value: "http://localhost:8761/eureka/"  # hostNetwork 사용 시 localhost로 접근
             - name: JAVA_OPTS
               value: "-Xms256m -Xmx512m"
-            # Git 저장소 설정 (선택사항, 기본값 사용 시 생략 가능)
+            # Git 저장소 설정
             - name: CONFIG_GIT_URI
               value: "https://github.com/prgrms-be-adv-devcourse/beadv2_2_dogs_BE"
+            # Config Server가 보는 Git 브랜치
+            # 
+            # [동적 브랜치 설정 방법]
+            # 배포 스크립트(deploy-k8s.sh)에서 다음 명령어로 환경 변수를 업데이트할 수 있습니다:
+            #
+            # 1. 현재 배포 브랜치 감지 (예: main-auth, main-cloud 등)
+            #    GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)  # 또는 CI/CD에서 전달받은 브랜치명
+            #
+            # 2. Config Server Deployment의 환경 변수 업데이트
+            #    kubectl set env deployment/config CONFIG_GIT_BRANCH=$GIT_BRANCH -n baro-prod
+            #
+            # 3. Config Server Pod 재시작하여 새 브랜치 적용
+            #    kubectl rollout restart deployment/config -n baro-prod
+            #
+            # 이렇게 하면:
+            # - main-auth 배포 시: Config Server가 main-auth 브랜치의 설정 파일을 제공
+            # - main-cloud 배포 시: Config Server가 main-cloud 브랜치의 설정 파일을 제공
+            # - 각 모듈별로 독립적인 설정 관리 가능
+            #
+            # [주의사항]
+            # - Config Server를 여러 모듈이 공유하는 경우, 마지막 배포된 브랜치를 보게 됨
+            # - 모든 모듈이 같은 설정 브랜치를 봐야 한다면 main을 유지하는 것이 안전
+            # - 모듈별로 다른 Config Server 인스턴스를 운영한다면 각각 다른 브랜치 설정 가능
+            #
+            # 기본값: main (환경 변수가 없을 때)
             - name: CONFIG_GIT_BRANCH
               value: "main"
           resources:

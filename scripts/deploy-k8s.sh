@@ -102,14 +102,104 @@ case "$MODULE_NAME" in
   cloud)
     # cloud 모듈 전체 배포 (eureka -> config -> gateway 순서)
     echo "📦 Cloud 모듈 전체 배포 시작..."
+    
+    # 이미지 태그 업데이트 함수
+    update_image_tag() {
+      local DEPLOYMENT_FILE="$1"
+      local SERVICE_NAME="$2"
+      if [ -f "$DEPLOYMENT_FILE" ]; then
+        CURRENT_IMAGE=$(grep -E "^\s+image:" "$DEPLOYMENT_FILE" | head -1 | awk '{print $2}')
+        NEW_IMAGE="ghcr.io/do-develop-space/${SERVICE_NAME}:${IMAGE_TAG}"
+        if [ "$CURRENT_IMAGE" != "$NEW_IMAGE" ]; then
+          sed -i.bak "s|ghcr.io/do-develop-space/${SERVICE_NAME}:[^[:space:]]*|${NEW_IMAGE}|g" "$DEPLOYMENT_FILE"
+          rm -f "${DEPLOYMENT_FILE}.bak" 2>/dev/null || true
+        fi
+      fi
+    }
+    
     echo "1️⃣ Eureka 배포 중..."
+    update_image_tag "$K8S_DIR/cloud/eureka/deployment.yaml" "eureka"
     $KUBECTL_CMD apply -f "$K8S_DIR/cloud/eureka/"
+    # latest 태그인 경우에만 재시작
+    if grep -q ":latest" "$K8S_DIR/cloud/eureka/deployment.yaml" 2>/dev/null; then
+      $KUBECTL_CMD rollout restart deployment/eureka -n baro-prod || true
+    fi
     $KUBECTL_CMD wait --for=condition=ready pod -l app=eureka -n baro-prod --timeout=300s || true
+    
     echo "2️⃣ Config 배포 중..."
+    update_image_tag "$K8S_DIR/cloud/config/deployment.yaml" "config"
     $KUBECTL_CMD apply -f "$K8S_DIR/cloud/config/"
+    
+    # [Config Server 동적 브랜치 설정]
+    # 현재 배포 브랜치에 맞춰 Config Server가 해당 브랜치의 설정 파일을 보도록 설정
+    # 예: main-auth 배포 시 Config Server도 main-auth 브랜치의 설정 파일 사용
+    #
+    # ====================================================================
+    # 활성화 방법:
+    # ====================================================================
+    # 1. .github/workflows/ci-cd.yml의 "Deploy to k8s" 단계에서
+    #    GIT_BRANCH 환경 변수 주석을 해제:
+    #    GIT_BRANCH: ${{ github.ref_name }}  # 배포 브랜치 이름
+    #
+    # 2. 아래 주석을 해제하여 Config Server 환경 변수 업데이트 활성화
+    #
+    # ====================================================================
+    # 동작 예시:
+    # ====================================================================
+    # - main-auth 브랜치 배포 시:
+    #   → Config Server가 main-auth 브랜치의 application.yml 파일 제공
+    #   → baro-auth 서비스가 main-auth 브랜치의 설정을 사용
+    #
+    # - main-cloud 브랜치 배포 시:
+    #   → Config Server가 main-cloud 브랜치의 application.yml 파일 제공
+    #   → cloud 모듈들이 main-cloud 브랜치의 설정을 사용
+    #
+    # ====================================================================
+    # 주의사항:
+    # ====================================================================
+    # 1. Config Server를 여러 모듈이 공유하는 경우:
+    #    - 마지막에 배포된 브랜치의 설정을 모든 서비스가 사용하게 됨
+    #    - 예: main-auth 배포 후 main-cloud 배포 시, 모든 서비스가 main-cloud 설정 사용
+    #    - 해결: 모듈별로 별도의 Config Server 인스턴스 운영 고려
+    #
+    # 2. 모든 모듈이 같은 설정을 봐야 하는 경우:
+    #    - 이 기능을 비활성화하고 기본값(main)을 사용하는 것이 안전
+    #
+    # 3. 브랜치 전략:
+    #    - feature → main-{module}로 직접 머지하는 경우 이 기능 유용
+    #    - feature → main → main-{module}인 경우 main 브랜치 유지 권장
+    #
+    # ====================================================================
+    # 코드 (주석 해제하여 활성화):
+    # ====================================================================
+    # if [ -n "$GIT_BRANCH" ]; then
+    #   echo "🔧 Config Server 브랜치 업데이트: $GIT_BRANCH"
+    #   $KUBECTL_CMD set env deployment/config CONFIG_GIT_BRANCH="$GIT_BRANCH" -n baro-prod
+    #   echo "✅ Config Server가 $GIT_BRANCH 브랜치를 보도록 설정됨"
+    #   # 환경 변수 변경 후 Config Server 재시작 필요
+    #   $KUBECTL_CMD rollout restart deployment/config -n baro-prod || true
+    # else
+    #   echo "ℹ️  GIT_BRANCH 환경 변수가 없어 Config Server는 기본값(main) 브랜치를 사용합니다."
+    # fi
+    #
+    # 수동 실행 시 (CI/CD 없이):
+    # GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+    # $KUBECTL_CMD set env deployment/config CONFIG_GIT_BRANCH="$GIT_BRANCH" -n baro-prod
+    # $KUBECTL_CMD rollout restart deployment/config -n baro-prod
+    
+    if grep -q ":latest" "$K8S_DIR/cloud/config/deployment.yaml" 2>/dev/null; then
+      $KUBECTL_CMD rollout restart deployment/config -n baro-prod || true
+    fi
     $KUBECTL_CMD wait --for=condition=ready pod -l app=config -n baro-prod --timeout=300s || true
+    
     echo "3️⃣ Gateway 배포 중..."
+    update_image_tag "$K8S_DIR/cloud/gateway/deployment.yaml" "gateway"
     $KUBECTL_CMD apply -f "$K8S_DIR/cloud/gateway/"
+    if grep -q ":latest" "$K8S_DIR/cloud/gateway/deployment.yaml" 2>/dev/null; then
+      $KUBECTL_CMD rollout restart deployment/gateway -n baro-prod || true
+    fi
+    $KUBECTL_CMD wait --for=condition=ready pod -l app=gateway -n baro-prod --timeout=300s || true
+    
     echo "✅ Cloud 모듈 배포 완료"
     $KUBECTL_CMD get pods -n baro-prod -l component=cloud
     exit 0
@@ -164,13 +254,23 @@ fi
 
 # 이미지 태그 업데이트 (Deployment 파일에서)
 DEPLOYMENT_FILE="$DEPLOY_PATH/deployment.yaml"
-if [ -f "$DEPLOYMENT_FILE" ] && [ "$IMAGE_TAG" != "latest" ]; then
-  echo "🏷️  이미지 태그 업데이트: $IMAGE_TAG"
-  # ghcr.io/do-develop-space/<service>:latest -> ghcr.io/do-develop-space/<service>:$IMAGE_TAG
-  SERVICE_NAME=$(grep -E "image:" "$DEPLOYMENT_FILE" | head -1 | sed -E 's/.*image:.*\/([^:]+):.*/\1/')
-  if [ -n "$SERVICE_NAME" ]; then
-    sed -i.bak "s|ghcr.io/do-develop-space/${SERVICE_NAME}:latest|ghcr.io/do-develop-space/${SERVICE_NAME}:${IMAGE_TAG}|g" "$DEPLOYMENT_FILE"
+if [ -f "$DEPLOYMENT_FILE" ]; then
+  # 현재 Deployment에 설정된 이미지 태그 확인
+  CURRENT_IMAGE=$(grep -E "^\s+image:" "$DEPLOYMENT_FILE" | head -1 | awk '{print $2}')
+  SERVICE_NAME=$(echo "$CURRENT_IMAGE" | sed -E 's|.*/([^:]+):.*|\1|')
+  
+  # 새로운 이미지 태그 구성
+  NEW_IMAGE="ghcr.io/do-develop-space/${SERVICE_NAME}:${IMAGE_TAG}"
+  
+  # 태그가 변경되었는지 확인
+  if [ "$CURRENT_IMAGE" != "$NEW_IMAGE" ]; then
+    echo "🏷️  이미지 태그 업데이트: $CURRENT_IMAGE -> $NEW_IMAGE"
+    # 모든 이미지 태그 패턴 교체 (latest, main-*, dev-* 등 모든 태그 지원)
+    sed -i.bak "s|ghcr.io/do-develop-space/${SERVICE_NAME}:[^[:space:]]*|${NEW_IMAGE}|g" "$DEPLOYMENT_FILE"
     rm -f "${DEPLOYMENT_FILE}.bak" 2>/dev/null || true
+    echo "✅ 태그 변경됨 - Kubernetes가 자동으로 rolling update 수행"
+  else
+    echo "ℹ️  이미지 태그 변경 없음: $NEW_IMAGE"
   fi
 fi
 
@@ -181,6 +281,15 @@ $KUBECTL_CMD apply -f "$DEPLOY_PATH/"
 # 배포 상태 확인
 APP_NAME=$(grep -E "^  name:" "$DEPLOYMENT_FILE" | head -1 | awk '{print $2}')
 if [ -n "$APP_NAME" ]; then
+  # 이미지 태그가 latest인 경우에만 재시작 필요 (Kubernetes가 변경을 감지하지 못함)
+  CURRENT_IMAGE=$(grep -E "^\s+image:" "$DEPLOYMENT_FILE" | head -1 | awk '{print $2}')
+  if [[ "$CURRENT_IMAGE" == *":latest" ]]; then
+    echo "⚠️  latest 태그 사용 중 - Pod 재시작 필요 (Kubernetes가 변경 감지 불가)"
+    $KUBECTL_CMD rollout restart deployment/"$APP_NAME" -n baro-prod || true
+  else
+    echo "✅ 구체적인 태그 사용 - Kubernetes가 자동으로 rolling update 수행"
+  fi
+  
   echo "⏳ Pod가 Ready 상태가 될 때까지 대기 중..."
   $KUBECTL_CMD wait --for=condition=ready pod -l app="$APP_NAME" -n baro-prod --timeout=300s || {
     echo "⚠️  Pod가 Ready 상태가 되지 않았습니다. 로그를 확인하세요."

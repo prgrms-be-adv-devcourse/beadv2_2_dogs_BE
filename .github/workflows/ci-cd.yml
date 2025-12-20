@@ -271,12 +271,17 @@ jobs:
           esac
           
           # 이미지 태그 결정 (배포 시 사용)
+          # 구체적인 태그를 사용하면 Kubernetes가 자동으로 변경을 감지하여 rolling update 수행
+          # latest 대신 SHA 기반 태그 사용 (자동 업데이트 가능)
           if [[ "$GITHUB_REF" == refs/heads/main-* ]]; then
-            IMAGE_TAG="latest"
+            # main-* 브랜치: 브랜치명-SHA 형식 (예: main-cloud-abc1234)
+            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+            IMAGE_TAG="${BRANCH_NAME}-${GITHUB_SHA:0:7}"
           elif [[ "$GITHUB_REF" == refs/heads/dev-* ]]; then
             # dev 브랜치는 브랜치 이름을 태그로 사용 (dev-support -> dev-support)
             IMAGE_TAG="${GITHUB_REF#refs/heads/}"
           else
+            # 기타 브랜치는 latest 사용 (fallback)
             IMAGE_TAG="latest"
           fi
           
@@ -600,6 +605,13 @@ jobs:
           IMAGE_TAG: ${{ needs.determine-service.outputs.image_tag }}
           MODULE_NAME: ${{ steps.module.outputs.name }}
           KUBECTL_CMD: ${{ steps.k3s-check.outputs.kubectl_cmd }}
+          # [Config Server 동적 브랜치 설정을 위한 환경 변수]
+          # 배포 브랜치 이름을 스크립트에 전달하여 Config Server가 해당 브랜치를 보도록 설정
+          # 예: main-auth 배포 시 GIT_BRANCH=main-auth로 설정
+          # deploy-k8s.sh에서 이 변수를 사용하여 Config Server의 CONFIG_GIT_BRANCH 업데이트
+          # 주석 해제 시: Config Server가 배포 브랜치의 설정 파일을 사용
+          # 주석 유지 시: Config Server는 기본값(main)을 계속 사용
+          # GIT_BRANCH: ${{ github.ref_name }}  # 배포 브랜치 이름 (예: main-auth, main-cloud)
         run: |
           echo "🚀 k8s 배포 시작: ${MODULE_NAME} (이미지 태그: ${IMAGE_TAG})"
           cd /home/ubuntu/apps
