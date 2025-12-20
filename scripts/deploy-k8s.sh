@@ -51,6 +51,9 @@ if [ -z "$MODULE_NAME" ]; then
     echo "  - order   (주문 모듈)"
     echo "  - support (지원 모듈)"
     echo "  - redis   (Redis 캐시)"
+    echo ""
+    echo "Note: 'data' 모듈(MySQL, Kafka, Elasticsearch)은 docker-compose로 배포해야 합니다."
+    echo "      사용법: bash deploy-module.sh data"
     exit 1
 fi
 
@@ -185,8 +188,16 @@ case "$MODULE_NAME" in
         DEPLOY_PATH="$K8S_BASE_DIR/apps/baro-support"
         APP_NAME="baro-support"
         ;;
+    data)
+        log_error "❌ 'data' 모듈은 k8s에서 지원하지 않습니다."
+        log_info "💡 'data' 모듈(MySQL, Kafka, Elasticsearch)은 docker-compose로 배포해야 합니다."
+        log_info "   사용법: bash deploy-module.sh data"
+        log_info "   또는: docker-compose -f docker-compose.data.yml up -d"
+        exit 1
+        ;;
     *)
         log_error "알 수 없는 모듈: $MODULE_NAME"
+        log_info "사용 가능한 모듈: cloud, eureka, config, gateway, redis, auth, buyer, seller, order, support"
         exit 1
         ;;
 esac
