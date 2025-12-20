@@ -7,6 +7,7 @@ spring:
   profiles:
     # 기본값은 git (프로덕션용)
     # 로컬 개발 시에는 local 프로파일 사용 (application-local.yml)
+    # native 모드 사용 시: active: native 과 함께 spring.cloud.config.server.native.search-locations 설정
     active: git
   cloud:
     config:

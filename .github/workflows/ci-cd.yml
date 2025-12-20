@@ -483,7 +483,7 @@ jobs:
 
           # 배포 스크립트 및 모듈별 docker-compose 파일 복사
           cp $GITHUB_WORKSPACE/scripts/deploy-module.sh .
-          cp $GITHUB_WORKSPACE/docker-compose.${MODULE}.yml .
+          cp $GITHUB_WORKSPACE/docker-compose.${MODULE}.yml . 2>/dev/null || true
 
           # 인프라 파일 복사 (cloud/data 배포용)
           cp $GITHUB_WORKSPACE/docker-compose.data.yml . 2>/dev/null || true
@@ -495,15 +495,50 @@ jobs:
             cp -r $GITHUB_WORKSPACE/docker/baro-es/* ./docker/baro-es/ 2>/dev/null || true
           fi
 
+      - name: Setup kubeconfig
+        run: |
+          # k3s kubeconfig를 홈 디렉토리로 복사하고 권한 설정
+          if [ -f /etc/rancher/k3s/k3s.yaml ]; then
+            echo "📋 k3s kubeconfig 파일을 홈 디렉토리로 복사 중..."
+            mkdir -p ~/.kube
+            sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+            sudo chown $USER:$USER ~/.kube/config
+            chmod 600 ~/.kube/config
+            # localhost를 실제 서버 IP로 변경 (k3s.yaml의 기본값)
+            # k3s는 기본적으로 127.0.0.1을 사용하므로 그대로 사용 가능
+            echo "✅ kubeconfig 설정 완료"
+          else
+            echo "⚠️  /etc/rancher/k3s/k3s.yaml 파일을 찾을 수 없습니다."
+          fi
+
       - name: Check k3s availability
         id: k3s-check
         run: |
-          # kubectl 명령어 확인 (일반 kubectl 또는 sudo k3s kubectl)
+          # kubeconfig 환경 변수 설정
+          if [ -f ~/.kube/config ]; then
+            export KUBECONFIG=~/.kube/config
+          fi
+          
+          # kubectl 명령어 확인
           KUBECTL_CMD=""
           if command -v kubectl &> /dev/null; then
+            # 일반 kubectl 사용 (kubeconfig가 설정되어 있으면 자동으로 사용)
             KUBECTL_CMD="kubectl"
           elif command -v k3s &> /dev/null; then
-            KUBECTL_CMD="sudo k3s kubectl"
+            # k3s가 설치되어 있으면 k3s kubectl 사용
+            # kubeconfig가 설정되어 있으면 일반 kubectl처럼 사용 가능
+            if [ -f ~/.kube/config ]; then
+              # k3s는 kubectl을 /usr/local/bin/kubectl에 심볼릭 링크로 설치
+              if [ -L /usr/local/bin/kubectl ] || [ -f /usr/local/bin/kubectl ]; then
+                KUBECTL_CMD="/usr/local/bin/kubectl"
+              else
+                # 직접 경로로 사용 불가능하면 sudo k3s kubectl 사용
+                KUBECTL_CMD="sudo k3s kubectl"
+              fi
+            else
+              # kubeconfig가 없으면 sudo k3s kubectl 사용
+              KUBECTL_CMD="sudo k3s kubectl"
+            fi
           else
             echo "k3s_available=false" >> $GITHUB_OUTPUT
             echo "⚠️  kubectl 또는 k3s가 설치되어 있지 않습니다. docker-compose 배포를 진행합니다."
@@ -511,14 +546,19 @@ jobs:
           fi
           
           # 클러스터 연결 확인
-          if $KUBECTL_CMD get nodes &> /dev/null; then
+          if $KUBECTL_CMD get nodes &> /dev/null 2>&1; then
             echo "k3s_available=true" >> $GITHUB_OUTPUT
             echo "kubectl_cmd=$KUBECTL_CMD" >> $GITHUB_OUTPUT
             echo "✅ k3s가 사용 가능합니다. k8s 배포를 진행합니다."
           else
             echo "k3s_available=false" >> $GITHUB_OUTPUT
             echo "⚠️  kubectl은 있지만 클러스터에 연결할 수 없습니다. docker-compose 배포를 진행합니다."
+            echo "디버그 정보:"
             $KUBECTL_CMD get nodes 2>&1 || true
+            if [ -f ~/.kube/config ]; then
+              echo "kubeconfig 위치: $KUBECONFIG"
+              ls -la ~/.kube/ 2>&1 || true
+            fi
           fi
 
       - name: Deploy to k8s (if available)
@@ -527,9 +567,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
           IMAGE_TAG: ${{ needs.determine-service.outputs.image_tag }}
           MODULE_NAME: ${{ steps.module.outputs.name }}
+          KUBECONFIG: ~/.kube/config
         run: |
           cd $GITHUB_WORKSPACE
           echo "🚀 k8s 배포 시작: ${MODULE_NAME} (이미지 태그: ${IMAGE_TAG})"
+          # kubeconfig 환경 변수 설정
+          export KUBECONFIG=~/.kube/config
           bash ./scripts/deploy-k8s.sh ${MODULE_NAME} ${IMAGE_TAG}
 
       - name: Deploy to docker-compose (fallback)
