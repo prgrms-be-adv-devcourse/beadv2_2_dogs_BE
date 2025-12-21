@@ -273,14 +273,30 @@ if [ -f "$DEPLOYMENT_FILE" ]; then
     log_step "🔧 Deployment 파일 설정 중..."
     
     # EC2 IP 설정 (여러 패턴 처리)
-    # 1. CHANGE_ME_TO_EC2_IP -> 실제 IP
+    # 1. CHANGE_ME_TO_EC2_IP -> 실제 IP (모든 위치에서 치환)
     # 2. EC2_IP 환경 변수 값이 127.0.0.1이면 실제 IP로 변경
     # 3. SPRING_DATASOURCE_URL에서 $(EC2_IP) 또는 127.0.0.1을 실제 IP로 변경
     
     if grep -q "CHANGE_ME_TO_EC2_IP" "$TEMP_DEPLOYMENT"; then
         log_info "EC2 IP 설정 중 (CHANGE_ME_TO_EC2_IP -> $EC2_IP)"
-        sed "s/CHANGE_ME_TO_EC2_IP/$EC2_IP/g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
-        mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+        # 모든 CHANGE_ME_TO_EC2_IP를 실제 IP로 치환 (전역 치환)
+        if sed -i.bak "s/CHANGE_ME_TO_EC2_IP/$EC2_IP/g" "$TEMP_DEPLOYMENT" 2>/dev/null; then
+            rm -f "${TEMP_DEPLOYMENT}.bak" 2>/dev/null || true
+        else
+            # sed -i가 실패하면 임시 파일 방식 사용
+            sed "s/CHANGE_ME_TO_EC2_IP/$EC2_IP/g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+            mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+        fi
+        
+        # 치환 검증
+        if grep -q "CHANGE_ME_TO_EC2_IP" "$TEMP_DEPLOYMENT"; then
+            log_error "❌ EC2 IP 치환이 완료되지 않았습니다. 남은 CHANGE_ME_TO_EC2_IP 패턴:"
+            grep -n "CHANGE_ME_TO_EC2_IP" "$TEMP_DEPLOYMENT" || true
+        else
+            log_info "✅ EC2 IP 치환 완료: $EC2_IP"
+        fi
+    else
+        log_info "ℹ️  CHANGE_ME_TO_EC2_IP 패턴이 없습니다. (이미 치환되었거나 불필요)"
     fi
     
     # EC2_IP 환경 변수 값이 127.0.0.1이면 실제 IP로 변경
@@ -330,12 +346,23 @@ fi
 
 # Deployment는 임시 파일 사용 (EC2 IP 및 이미지 태그가 적용된 버전)
 if [ -n "$TEMP_DEPLOYMENT" ] && [ -f "$TEMP_DEPLOYMENT" ]; then
+    # 최종 검증: CHANGE_ME_TO_EC2_IP가 남아있는지 확인
+    if grep -q "CHANGE_ME_TO_EC2_IP" "$TEMP_DEPLOYMENT"; then
+        log_error "❌ 치환되지 않은 CHANGE_ME_TO_EC2_IP가 남아있습니다!"
+        log_error "다음 위치에서 발견:"
+        grep -n "CHANGE_ME_TO_EC2_IP" "$TEMP_DEPLOYMENT" || true
+        log_error "배포를 중단합니다. 스크립트를 확인하세요."
+        rm -f "$TEMP_DEPLOYMENT"
+        exit 1
+    fi
+    
     log_info "Applying Deployment (EC2 IP: $EC2_IP, Image Tag: $IMAGE_TAG)..."
     $KUBECTL_CMD apply -f "$TEMP_DEPLOYMENT"
     # 임시 파일 삭제
     rm -f "$TEMP_DEPLOYMENT"
 else
     # 임시 파일이 없으면 원본 사용
+    log_warn "⚠️  임시 파일이 없습니다. 원본 파일을 사용합니다."
     $KUBECTL_CMD apply -f "$DEPLOY_PATH/"
 fi
 
