@@ -29,7 +29,7 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-              value: "http://eureka:8761/eureka/"
+              value: "http://localhost:8761/eureka/"
             - name: JAVA_OPTS
               value: "-Xms256m -Xmx512m"
           resources:
