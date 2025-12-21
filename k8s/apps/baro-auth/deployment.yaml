@@ -18,7 +18,6 @@ spec:
         component: app
     spec:
       hostNetwork: true  # EC2 호스트의 MySQL 접근을 위해 필요
-      dnsPolicy: ClusterFirstWithHostNet  # hostNetwork 사용 시 DNS 정책
       containers:
         - name: baro-auth
           image: ghcr.io/do-develop-space/baro-auth:latest
@@ -31,7 +30,7 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-              value: "http://eureka:8761/eureka/"  # Kubernetes Service DNS 사용
+              value: "http://localhost:8761/eureka/" 
             - name: JAVA_OPTS
               value: "-Xms256m -Xmx384m"
             # MySQL 설정
