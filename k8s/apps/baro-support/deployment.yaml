@@ -31,7 +31,7 @@ spec:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://eureka:8761/eureka/"  # Kubernetes Service DNS 사용
             - name: JAVA_OPTS
-              value: "-Xms256m -Xmx384m"
+              value: "-Xms256m -Xmx512m"
             # MySQL 설정
             - name: MYSQL_DATABASE
               value: "barosupport"
@@ -86,16 +86,17 @@ spec:
                   key: SPRING_MAIL_PASSWORD
           resources:
             requests:
-              memory: "256Mi"
+              memory: "512Mi"
               cpu: "200m"
             limits:
-              memory: "384Mi"
+              memory: "768Mi"
               cpu: "500m"
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8089
-            initialDelaySeconds: 90
+              scheme: HTTP
+            initialDelaySeconds: 120
             periodSeconds: 30
             timeoutSeconds: 10
             failureThreshold: 3
@@ -103,7 +104,8 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8089
-            initialDelaySeconds: 60
+              scheme: HTTP
+            initialDelaySeconds: 90
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
@@ -111,8 +113,9 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8089
-            initialDelaySeconds: 30
+              scheme: HTTP
+            initialDelaySeconds: 60
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 20
+            timeoutSeconds: 10
+            failureThreshold: 30
 
