@@ -80,23 +80,22 @@ services:
     # tini가 모든 자식 프로세스의 종료 상태를 수집(wait)하여 zombie 발생 방지
     init: true
     ports:
-      - "29092:9092"  # Broker listener (외부 접근용)
-      - "9092:9092"  # Broker listener (외부 접근용)
+      - "29092:29092"  # Broker listener (외부 접근용) - 컨테이너 내부 29092 → 호스트 29092
       # 9093은 Controller listener로 카프카 내부 통신용이므로 외부 노출 불필요
     environment:
       # KRaft 모드 설정
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@127.0.0.1:29093
       # CLUSTER_ID는 기존 볼륨에 저장된 값을 사용 (변경 시 데이터 손실)
       # 새로 초기화하려면 .env에서 다른 값으로 설정
       KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID:-}
       CLUSTER_ID: ${KAFKA_CLUSTER_ID:-}
       
       # Listeners 설정
-      # hostNetwork: true를 사용하는 Kubernetes Pod에서 접근하므로 localhost로 advertised
-      KAFKA_LISTENERS: PLAINTEXT://:29092,CONTROLLER://:29093
-      # KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      # hostNetwork: true를 사용하는 Kubernetes Pod에서 접근하므로 127.0.0.1로 advertised
+      # 컨테이너 내부에서 0.0.0.0으로 리스닝하여 호스트에서 접근 가능하도록 설정
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:29092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
