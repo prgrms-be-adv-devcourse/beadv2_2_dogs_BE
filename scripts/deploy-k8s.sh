@@ -272,39 +272,67 @@ if [ -f "$DEPLOYMENT_FILE" ]; then
     
     log_step "🔧 Deployment 파일 설정 중..."
     
-    # EC2 IP 설정 (여러 패턴 처리)
-    # 1. CHANGE_ME_TO_EC2_IP -> 실제 IP (모든 위치에서 치환)
-    # 2. EC2_IP 환경 변수 값이 127.0.0.1이면 실제 IP로 변경
-    # 3. SPRING_DATASOURCE_URL에서 $(EC2_IP) 또는 127.0.0.1을 실제 IP로 변경
+    # hostNetwork 여부 확인
+    USE_HOST_NETWORK=false
+    if grep -q "hostNetwork: true" "$TEMP_DEPLOYMENT"; then
+        USE_HOST_NETWORK=true
+        log_info "🌐 hostNetwork: true 감지 - localhost(127.0.0.1) 사용"
+    else
+        log_info "🌐 hostNetwork: false - EC2 IP($EC2_IP) 사용"
+    fi
+    
+    # EC2 IP 설정 (hostNetwork 여부에 따라 다르게 처리)
+    # hostNetwork: true인 경우 -> 127.0.0.1 사용
+    # hostNetwork: false인 경우 -> EC2 IP 사용
     
     if grep -q "CHANGE_ME_TO_EC2_IP" "$TEMP_DEPLOYMENT"; then
-        log_info "EC2 IP 설정 중 (CHANGE_ME_TO_EC2_IP -> $EC2_IP)"
-        # 모든 CHANGE_ME_TO_EC2_IP를 실제 IP로 치환 (전역 치환)
-        if sed -i.bak "s/CHANGE_ME_TO_EC2_IP/$EC2_IP/g" "$TEMP_DEPLOYMENT" 2>/dev/null; then
+        if [ "$USE_HOST_NETWORK" = "true" ]; then
+            # hostNetwork: true인 경우 127.0.0.1로 치환
+            REPLACEMENT_IP="127.0.0.1"
+            log_info "EC2 IP 설정 중 (hostNetwork: true -> CHANGE_ME_TO_EC2_IP -> 127.0.0.1)"
+        else
+            # hostNetwork: false인 경우 EC2 IP로 치환
+            REPLACEMENT_IP="$EC2_IP"
+            log_info "EC2 IP 설정 중 (hostNetwork: false -> CHANGE_ME_TO_EC2_IP -> $EC2_IP)"
+        fi
+        
+        # 모든 CHANGE_ME_TO_EC2_IP를 치환 IP로 변경 (전역 치환)
+        if sed -i.bak "s/CHANGE_ME_TO_EC2_IP/$REPLACEMENT_IP/g" "$TEMP_DEPLOYMENT" 2>/dev/null; then
             rm -f "${TEMP_DEPLOYMENT}.bak" 2>/dev/null || true
         else
             # sed -i가 실패하면 임시 파일 방식 사용
-            sed "s/CHANGE_ME_TO_EC2_IP/$EC2_IP/g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+            sed "s/CHANGE_ME_TO_EC2_IP/$REPLACEMENT_IP/g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
             mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
         fi
         
         # 치환 검증
         if grep -q "CHANGE_ME_TO_EC2_IP" "$TEMP_DEPLOYMENT"; then
-            log_error "❌ EC2 IP 치환이 완료되지 않았습니다. 남은 CHANGE_ME_TO_EC2_IP 패턴:"
+            log_error "❌ IP 치환이 완료되지 않았습니다. 남은 CHANGE_ME_TO_EC2_IP 패턴:"
             grep -n "CHANGE_ME_TO_EC2_IP" "$TEMP_DEPLOYMENT" || true
         else
-            log_info "✅ EC2 IP 치환 완료: $EC2_IP"
+            log_info "✅ IP 치환 완료: $REPLACEMENT_IP"
         fi
     else
         log_info "ℹ️  CHANGE_ME_TO_EC2_IP 패턴이 없습니다. (이미 치환되었거나 불필요)"
     fi
     
-    # EC2_IP 환경 변수 값이 127.0.0.1이면 실제 IP로 변경
-    if grep -q 'value: "127.0.0.1"' "$TEMP_DEPLOYMENT" && grep -q "name: EC2_IP" "$TEMP_DEPLOYMENT"; then
-        log_info "EC2 IP 환경 변수 업데이트 중 (127.0.0.1 -> $EC2_IP)"
-        # EC2_IP 환경 변수 값만 변경 (다른 127.0.0.1은 변경하지 않음)
-        sed "/name: EC2_IP/,/value:/ s|value: \"127.0.0.1\"|value: \"$EC2_IP\"|" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
-        mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+    # EC2_IP 환경 변수 설정 (hostNetwork 여부에 따라)
+    if grep -q "name: EC2_IP" "$TEMP_DEPLOYMENT"; then
+        if [ "$USE_HOST_NETWORK" = "true" ]; then
+            # hostNetwork: true인 경우 EC2_IP 환경 변수도 127.0.0.1로 설정
+            if grep -q 'value: "CHANGE_ME_TO_EC2_IP"' "$TEMP_DEPLOYMENT" || grep -q 'value: "127.0.0.1"' "$TEMP_DEPLOYMENT" || grep -q "value: \"$EC2_IP\"" "$TEMP_DEPLOYMENT"; then
+                log_info "EC2_IP 환경 변수 설정 중 (hostNetwork: true -> 127.0.0.1)"
+                sed "/name: EC2_IP/,/value:/ s|value: \".*\"|value: \"127.0.0.1\"|" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+                mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+            fi
+        else
+            # hostNetwork: false인 경우 EC2 IP로 설정
+            if grep -q 'value: "CHANGE_ME_TO_EC2_IP"' "$TEMP_DEPLOYMENT" || grep -q 'value: "127.0.0.1"' "$TEMP_DEPLOYMENT"; then
+                log_info "EC2_IP 환경 변수 설정 중 (hostNetwork: false -> $EC2_IP)"
+                sed "/name: EC2_IP/,/value:/ s|value: \".*\"|value: \"$EC2_IP\"|" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+                mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+            fi
+        fi
     fi
     
     # SPRING_DATASOURCE_URL에서 $(EC2_IP) 또는 127.0.0.1을 실제 IP로 변경
