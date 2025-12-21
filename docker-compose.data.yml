@@ -5,22 +5,28 @@ services:
   # ===================================
   # Cache & Session Store
   # ===================================
-  # redis:
-  #   image: redis:7.2-alpine
-  #   container_name: baro-redis
-  #   ports:
-  #     - "6379:6379"
-  #   volumes:
-  #     - redis-data:/data
-  #   command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
-  #   restart: unless-stopped
-  #   networks:
-  #     - baro-network
-  #   healthcheck:
-  #     test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 5
+  redis:
+    image: redis:7.2-alpine
+    container_name: baro-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 256M
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis123}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   # ===================================
   # Database
@@ -170,8 +176,8 @@ services:
       retries: 12
 
 volumes:
-  # redis-data:
-  #   driver: local
+  redis-data:
+    driver: local
   mysql-data:
     driver: local
   kafka-data:

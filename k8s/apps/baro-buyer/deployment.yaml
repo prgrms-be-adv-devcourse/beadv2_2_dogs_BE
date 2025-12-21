@@ -56,6 +56,16 @@ spec:
             # Kafka 설정
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: "CHANGE_ME_TO_EC2_IP:29092"
+            # Redis 설정 (Kubernetes Service DNS 사용)
+            - name: SPRING_DATA_REDIS_HOST
+              value: "redis"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: REDIS_PASSWORD
             # AWS 설정
             - name: AWS_ACCESS_KEY
               valueFrom:
