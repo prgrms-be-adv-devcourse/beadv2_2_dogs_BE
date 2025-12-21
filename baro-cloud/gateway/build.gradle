@@ -42,7 +42,7 @@ dependencies {
     // ========= Gateway 서비스 의존성 =========
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+    implementation 'org.springframework.cloud:spring-cloud-starter-config' // 부트스트랩 단계에 Config Server에서 공통 설정을 수신
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // JWT for Gateway Filter — 인증 정보를 검증하여 하위 서비스로 전파
