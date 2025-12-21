@@ -29,7 +29,7 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-              value: "http://localhost:8761/eureka/"  # hostNetwork 사용 시 localhost로 접근
+              value: "http://eureka:8761/eureka/"  # Kubernetes Service DNS 사용
             - name: JAVA_OPTS
               value: "-Xms256m -Xmx384m"
             # MySQL 설정
