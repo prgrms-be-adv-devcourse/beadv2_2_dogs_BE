@@ -257,42 +257,84 @@ if [ ! -d "$DEPLOY_PATH" ]; then
 fi
 
 # ===================================
-# Deployment 파일에 EC2 IP 설정
+# Deployment 파일에 EC2 IP 및 이미지 태그 설정 (임시 파일 사용)
 # ===================================
 DEPLOYMENT_FILE="$DEPLOY_PATH/deployment.yaml"
-if [ -f "$DEPLOYMENT_FILE" ]; then
-    # hostNetwork를 사용하는 경우 EC2 IP 설정이 불필요할 수 있지만,
-    # 기존 코드 호환성을 위해 주석 처리 (필요시 활성화)
-    # log_step "🔧 EC2 IP 설정 중: $DEPLOYMENT_FILE"
-    # sed -i.bak "s/CHANGE_ME_TO_EC2_IP/$EC2_IP/g" "$DEPLOYMENT_FILE"
-    # rm -f "${DEPLOYMENT_FILE}.bak" 2>/dev/null || true
-    log_info "ℹ️  hostNetwork 사용으로 EC2 IP 설정 불필요 (127.0.0.1 사용)"
-fi
+TEMP_DEPLOYMENT=""
 
-# ===================================
-# 이미지 태그 업데이트
-# ===================================
-if [ -f "$DEPLOYMENT_FILE" ] && [ "$IMAGE_TAG" != "latest" ]; then
-    log_step "🏷️  이미지 태그 업데이트: $IMAGE_TAG"
-    # ghcr.io/do-develop-space/<service>:latest -> ghcr.io/do-develop-space/<service>:$IMAGE_TAG
-    SERVICE_NAME=$(grep -E "image:" "$DEPLOYMENT_FILE" | head -1 | sed -E 's/.*image:.*\/([^:]+):.*/\1/')
-    if [ -n "$SERVICE_NAME" ]; then
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            # macOS
-            sed -i '' "s|ghcr.io/do-develop-space/${SERVICE_NAME}:latest|ghcr.io/do-develop-space/${SERVICE_NAME}:${IMAGE_TAG}|g" "$DEPLOYMENT_FILE"
-        else
-            # Linux
-            sed -i "s|ghcr.io/do-develop-space/${SERVICE_NAME}:latest|ghcr.io/do-develop-space/${SERVICE_NAME}:${IMAGE_TAG}|g" "$DEPLOYMENT_FILE"
-        fi
-        log_info "✅ 이미지 태그 업데이트 완료: ${SERVICE_NAME}:${IMAGE_TAG}"
+if [ -f "$DEPLOYMENT_FILE" ]; then
+    # 임시 파일 생성 (원본 파일 보존)
+    TEMP_DEPLOYMENT=$(mktemp)
+    cp "$DEPLOYMENT_FILE" "$TEMP_DEPLOYMENT"
+    
+    log_step "🔧 Deployment 파일 설정 중..."
+    
+    # EC2 IP 설정 (여러 패턴 처리)
+    # 1. CHANGE_ME_TO_EC2_IP -> 실제 IP
+    # 2. EC2_IP 환경 변수 값이 127.0.0.1이면 실제 IP로 변경
+    # 3. SPRING_DATASOURCE_URL에서 $(EC2_IP) 또는 127.0.0.1을 실제 IP로 변경
+    
+    if grep -q "CHANGE_ME_TO_EC2_IP" "$TEMP_DEPLOYMENT"; then
+        log_info "EC2 IP 설정 중 (CHANGE_ME_TO_EC2_IP -> $EC2_IP)"
+        sed "s/CHANGE_ME_TO_EC2_IP/$EC2_IP/g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+        mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
     fi
+    
+    # EC2_IP 환경 변수 값이 127.0.0.1이면 실제 IP로 변경
+    if grep -q 'value: "127.0.0.1"' "$TEMP_DEPLOYMENT" && grep -q "name: EC2_IP" "$TEMP_DEPLOYMENT"; then
+        log_info "EC2 IP 환경 변수 업데이트 중 (127.0.0.1 -> $EC2_IP)"
+        # EC2_IP 환경 변수 값만 변경 (다른 127.0.0.1은 변경하지 않음)
+        sed "/name: EC2_IP/,/value:/ s|value: \"127.0.0.1\"|value: \"$EC2_IP\"|" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+        mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+    fi
+    
+    # SPRING_DATASOURCE_URL에서 $(EC2_IP) 또는 127.0.0.1을 실제 IP로 변경
+    if grep -q "SPRING_DATASOURCE_URL" "$TEMP_DEPLOYMENT"; then
+        log_info "SPRING_DATASOURCE_URL 업데이트 중 (EC2 IP: $EC2_IP)"
+        # $(EC2_IP) 패턴을 실제 IP로 변경
+        sed "s|\$(EC2_IP)|$EC2_IP|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+        mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+        # 127.0.0.1:3306 패턴을 실제 IP로 변경 (데이터베이스 URL만)
+        sed "s|127\.0\.0\.1:3306|$EC2_IP:3306|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+        mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+    fi
+    
+    # 이미지 태그 업데이트 (latest가 아니고 변경이 필요한 경우)
+    if [ "$IMAGE_TAG" != "latest" ]; then
+        log_step "🏷️  이미지 태그 업데이트: $IMAGE_TAG"
+        SERVICE_NAME=$(grep -E "image:" "$TEMP_DEPLOYMENT" | head -1 | sed -E 's/.*image:.*\/([^:]+):.*/\1/')
+        if [ -n "$SERVICE_NAME" ]; then
+            sed "s|ghcr.io/do-develop-space/${SERVICE_NAME}:latest|ghcr.io/do-develop-space/${SERVICE_NAME}:${IMAGE_TAG}|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+            mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+            log_info "✅ 이미지 태그 업데이트 완료: ${SERVICE_NAME}:${IMAGE_TAG}"
+        fi
+    fi
+else
+    log_error "Deployment 파일을 찾을 수 없습니다: $DEPLOYMENT_FILE"
+    exit 1
 fi
 
 # ===================================
 # k8s 배포
 # ===================================
 log_step "📦 k8s 리소스 적용 중..."
-$KUBECTL_CMD apply -f "$DEPLOY_PATH/"
+
+# Service는 원본 파일 사용
+if [ -f "$DEPLOY_PATH/service.yaml" ]; then
+    log_info "Applying Service..."
+    $KUBECTL_CMD apply -f "$DEPLOY_PATH/service.yaml"
+fi
+
+# Deployment는 임시 파일 사용 (EC2 IP 및 이미지 태그가 적용된 버전)
+if [ -n "$TEMP_DEPLOYMENT" ] && [ -f "$TEMP_DEPLOYMENT" ]; then
+    log_info "Applying Deployment (EC2 IP: $EC2_IP, Image Tag: $IMAGE_TAG)..."
+    $KUBECTL_CMD apply -f "$TEMP_DEPLOYMENT"
+    # 임시 파일 삭제
+    rm -f "$TEMP_DEPLOYMENT"
+else
+    # 임시 파일이 없으면 원본 사용
+    $KUBECTL_CMD apply -f "$DEPLOY_PATH/"
+fi
 
 # ===================================
 # 배포 상태 확인
