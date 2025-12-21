@@ -54,8 +54,28 @@ spring:
         spring.json.type.mapping: productEvent:com.barofarm.support.event.ProductEvent
         spring.json.use.type.headers: false
         spring.json.value.default.type: com.barofarm.support.event.ProductEvent
+        # 재연결 설정
+        reconnect.backoff.ms: 50          # 재연결 시 초기 백오프 시간 (50ms)
+        reconnect.backoff.max.ms: 1000    # 재연결 시 최대 백오프 시간 (1초)
+        # 세션 및 하트비트 설정
+        session.timeout.ms: 30000          # 세션 타임아웃 (30초)
+        heartbeat.interval.ms: 3000        # 하트비트 간격 (3초)
+        # 폴링 및 요청 타임아웃 설정
+        max.poll.interval.ms: 300000       # 최대 폴링 간격 (5분)
+        request.timeout.ms: 30000          # 요청 타임아웃 (30초)
+        # 메타데이터 갱신 설정
+        metadata.max.age.ms: 300000        # 메타데이터 최대 유지 시간 (5분)
+        # 연결 재시도 설정
+        connections.max.idle.ms: 540000    # 최대 유휴 연결 시간 (9분)
       auto-offset-reset: latest  # earliest에서 latest로 변경하여 오래된 메시지 건너뛰기
       # auto-offset-reset: earliest
+    listener:
+      # Consumer 재시작 설정
+      auto-startup: true                   # 자동 시작
+      # 에러 처리 설정
+      ack-mode: batch                      # 배치 단위로 커밋
+      # 재시도 설정
+      concurrency: 1                       # 동시 Consumer 스레드 수
 
 eureka:
   client:
