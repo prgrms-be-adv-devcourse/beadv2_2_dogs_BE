@@ -46,16 +46,17 @@ spec:
                   name: baro-secrets
                   key: MYSQL_PASSWORD
             # MySQL 호스트 (EC2 Private IP)
+            # 실제 배포 시 deploy-k8s.sh 스크립트가 자동으로 EC2 IP로 치환
             - name: EC2_IP
-              value: "127.0.0.1"
+              value: "CHANGE_ME_TO_EC2_IP"  # 배포 스크립트가 자동으로 실제 IP로 치환
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://$(EC2_IP):3306/barosupport?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
+              value: "jdbc:mysql://CHANGE_ME_TO_EC2_IP:3306/barosupport?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
             # Kafka 설정
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
-              value: "$(EC2_IP):29092"
+              value: "CHANGE_ME_TO_EC2_IP:29092"
             # Elasticsearch 설정
             - name: SPRING_ELASTICSEARCH_URIS
-              value: "http://$(EC2_IP):9200"
+              value: "http://CHANGE_ME_TO_EC2_IP:9200"
             # AWS 설정
             - name: AWS_ACCESS_KEY
               valueFrom:
