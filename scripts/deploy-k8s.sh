@@ -61,8 +61,11 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 K8S_BASE_DIR=""
 
-# 여러 경로에서 k8s 디렉토리 찾기
-if [ -d "$SCRIPT_DIR/../k8s/cloud" ]; then
+# 여러 경로에서 k8s 디렉토리 찾기 (우선순위 순)
+if [ -d "/home/ubuntu/apps/k8s/cloud" ]; then
+    # 배포 기준 디렉토리 (최우선)
+    K8S_BASE_DIR="/home/ubuntu/apps/k8s"
+elif [ -d "$SCRIPT_DIR/../k8s/cloud" ]; then
     K8S_BASE_DIR="$SCRIPT_DIR/../k8s"
 elif [ -d "$SCRIPT_DIR/../../k8s/cloud" ]; then
     K8S_BASE_DIR="$SCRIPT_DIR/../../k8s"
