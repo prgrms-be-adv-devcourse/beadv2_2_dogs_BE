@@ -49,9 +49,9 @@ spec:
             # 실제 배포 시 EC2_IP 환경 변수를 설정하거나 아래 value를 직접 수정
             # EC2 IP 확인: curl -s http://169.254.169.254/latest/meta-data/local-ipv4
             - name: EC2_IP
-              value: "CHANGE_ME_TO_EC2_IP"  # 실제 EC2 Private IP로 변경 필요
+              value: "127.0.0.1"
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://127.0.0.1:3306/barobuyer?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
+              value: "jdbc:mysql://$(EC2_IP):3306/baroauth?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
             # 이메일 설정
             - name: SPRING_MAIL_USERNAME
               valueFrom:
