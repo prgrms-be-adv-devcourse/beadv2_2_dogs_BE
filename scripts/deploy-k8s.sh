@@ -335,15 +335,24 @@ if [ -f "$DEPLOYMENT_FILE" ]; then
         fi
     fi
     
-    # SPRING_DATASOURCE_URL에서 $(EC2_IP) 또는 127.0.0.1을 실제 IP로 변경
+    # SPRING_DATASOURCE_URL에서 $(EC2_IP) 패턴 처리
+    # hostNetwork: true일 때는 127.0.0.1을 그대로 유지
     if grep -q "SPRING_DATASOURCE_URL" "$TEMP_DEPLOYMENT"; then
-        log_info "SPRING_DATASOURCE_URL 업데이트 중 (EC2 IP: $EC2_IP)"
+        log_info "SPRING_DATASOURCE_URL 업데이트 중 (EC2 IP: $EC2_IP, hostNetwork: $USE_HOST_NETWORK)"
         # $(EC2_IP) 패턴을 실제 IP로 변경
         sed "s|\$(EC2_IP)|$EC2_IP|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
         mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
-        # 127.0.0.1:3306 패턴을 실제 IP로 변경 (데이터베이스 URL만)
-        sed "s|127\.0\.0\.1:3306|$EC2_IP:3306|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
-        mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+        
+        # hostNetwork: false인 경우에만 127.0.0.1:3306을 EC2 IP로 변경
+        # hostNetwork: true인 경우 127.0.0.1은 그대로 유지해야 함
+        if [ "$USE_HOST_NETWORK" = "false" ]; then
+            # 127.0.0.1:3306 패턴을 실제 IP로 변경 (데이터베이스 URL만)
+            sed "s|127\.0\.0\.1:3306|$EC2_IP:3306|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+            mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+            log_info "SPRING_DATASOURCE_URL: 127.0.0.1:3306 -> $EC2_IP:3306 (hostNetwork: false)"
+        else
+            log_info "SPRING_DATASOURCE_URL: 127.0.0.1:3306 유지 (hostNetwork: true)"
+        fi
     fi
     
     # 이미지 태그 업데이트 (latest가 아니고 변경이 필요한 경우)
