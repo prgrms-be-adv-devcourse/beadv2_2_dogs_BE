@@ -17,6 +17,8 @@ spec:
         app: baro-order
         component: app
     spec:
+      hostNetwork: true  # EC2 호스트의 Kafka/MySQL 접근을 위해 필요
+      dnsPolicy: ClusterFirstWithHostNet  # hostNetwork 사용 시 DNS 정책
       containers:
         - name: baro-order
           image: ghcr.io/do-develop-space/baro-order:latest

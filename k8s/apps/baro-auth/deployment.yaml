@@ -17,6 +17,8 @@ spec:
         app: baro-auth
         component: app
     spec:
+      hostNetwork: true  # EC2 호스트의 MySQL 접근을 위해 필요
+      dnsPolicy: ClusterFirstWithHostNet  # hostNetwork 사용 시 DNS 정책
       containers:
         - name: baro-auth
           image: ghcr.io/do-develop-space/baro-auth:latest
@@ -74,6 +76,7 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8081
+              scheme: HTTP
             initialDelaySeconds: 90
             periodSeconds: 30
             timeoutSeconds: 10
@@ -82,6 +85,7 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8081
+              scheme: HTTP
             initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 5
@@ -90,8 +94,9 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8081
-            initialDelaySeconds: 30
+              scheme: HTTP
+            initialDelaySeconds: 60
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 20
+            timeoutSeconds: 10
+            failureThreshold: 30
 
