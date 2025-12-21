@@ -51,7 +51,7 @@ spec:
             - name: EC2_IP
               value: "CHANGE_ME_TO_EC2_IP"  # 실제 EC2 Private IP로 변경 필요
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://$(EC2_IP):3306/baroauth?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
+              value: "jdbc:mysql://127.0.0.1:3306/barobuyer?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
             # 이메일 설정
             - name: SPRING_MAIL_USERNAME
               valueFrom:
