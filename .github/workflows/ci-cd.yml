@@ -490,21 +490,54 @@ jobs:
           cp $GITHUB_WORKSPACE/docker-compose.cloud.yml . 2>/dev/null || true
 
           # k8s 디렉토리 복사 (k8s 배포용) - /home/ubuntu/apps/k8s로 복사
+          # 기존 파일 보존을 위해 rsync 사용 (서버에 직접 만든 scripts 폴더 등 보존)
           if [ -d "$GITHUB_WORKSPACE/k8s" ]; then
-            echo "📦 k8s 디렉토리 복사 중..."
+            echo "📦 k8s 디렉토리 복사 중 (기존 파일 보존)..."
             echo "   - 소스: $GITHUB_WORKSPACE/k8s"
             echo "   - 대상: /home/ubuntu/apps/k8s"
             mkdir -p /home/ubuntu/apps
-            rm -rf /home/ubuntu/apps/k8s
-            cp -r $GITHUB_WORKSPACE/k8s /home/ubuntu/apps/
-            echo "✅ k8s 디렉토리 복사 완료: /home/ubuntu/apps/k8s"
+            
+            # 서버에 직접 만든 scripts 폴더 등 백업
+            if [ -d "/home/ubuntu/apps/k8s/scripts" ]; then
+              echo "💾 기존 scripts 폴더 백업 중..."
+              cp -r /home/ubuntu/apps/k8s/scripts /tmp/k8s-scripts-backup-$$ 2>/dev/null || true
+            fi
+            
+            # rsync로 파일만 업데이트 (--delete 옵션 없이, 기존 추가 파일 보존)
+            if command -v rsync &> /dev/null; then
+              rsync -av "$GITHUB_WORKSPACE/k8s/" /home/ubuntu/apps/k8s/ || {
+                # rsync 실패 시 cp 사용
+                mkdir -p /home/ubuntu/apps/k8s
+                cp -r "$GITHUB_WORKSPACE/k8s"/* /home/ubuntu/apps/k8s/ 2>/dev/null || true
+              }
+            else
+              # rsync가 없으면 cp 사용하되, 기존 디렉토리는 삭제하지 않음
+              mkdir -p /home/ubuntu/apps/k8s
+              cp -r "$GITHUB_WORKSPACE/k8s"/* /home/ubuntu/apps/k8s/ 2>/dev/null || true
+            fi
+            
+            # 백업한 scripts 폴더 복원
+            if [ -d "/tmp/k8s-scripts-backup-$$" ]; then
+              echo "🔄 기존 scripts 폴더 복원 중..."
+              cp -r /tmp/k8s-scripts-backup-$$/* /home/ubuntu/apps/k8s/scripts/ 2>/dev/null || true
+              rm -rf /tmp/k8s-scripts-backup-$$
+            fi
+            
+            echo "✅ k8s 디렉토리 복사 완료: /home/ubuntu/apps/k8s (기존 추가 파일 보존)"
           fi
 
           # 배포 스크립트 복사 (k8s 배포용)
           if [ -f "$GITHUB_WORKSPACE/scripts/deploy-k8s.sh" ]; then
+            # /home/ubuntu/apps/BE/scripts/에 복사
             cp $GITHUB_WORKSPACE/scripts/deploy-k8s.sh ./scripts/ 2>/dev/null || mkdir -p ./scripts && cp $GITHUB_WORKSPACE/scripts/deploy-k8s.sh ./scripts/
             chmod +x ./scripts/deploy-k8s.sh
-            echo "✅ deploy-k8s.sh 스크립트 복사 완료"
+            
+            # /home/ubuntu/apps/k8s/scripts/에도 복사
+            mkdir -p /home/ubuntu/apps/k8s/scripts
+            cp $GITHUB_WORKSPACE/scripts/deploy-k8s.sh /home/ubuntu/apps/k8s/scripts/
+            chmod +x /home/ubuntu/apps/k8s/scripts/deploy-k8s.sh
+            
+            echo "✅ deploy-k8s.sh 스크립트 복사 완료 (BE/scripts 및 k8s/scripts)"
           fi
 
           # data 모듈인 경우 Elasticsearch 빌드 컨텍스트 복사
@@ -590,15 +623,41 @@ jobs:
           # kubeconfig 환경 변수 설정
           export KUBECONFIG=~/.kube/config
           
-          # k8s 디렉토리 최신 버전으로 업데이트 (Copy deployment files에서 복사했지만, 최신 커밋 반영을 위해 다시 업데이트)
+          # k8s 디렉토리 최신 버전으로 업데이트 (기존 파일 보존)
           if [ -d "$GITHUB_WORKSPACE/k8s" ]; then
-            echo "📦 k8s 디렉토리 최신 버전으로 업데이트 중..."
+            echo "📦 k8s 디렉토리 최신 버전으로 업데이트 중 (기존 파일 보존)..."
             echo "   - 소스: $GITHUB_WORKSPACE/k8s"
             echo "   - 대상: /home/ubuntu/apps/k8s (배포 기준 디렉토리)"
             mkdir -p /home/ubuntu/apps
-            rm -rf /home/ubuntu/apps/k8s
-            cp -r $GITHUB_WORKSPACE/k8s /home/ubuntu/apps/
-            echo "✅ k8s 디렉토리 업데이트 완료: /home/ubuntu/apps/k8s (k8s/apps 포함 모든 파일 최신화)"
+            
+            # 서버에 직접 만든 scripts 폴더 등 백업
+            if [ -d "/home/ubuntu/apps/k8s/scripts" ]; then
+              echo "💾 기존 scripts 폴더 백업 중..."
+              cp -r /home/ubuntu/apps/k8s/scripts /tmp/k8s-scripts-backup-$$ 2>/dev/null || true
+            fi
+            
+            # rsync로 파일만 업데이트 (--delete 옵션 없이, 기존 추가 파일 보존)
+            if command -v rsync &> /dev/null; then
+              rsync -av "$GITHUB_WORKSPACE/k8s/" /home/ubuntu/apps/k8s/ || {
+                # rsync 실패 시 cp 사용
+                mkdir -p /home/ubuntu/apps/k8s
+                cp -r "$GITHUB_WORKSPACE/k8s"/* /home/ubuntu/apps/k8s/ 2>/dev/null || true
+              }
+            else
+              # rsync가 없으면 cp 사용하되, 기존 디렉토리는 삭제하지 않음
+              mkdir -p /home/ubuntu/apps/k8s
+              cp -r "$GITHUB_WORKSPACE/k8s"/* /home/ubuntu/apps/k8s/ 2>/dev/null || true
+            fi
+            
+            # 백업한 scripts 폴더 복원
+            if [ -d "/tmp/k8s-scripts-backup-$$" ]; then
+              echo "🔄 기존 scripts 폴더 복원 중..."
+              mkdir -p /home/ubuntu/apps/k8s/scripts
+              cp -r /tmp/k8s-scripts-backup-$$/* /home/ubuntu/apps/k8s/scripts/ 2>/dev/null || true
+              rm -rf /tmp/k8s-scripts-backup-$$
+            fi
+            
+            echo "✅ k8s 디렉토리 업데이트 완료: /home/ubuntu/apps/k8s (기존 추가 파일 보존, k8s/apps 포함 모든 파일 최신화)"
           else
             echo "⚠️  k8s 디렉토리를 찾을 수 없습니다: $GITHUB_WORKSPACE/k8s"
           fi
@@ -606,10 +665,18 @@ jobs:
           # deploy-k8s.sh 스크립트 최신 버전으로 업데이트
           if [ -f "$GITHUB_WORKSPACE/scripts/deploy-k8s.sh" ]; then
             echo "📝 deploy-k8s.sh 스크립트 최신 버전으로 업데이트 중..."
+            
+            # /home/ubuntu/apps/BE/scripts/에 업데이트
             mkdir -p /home/ubuntu/apps/BE/scripts
             cp $GITHUB_WORKSPACE/scripts/deploy-k8s.sh /home/ubuntu/apps/BE/scripts/
             chmod +x /home/ubuntu/apps/BE/scripts/deploy-k8s.sh
-            echo "✅ deploy-k8s.sh 스크립트 업데이트 완료"
+            
+            # /home/ubuntu/apps/k8s/scripts/에도 업데이트
+            mkdir -p /home/ubuntu/apps/k8s/scripts
+            cp $GITHUB_WORKSPACE/scripts/deploy-k8s.sh /home/ubuntu/apps/k8s/scripts/
+            chmod +x /home/ubuntu/apps/k8s/scripts/deploy-k8s.sh
+            
+            echo "✅ deploy-k8s.sh 스크립트 업데이트 완료 (BE/scripts 및 k8s/scripts)"
           fi
           
           echo ""
