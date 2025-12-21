@@ -17,6 +17,8 @@ spec:
         app: baro-support
         component: app
     spec:
+      hostNetwork: true  # EC2 호스트의 Kafka/MySQL/Elasticsearch 접근을 위해 필요
+      dnsPolicy: ClusterFirstWithHostNet  # hostNetwork 사용 시 DNS 정책
       containers:
         - name: baro-support
           image: ghcr.io/do-develop-space/baro-support:latest
