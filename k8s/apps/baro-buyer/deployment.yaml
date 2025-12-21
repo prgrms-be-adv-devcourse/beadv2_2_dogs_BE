@@ -47,12 +47,12 @@ spec:
                   key: MYSQL_PASSWORD
             # MySQL 호스트 (EC2 Private IP)
             - name: EC2_IP
-              value: "CHANGE_ME_TO_EC2_IP"  # 실제 EC2 Private IP로 변경 필요
+              value: "127.0.0.1"
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://127.0.0.1:3306/barobuyer?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
+              value: "jdbc:mysql://$(EC2_IP):3306/barobuyer?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
             # Kafka 설정
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
-              value: "127.0.0.1:29092"
+              value: "$(EC2_IP):29092"
             # AWS 설정
             - name: AWS_ACCESS_KEY
               valueFrom:
