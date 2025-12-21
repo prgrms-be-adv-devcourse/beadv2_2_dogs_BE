@@ -87,15 +87,15 @@ logging:
     org.springframework.web.servlet.DispatcherServlet: DEBUG
 
 # Actuator 설정
-# management:
-#   endpoints:
-#     web:
-#       exposure:
-#         include: refresh, health, beans, info
-#   endpoint:
-#     health:
-#       enabled: true
-#       show-details: when-authorized
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans, info
+  endpoint:
+    health:
+      enabled: true
+      show-details: always
 
 # Swagger/OpenAPI 설정
 springdoc:
