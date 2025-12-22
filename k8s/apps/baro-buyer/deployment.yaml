@@ -55,9 +55,11 @@ spec:
             # Kafka 설정
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: "CHANGE_ME_TO_EC2_IP:29092"
-            # Redis 설정 (Kubernetes Service DNS 사용)
+            # Redis 설정
+            # 실제 배포 시 deploy-k8s.sh 스크립트가 자동으로 EC2 IP로 치환
+            # hostNetwork: true인 경우 127.0.0.1로, false인 경우 EC2 IP로 변경됨
             - name: SPRING_DATA_REDIS_HOST
-              value: "redis"
+              value: "CHANGE_ME_TO_EC2_IP"
             - name: SPRING_DATA_REDIS_PORT
               value: "6379"
             - name: SPRING_DATA_REDIS_PASSWORD
