@@ -309,6 +309,9 @@ if [ -f "$DEPLOYMENT_FILE" ]; then
         if grep -q "CHANGE_ME_TO_EC2_IP" "$TEMP_DEPLOYMENT"; then
             log_error "❌ IP 치환이 완료되지 않았습니다. 남은 CHANGE_ME_TO_EC2_IP 패턴:"
             grep -n "CHANGE_ME_TO_EC2_IP" "$TEMP_DEPLOYMENT" || true
+            log_error "배포를 중단합니다. 스크립트를 확인하세요."
+            rm -f "$TEMP_DEPLOYMENT"
+            exit 1
         else
             log_info "✅ IP 치환 완료: $REPLACEMENT_IP"
         fi
@@ -411,8 +414,20 @@ if [ -f "$DEPLOYMENT_FILE" ]; then
     if [ -n "$DEPLOYMENT_NAME" ]; then
         log_step "⏳ Pod가 Ready 상태가 될 때까지 대기 중..."
         $KUBECTL_CMD wait --for=condition=ready pod -l app="$APP_NAME" -n baro-prod --timeout=300s || {
-            log_warn "Pod가 Ready 상태가 되지 않았습니다. 로그를 확인하세요."
+            log_warn "Pod가 Ready 상태가 되지 않았습니다. 상태를 확인합니다..."
             $KUBECTL_CMD get pods -n baro-prod -l app="$APP_NAME"
+            
+            # 가장 최근 Pod의 로그 출력
+            LATEST_POD=$($KUBECTL_CMD get pods -n baro-prod -l app="$APP_NAME" --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1].metadata.name}' 2>/dev/null)
+            if [ -n "$LATEST_POD" ]; then
+                log_warn "📋 Pod 로그 ($LATEST_POD):"
+                $KUBECTL_CMD logs -n baro-prod "$LATEST_POD" --tail=50 || true
+                
+                log_warn "📊 Pod 이벤트:"
+                $KUBECTL_CMD describe pod -n baro-prod "$LATEST_POD" | grep -A 20 "Events:" || true
+            fi
+            
+            log_warn "💡 로그 확인 명령어: kubectl logs -n baro-prod -l app=$APP_NAME --tail=100"
             exit 1
         }
         

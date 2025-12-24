@@ -66,10 +66,10 @@ spec:
                   key: SPRING_MAIL_PASSWORD
           resources:
             requests:
-              memory: "256Mi"
+              memory: "512Mi"
               cpu: "200m"
             limits:
-              memory: "384Mi"
+              memory: "768Mi"
               cpu: "500m"
           livenessProbe:
             httpGet:
