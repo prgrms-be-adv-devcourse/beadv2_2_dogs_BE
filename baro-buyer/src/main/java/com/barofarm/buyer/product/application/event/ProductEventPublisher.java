@@ -1,8 +1,8 @@
 package com.barofarm.buyer.product.application.event;
 
-import com.barofarm.buyer.event.ProductEvent;
-import com.barofarm.buyer.event.ProductEvent.ProductEventType;
 import com.barofarm.buyer.product.domain.Product;
+import com.barofarm.buyer.product.event.ProductEvent;
+import com.barofarm.buyer.product.event.ProductEvent.ProductEventType;
 import com.barofarm.buyer.product.infrastructure.kafka.ProductEventProducer;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;

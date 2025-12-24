@@ -1,4 +1,4 @@
-package com.barofarm.buyer.event;
+package com.barofarm.buyer.product.event;
 
 import java.time.Instant;
 import java.util.UUID;
