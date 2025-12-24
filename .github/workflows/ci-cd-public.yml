@@ -514,6 +514,29 @@ jobs:
             fi
           fi
 
+          # data/docker 인프라 배포용 deploy-module.sh 복사
+          if [ -f "$GITHUB_WORKSPACE/scripts/deploy-module.sh" ]; then
+            mkdir -p /home/ubuntu/apps/BE/scripts
+            cp "$GITHUB_WORKSPACE/scripts/deploy-module.sh" ./scripts/ 2>/dev/null || {
+              echo "⚠️  BE/scripts deploy-module.sh 복사 실패, 재시도..."
+              mkdir -p ./scripts
+              cp "$GITHUB_WORKSPACE/scripts/deploy-module.sh" ./scripts/ || {
+                echo "❌ deploy-module.sh 복사 실패"
+                exit 1
+              }
+            }
+            chmod +x ./scripts/deploy-module.sh
+            echo "✅ deploy-module.sh 스크립트 복사 완료 (BE/scripts)"
+          else
+            echo "⚠️  [Public EC2 - Control-Plane] deploy-module.sh 스크립트를 찾을 수 없습니다: $GITHUB_WORKSPACE/scripts/deploy-module.sh"
+            echo "디버그 정보:"
+            echo "  - scripts 디렉토리 존재: $([ -d "$GITHUB_WORKSPACE/scripts" ] && echo 'yes' || echo 'no')"
+            if [ -d "$GITHUB_WORKSPACE/scripts" ]; then
+              echo "  - scripts 디렉토리 내용:"
+              ls -la "$GITHUB_WORKSPACE/scripts" 2>&1 | head -10 || true
+            fi
+          fi
+
           # data 모듈인 경우 docker-compose 파일 복사
           if [ "$MODULE" = "data" ]; then
             echo "📦 [Public EC2 - Control-Plane] data 모듈용 docker-compose 파일 복사 중..."
@@ -763,33 +786,25 @@ jobs:
           echo "   - 작업 디렉토리: /home/ubuntu/apps/BE"
           echo ""
 
-          # Elasticsearch 커스텀 이미지 빌드 (있으면)
-          if [ -d "./docker/baro-es" ]; then
-            echo "🔨 Elasticsearch 커스텀 이미지 빌드 중..."
-            docker build -t baro-elasticsearch:latest ./docker/baro-es/ || echo "⚠️ Elasticsearch 이미지 빌드 실패, 공식 이미지 사용을 시도합니다."
-          fi
-
-          # docker compose 명령어 선택
-          if command -v docker-compose &> /dev/null; then
-            DC_CMD="docker-compose"
-          else
-            DC_CMD="docker compose"
-          fi
-
-          # docker-compose.data.yml 배포
-          if [ -f "./docker-compose.data.yml" ]; then
-            echo "📝 docker-compose.data.yml 실행 중..."
-            $DC_CMD -f docker-compose.data.yml pull || echo "⚠️ 이미지 pull 실패, 계속 진행..."
-            $DC_CMD -f docker-compose.data.yml up -d || {
-              echo "❌ docker-compose.data.yml up 실패"
-              echo "📊 현재 컨테이너 상태:"
-              docker ps -a 2>&1 | head -30 || true
-              exit 1
-            }
-          else
+          # docker-compose.data.yml 존재 여부 확인 (deploy-module.sh도 이 파일을 사용)
+          if [ ! -f "./docker-compose.data.yml" ]; then
             echo "❌ docker-compose.data.yml 파일을 찾을 수 없습니다. (현재 디렉토리: $(pwd))"
             echo "디렉토리 내용:"
             ls -la . 2>&1 | head -30 || true
+            exit 1
+          fi
+
+          # 검증된 deploy-module.sh로 data 인프라 배포
+          if [ -f "./scripts/deploy-module.sh" ]; then
+            echo "📝 scripts/deploy-module.sh data 실행 중..."
+            GITHUB_TOKEN=${GITHUB_TOKEN} bash ./scripts/deploy-module.sh data || {
+              echo "❌ deploy-module.sh data 실행 실패"
+              exit 1
+            }
+          else
+            echo "❌ ./scripts/deploy-module.sh 스크립트를 찾을 수 없습니다."
+            echo "디렉토리 내용:"
+            ls -la ./scripts 2>&1 || echo "scripts 디렉토리가 없습니다."
             exit 1
           fi
 
