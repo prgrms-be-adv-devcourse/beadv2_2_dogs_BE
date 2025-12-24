@@ -1,6 +1,6 @@
 package com.barofarm.buyer.product.infrastructure.kafka;
 
-import com.barofarm.buyer.event.ProductEvent;
+import com.barofarm.buyer.product.event.ProductEvent;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.producer.ProducerConfig;

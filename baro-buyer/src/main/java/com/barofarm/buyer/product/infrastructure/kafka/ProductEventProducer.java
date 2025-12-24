@@ -1,6 +1,6 @@
 package com.barofarm.buyer.product.infrastructure.kafka;
 
-import com.barofarm.buyer.event.ProductEvent;
+import com.barofarm.buyer.product.event.ProductEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
