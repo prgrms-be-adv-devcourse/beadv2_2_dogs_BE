@@ -32,7 +32,7 @@ spec:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://localhost:8761/eureka/"  # hostNetwork: true 사용 시 localhost
             - name: JAVA_OPTS
-              value: "-Xms256m -Xmx384m"
+              value: "-Xms512m -Xmx512m"
             # MySQL 설정
             - name: MYSQL_DATABASE
               value: "baroseller"
@@ -73,10 +73,10 @@ spec:
                   key: AWS_S3_BUCKET_NAME
           resources:
             requests:
-              memory: "256Mi"
+              memory: "512Mi"
               cpu: "200m"
             limits:
-              memory: "384Mi"
+              memory: "768Mi"
               cpu: "500m"
           livenessProbe:
             httpGet:
