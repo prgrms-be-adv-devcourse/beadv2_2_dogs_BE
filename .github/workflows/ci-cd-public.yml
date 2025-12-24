@@ -514,6 +514,30 @@ jobs:
             fi
           fi
 
+          # data 모듈인 경우 docker-compose 파일 복사
+          if [ "$MODULE" = "data" ]; then
+            echo "📦 [Public EC2 - Control-Plane] data 모듈용 docker-compose 파일 복사 중..."
+            if [ -f "$GITHUB_WORKSPACE/docker-compose.data.yml" ]; then
+              cp "$GITHUB_WORKSPACE/docker-compose.data.yml" . || {
+                echo "❌ docker-compose.data.yml 복사 실패"
+                exit 1
+              }
+              echo "✅ docker-compose.data.yml 복사 완료"
+            else
+              echo "❌ docker-compose.data.yml 파일을 찾을 수 없습니다: $GITHUB_WORKSPACE/docker-compose.data.yml"
+              exit 1
+            fi
+
+            # Elasticsearch 빌드 컨텍스트 복사 (옵션)
+            if [ -d "$GITHUB_WORKSPACE/docker/baro-es" ]; then
+              echo "📦 [Public EC2 - Control-Plane] Elasticsearch 빌드 컨텍스트 복사 중..."
+              mkdir -p ./docker/baro-es
+              cp -r "$GITHUB_WORKSPACE/docker/baro-es"/* ./docker/baro-es/ 2>/dev/null || {
+                echo "⚠️  Elasticsearch 빌드 컨텍스트 복사 실패 (계속 진행)"
+              }
+            fi
+          fi
+
           # Elasticsearch 빌드 컨텍스트 복사 (커스텀 이미지 빌드용)
           if [ -d "$GITHUB_WORKSPACE/docker/baro-es" ]; then
             mkdir -p ./docker/baro-es
@@ -624,7 +648,7 @@ jobs:
           fi
 
       - name: Deploy to k8s
-        if: steps.k3s-check.outputs.k3s_available == 'true'
+        if: steps.k3s-check.outputs.k3s_available == 'true' && steps.module.outputs.name != 'data'
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
           IMAGE_TAG: ${{ needs.determine-service.outputs.image_tag }}
@@ -727,6 +751,53 @@ jobs:
             echo "📊 Node 상태:"
             $KUBECTL_CMD get nodes 2>&1 || true
           fi
+
+      - name: Deploy data with docker-compose
+        if: steps.module.outputs.name == 'data'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          cd /home/ubuntu/apps/BE
+          echo ""
+          echo "🚀 [Public EC2 - Control-Plane] data 인프라 docker-compose 배포 시작"
+          echo "   - 작업 디렉토리: /home/ubuntu/apps/BE"
+          echo ""
+
+          # Elasticsearch 커스텀 이미지 빌드 (있으면)
+          if [ -d "./docker/baro-es" ]; then
+            echo "🔨 Elasticsearch 커스텀 이미지 빌드 중..."
+            docker build -t baro-elasticsearch:latest ./docker/baro-es/ || echo "⚠️ Elasticsearch 이미지 빌드 실패, 공식 이미지 사용을 시도합니다."
+          fi
+
+          # docker compose 명령어 선택
+          if command -v docker-compose &> /dev/null; then
+            DC_CMD="docker-compose"
+          else
+            DC_CMD="docker compose"
+          fi
+
+          # docker-compose.data.yml 배포
+          if [ -f "./docker-compose.data.yml" ]; then
+            echo "📝 docker-compose.data.yml 실행 중..."
+            $DC_CMD -f docker-compose.data.yml pull || echo "⚠️ 이미지 pull 실패, 계속 진행..."
+            $DC_CMD -f docker-compose.data.yml up -d || {
+              echo "❌ docker-compose.data.yml up 실패"
+              echo "📊 현재 컨테이너 상태:"
+              docker ps -a 2>&1 | head -30 || true
+              exit 1
+            }
+          else
+            echo "❌ docker-compose.data.yml 파일을 찾을 수 없습니다. (현재 디렉토리: $(pwd))"
+            echo "디렉토리 내용:"
+            ls -la . 2>&1 | head -30 || true
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ [Public EC2 - Control-Plane] data 인프라 배포 완료"
+          echo ""
+          echo "📊 컨테이너 상태:"
+          docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "baro-|NAMES" || docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
   # ==================================================
   # Cleanup: 오래된 이미지 정리
