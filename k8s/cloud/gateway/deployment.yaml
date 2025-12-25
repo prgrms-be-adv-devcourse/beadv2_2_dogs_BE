@@ -31,13 +31,13 @@ spec:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://eureka:8761/eureka/"  # Kubernetes Service DNS 사용
             - name: JAVA_OPTS
-              value: "-Xms256m -Xmx512m"
+              value: "-Xms256m -Xmx384m"
           resources:
             requests:
               memory: "256Mi"
               cpu: "200m"
             limits:
-              memory: "512Mi"
+              memory: "384Mi"
               cpu: "1000m"
           livenessProbe:
             httpGet:
