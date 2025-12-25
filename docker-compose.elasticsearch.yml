@@ -1,0 +1,36 @@
+services:
+  elasticsearch:
+    build:
+      context: ./docker/elasticsearch
+    container_name: barofarm-es-local
+    environment:
+      - node.name=es01
+      - cluster.name=docker-cluster
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sSf http://localhost:9200 >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+#    networks:
+#      - baro-network
+
+volumes:
+  esdata:
+    driver: local
+
+networks:
+  baro-network:
+    name: be_baro-network
+    external: true

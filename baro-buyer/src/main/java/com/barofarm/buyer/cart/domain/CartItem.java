@@ -1,0 +1,120 @@
+package com.barofarm.buyer.cart.domain;
+
+import com.barofarm.buyer.cart.exception.CartErrorCode;
+import com.barofarm.buyer.common.entity.BaseEntity;
+import com.barofarm.buyer.common.exception.CustomException;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.util.Objects;
+import java.util.UUID;
+import lombok.Getter;
+
+@Schema(description = "장바구니 항목 정보")
+@Getter
+@Entity
+@Table(name = "cart_item")
+public class CartItem extends BaseEntity {
+
+  @Schema(description = "장바구니 항목 UUID")
+  @Id
+  private UUID id;
+
+  @Schema(description = "소속 장바구니")
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "cart_id", nullable = false)
+  private Cart cart;
+
+  @Schema(description = "상품 UUID")
+  @Column(name = "product_id", nullable = false)
+  private UUID productId;
+
+  @Schema(description = "수량")
+  @Column(nullable = false)
+  private Integer quantity;
+
+  @Schema(description = "단가")
+  @Column(name = "unit_price", nullable = false)
+  private Long unitPrice;
+
+  @Schema(description = "장바구니 항목의 옵션 정보를 JSON 형태로 저장")
+  @Column(name = "option_info_json")
+  private String optionInfoJson;
+
+  public CartItem() {}
+
+  /* ====== 정적 팩토리 메소드 ====== */
+
+  /** 새 장바구니 항목 생성 */
+  public static CartItem create(UUID productId, Integer quantity, Long unitPrice, String optionInfoJson) {
+      if (productId == null) {
+          throw new CustomException(CartErrorCode.PRODUCT_ID_NULL);
+      }
+      if (quantity == null || quantity <= 0) {
+          throw new CustomException(CartErrorCode.QUANTITY_MUST_BE_POSITIVE);
+      }
+      if (unitPrice == null || unitPrice <= 0) {
+          throw new CustomException(CartErrorCode.UNIT_PRICE_MUST_BE_POSITIVE);
+      }
+
+      CartItem item = new CartItem();
+      item.id = UUID.randomUUID();
+      item.productId = productId;
+      item.quantity = quantity;
+      item.unitPrice = unitPrice;
+      item.optionInfoJson = optionInfoJson;
+      return item;
+  }
+
+  /* ====== 비즈니스 메소드 ====== */
+
+  /** 수량 증가 */
+  public void increaseQuantity(int qty) {
+    if (qty <= 0) {
+      throw new CustomException(CartErrorCode.QUANTITY_MUST_BE_POSITIVE);
+    }
+    this.quantity += qty;
+    touch();
+  }
+
+  /** 수량 변경 */
+  public void changeQuantity(int qty) {
+    if (qty <= 0) {
+      throw new CustomException(CartErrorCode.QUANTITY_MUST_BE_POSITIVE);
+    }
+    this.quantity = qty;
+    touch();
+  }
+
+  /** 옵션 변경 */
+  public void changeOption(String optionInfoJson) {
+    this.optionInfoJson = optionInfoJson;
+    touch();
+  }
+
+  /** 단일 CartItem 금액 계산 */
+  public Long calculatePrice() {
+    return unitPrice * quantity;
+  }
+
+  /** 상품 UUID + 옵션 JSON이 동일한지 비교 */
+  public boolean isSameProductAndOption(CartItem other) {
+    return this.productId.equals(other.productId)
+        && Objects.equals(this.optionInfoJson, other.optionInfoJson);
+  }
+
+  /* ====== Cart와의 연관관계 관리 ====== */
+
+  public void bindToCart(Cart cart) {
+    this.cart = cart;
+  }
+
+  private void touch() {
+    updateTimestamp();
+  }
+}

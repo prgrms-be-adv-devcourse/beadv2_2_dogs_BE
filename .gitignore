@@ -82,4 +82,6 @@ logs/
 *.swp
 *~
 
+baro-auth/.env
 .env
+.secrets.env

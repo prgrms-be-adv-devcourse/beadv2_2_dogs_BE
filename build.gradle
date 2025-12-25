@@ -79,6 +79,6 @@ tasks.register('lint') {
 
 tasks.register('format') {
     group = 'verification'
-    description = '코드 자동 포맷팅'
+    description = '코드 자동 포맷용'
     dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'spotlessApply' } }
 }

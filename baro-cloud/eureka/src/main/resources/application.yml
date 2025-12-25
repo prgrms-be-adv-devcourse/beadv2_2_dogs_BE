@@ -1,9 +1,9 @@
 server:
-  port: 8761
+  port: 8761 # [1] README 기준 Eureka 포트
 
 spring:
   application:
-    name: eureka-server
+    name: eureka-server # [2] 서비스 ID(대시보드 타이틀 및 클라이언트 등록명)
 
 eureka:
   instance:
@@ -13,13 +13,16 @@ eureka:
     # IP 주소로 등록하여 Docker 환경에서 안정적으로 동작
     prefer-ip-address: true
   client:
-    register-with-eureka: false
-    fetch-registry: false
+    register-with-eureka: false # [4] 서버는 자기 자신을 다시 등록하지 않음
+    fetch-registry: false # [5] 다른 레지스트리에서 정보를 받아오지 않음(스탠드얼론 모드)
     service-url:
       # Docker 환경에서는 서비스 이름(eureka) 사용, 로컬에서는 localhost 사용
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
   server:
-    enable-self-preservation: false
-    eviction-interval-timer-in-ms: 5000
+    enable-self-preservation: false # [7] 데모용: 네트워크 단절 시에도 빠른 퇴출 허용(운영에서는 true 추천)
+    eviction-interval-timer-in-ms: 5000 # [8] 5초 주기로 Heartbeat 누락 인스턴스 제거
+
+# [footnotes]
+# [7] 운영 환경에서 false 설정은 장애나 일시적 네트워크 지연 시 대량 퇴출로 이어질 수 있으므로 주의.
 
 

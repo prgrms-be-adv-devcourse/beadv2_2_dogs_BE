@@ -1,13 +1,13 @@
-# 바로팜 프로젝트 구조
+# 바로팜 프로젝트 구조 (MSA)
 
-## 📦 모듈 구조 (모듈러 모놀리스)
+## 📦 모듈 구조 (Repository 기준)
 
 ```
 baro-farm/
 ├── baro-auth/                    # A. 인증 모듈
 │   ├── src/main/java/com/barofarm/auth/
 │   │   ├── AuthApplication.java
-│   │   └── auth/                 # 인증/인가 도메인
+│   │   └── auth/                 # 인증/인가 도메인, 구매자 및 회원관리 통합
 │   └── build.gradle
 │
 ├── baro-buyer/                   # B. 구매자 모듈
@@ -15,7 +15,8 @@ baro-farm/
 │   │   ├── BuyerApplication.java
 │   │   ├── buyer/                # 구매자 회원 관리
 │   │   ├── cart/                 # 장바구니 관리
-│   │   └── product/              # 상품 관리
+│   │   ├── product/              # 상품 관리
+│   │   └── inventory/            # 재고 관리
 │   └── build.gradle
 │
 ├── baro-seller/                  # C. 판매자 모듈
@@ -29,7 +30,8 @@ baro-farm/
 │   ├── src/main/java/com/barofarm/order/
 │   │   ├── OrderApplication.java
 │   │   ├── order/                # 주문 관리
-│   │   └── payment/              # 결제 관리
+│   │   ├── payment/              # 결제 관리
+│   │   └── deposit/              # 예치금 관리
 │   └── build.gradle
 │
 ├── baro-support/                 # E. 지원 모듈
@@ -43,19 +45,10 @@ baro-farm/
 │   │   └── review/               # 리뷰 관리
 │   └── build.gradle
 │
-├── baro-cloud/                   # F. 인프라 모듈 (개별 배포)
-│   ├── gateway/
-│   │   ├── src/main/java/com/barofarm/gateway/
-│   │   │   └── GatewayApplication.java
-│   │   └── build.gradle
-│   ├── config/
-│   │   ├── src/main/java/com/barofarm/config/
-│   │   │   └── ConfigApplication.java
-│   │   └── build.gradle
-│   └── eureka/
-│       ├── src/main/java/com/barofarm/eureka/
-│       │   └── EurekaApplication.java
-│       └── build.gradle
+└── baro-cloud/                   # F. 인프라 모듈
+    ├── gateway/                  # API Gateway
+    ├── config/                   # Config Server
+    └── eureka/                   # Service Registry
 │
 ├── config/checkstyle/            # 코드 품질 설정
 │   ├── checkstyle.xml
@@ -70,29 +63,28 @@ baro-farm/
 
 ## 🎯 아키텍처 특징
 
-### 모듈러 모놀리스 (Modular Monolith)
+### 마이크로서비스 구성
 
-- **하나의 모듈 = 하나의 JAR 파일**
-- **모듈 내부는 패키지로 도메인 분리**
-- **같은 모듈 내 도메인 간 메서드 호출**
-- **다른 모듈 간에는 Feign으로 통신**
+- 각 모듈은 **독립 JAR + 독립 프로세스**로 실행
+- 모듈 내부는 도메인별 패키지로 분리
+- 모듈 간 통신은 **Gateway(8080) + Eureka + Feign**을 사용
 
-### 배포 단위
+### 배포/포트
 
-| 모듈 | JAR 파일 | 포트 | 포함 도메인 |
-|------|---------|------|------------|
-| baro-auth | baro-auth.jar | 8081 | auth |
-| baro-buyer | baro-buyer.jar | 8082 | buyer, cart, product |
-| baro-seller | baro-seller.jar | 8085 | seller, farm |
-| baro-order | baro-order.jar | 8087 | order, payment |
-| baro-support | baro-support.jar | 8089 | settlement, delivery, notification, experience, search, review |
-| gateway | gateway.jar | 8080 | API Gateway |
-| config | config.jar | 8888 | Config Server |
-| eureka | eureka.jar | 8761 | Service Registry |
+| 모듈 | 포트 | 포함 도메인 |
+|------|------|------------|
+| gateway | 8080 | API Gateway |
+| eureka | 8761 | Service Registry |
+| config | 8888 | Config Server |
+| baro-auth | 8081 | auth |
+| baro-buyer | 8082 | buyer, cart, product |
+| baro-seller | 8085 | seller, farm |
+| baro-order | 8087 | order, payment |
+| baro-support | 8089 | settlement, delivery, notification, experience, search, review |
 
 ## 🔄 통신 방식
 
-### 모듈 내부 (같은 JAR)
+### 모듈 내부 (같은 서비스 내 호출)
 ```java
 // baro-buyer.jar 내부
 @Service
@@ -102,7 +94,7 @@ class CartService {
 }
 ```
 
-### 모듈 간 (다른 JAR)
+### 모듈 간 (다른 서비스)
 ```java
 // baro-order.jar → baro-buyer.jar
 @FeignClient("buyer-service")
@@ -152,18 +144,7 @@ java -jar baro-support/build/libs/baro-support-0.0.1-SNAPSHOT.jar
 java -jar baro-cloud/gateway/build/libs/gateway-0.0.1-SNAPSHOT.jar
 ```
 
-## 🎨 향후 MSA 전환 시
-
-모듈러 모놀리스에서 MSA로 전환하려면:
-
-1. 각 도메인 패키지를 독립 모듈로 분리
-2. 내부 메서드 호출을 Feign으로 변경
-3. 각각 독립 배포
-
-```
-baro-buyer.jar (3개 도메인)
-    ↓ 분리
-buyer-service.jar
-cart-service.jar
-product-service.jar
-```
+## 🎨 참고
+- API 호출은 모두 Gateway(8080)를 경유
+- 서비스 등록/발견은 Eureka(8761) 기반
+- 설정은 Config Server(8888)에서 관리 가능
