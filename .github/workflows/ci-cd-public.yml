@@ -794,17 +794,44 @@ jobs:
             exit 1
           fi
 
+          # be_baro-network 네트워크 사전 생성 (docker-compose.data.yml이 external로 선언)
+          echo "🌐 Docker 네트워크 확인 및 생성 중..."
+          if ! docker network ls --format '{{.Name}}' | grep -q "^be_baro-network$"; then
+            echo "📦 be_baro-network 네트워크 생성 중..."
+            NETWORK_OUTPUT=$(docker network create be_baro-network 2>&1)
+            NETWORK_EXIT_CODE=$?
+            if [ $NETWORK_EXIT_CODE -eq 0 ]; then
+              echo "✅ be_baro-network 네트워크 생성 완료"
+            elif echo "$NETWORK_OUTPUT" | grep -q "already exists"; then
+              echo "✅ be_baro-network 네트워크가 이미 존재합니다."
+            else
+              echo "❌ be_baro-network 네트워크 생성 실패: $NETWORK_OUTPUT"
+              exit 1
+            fi
+          else
+            echo "✅ be_baro-network 네트워크가 이미 존재합니다."
+          fi
+
           # 검증된 deploy-module.sh로 data 인프라 배포
           if [ -f "./scripts/deploy-module.sh" ]; then
             echo "📝 scripts/deploy-module.sh data 실행 중..."
+            echo "   - 스크립트 경로: $(pwd)/scripts/deploy-module.sh"
+            echo "   - 스크립트 권한: $(ls -la ./scripts/deploy-module.sh 2>&1 || echo 'not found')"
             GITHUB_TOKEN=${GITHUB_TOKEN} bash ./scripts/deploy-module.sh data || {
               echo "❌ deploy-module.sh data 실행 실패"
+              echo "디버그 정보:"
+              echo "  - 현재 디렉토리: $(pwd)"
+              echo "  - 스크립트 존재: $([ -f ./scripts/deploy-module.sh ] && echo 'yes' || echo 'no')"
+              echo "  - 네트워크 상태:"
+              docker network ls | grep -E "be_baro-network|NETWORK" || true
               exit 1
             }
           else
             echo "❌ ./scripts/deploy-module.sh 스크립트를 찾을 수 없습니다."
             echo "디렉토리 내용:"
             ls -la ./scripts 2>&1 || echo "scripts 디렉토리가 없습니다."
+            echo "전체 디렉토리 내용:"
+            ls -la . 2>&1 | head -30 || true
             exit 1
           fi
 
