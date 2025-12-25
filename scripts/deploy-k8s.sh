@@ -154,6 +154,21 @@ fi
 log_info "📍 EC2 Private IP: $EC2_IP"
 
 # ===================================
+# Namespace 생성 (없으면)
+# ===================================
+log_step "📦 Checking namespace: baro-prod..."
+if ! $KUBECTL_CMD get namespace baro-prod &> /dev/null 2>&1; then
+    log_info "Creating namespace: baro-prod..."
+    $KUBECTL_CMD create namespace baro-prod || {
+        log_error "❌ Failed to create namespace baro-prod"
+        exit 1
+    }
+    log_info "✅ Namespace baro-prod created"
+else
+    log_info "✅ Namespace baro-prod already exists"
+fi
+
+# ===================================
 # 모듈별 배포 경로 결정
 # ===================================
 case "$MODULE_NAME" in
