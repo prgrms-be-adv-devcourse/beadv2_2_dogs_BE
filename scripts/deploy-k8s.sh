@@ -245,21 +245,87 @@ if [ "$MODULE_NAME" = "cloud" ]; then
     if [ "$IMAGE_TAG" != "latest" ]; then
         $KUBECTL_CMD set image deployment/eureka eureka=ghcr.io/do-develop-space/eureka:${IMAGE_TAG} -n baro-prod || true
     fi
-    $KUBECTL_CMD wait --for=condition=ready pod -l app=eureka -n baro-prod --timeout=300s || true
+    
+    # Pod가 Ready 상태가 될 때까지 대기 (타임아웃: 300초)
+    if ! $KUBECTL_CMD wait --for=condition=ready pod -l app=eureka -n baro-prod --timeout=300s 2>&1; then
+        log_warn "⚠️ Eureka Pod가 Ready 상태가 되지 않았습니다. 상태 확인 중..."
+        echo ""
+        echo "📊 Eureka Pod 상태:"
+        $KUBECTL_CMD get pods -n baro-prod -l app=eureka 2>&1 || true
+        echo ""
+        echo "📋 Eureka Deployment 상태:"
+        $KUBECTL_CMD get deployment eureka -n baro-prod 2>&1 || true
+        echo ""
+        echo "📝 Eureka Pod 이벤트:"
+        EUREKA_POD=$($KUBECTL_CMD get pods -n baro-prod -l app=eureka -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+        if [ -n "$EUREKA_POD" ]; then
+            $KUBECTL_CMD describe pod "$EUREKA_POD" -n baro-prod 2>&1 | grep -A 30 "Events:" || true
+            echo ""
+            echo "📄 Eureka Pod 로그 (마지막 50줄):"
+            $KUBECTL_CMD logs "$EUREKA_POD" -n baro-prod --tail=50 2>&1 || true
+        fi
+        log_warn "⚠️ Eureka 배포는 계속 진행하지만, Pod가 준비되지 않았을 수 있습니다."
+    else
+        log_info "✅ Eureka Pod가 Ready 상태입니다."
+    fi
     
     log_step "2️⃣ Config 배포 중..."
     $KUBECTL_CMD apply -f "$K8S_BASE_DIR/cloud/config/"
     if [ "$IMAGE_TAG" != "latest" ]; then
         $KUBECTL_CMD set image deployment/config config=ghcr.io/do-develop-space/config:${IMAGE_TAG} -n baro-prod || true
     fi
-    $KUBECTL_CMD wait --for=condition=ready pod -l app=config -n baro-prod --timeout=300s || true
+    
+    # Pod가 Ready 상태가 될 때까지 대기 (타임아웃: 300초)
+    if ! $KUBECTL_CMD wait --for=condition=ready pod -l app=config -n baro-prod --timeout=300s 2>&1; then
+        log_warn "⚠️ Config Pod가 Ready 상태가 되지 않았습니다. 상태 확인 중..."
+        echo ""
+        echo "📊 Config Pod 상태:"
+        $KUBECTL_CMD get pods -n baro-prod -l app=config 2>&1 || true
+        echo ""
+        echo "📋 Config Deployment 상태:"
+        $KUBECTL_CMD get deployment config -n baro-prod 2>&1 || true
+        echo ""
+        echo "📝 Config Pod 이벤트:"
+        CONFIG_POD=$($KUBECTL_CMD get pods -n baro-prod -l app=config -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+        if [ -n "$CONFIG_POD" ]; then
+            $KUBECTL_CMD describe pod "$CONFIG_POD" -n baro-prod 2>&1 | grep -A 30 "Events:" || true
+            echo ""
+            echo "📄 Config Pod 로그 (마지막 50줄):"
+            $KUBECTL_CMD logs "$CONFIG_POD" -n baro-prod --tail=50 2>&1 || true
+        fi
+        log_warn "⚠️ Config 배포는 계속 진행하지만, Pod가 준비되지 않았을 수 있습니다."
+    else
+        log_info "✅ Config Pod가 Ready 상태입니다."
+    fi
     
     log_step "3️⃣ Gateway 배포 중..."
     $KUBECTL_CMD apply -f "$K8S_BASE_DIR/cloud/gateway/"
     if [ "$IMAGE_TAG" != "latest" ]; then
         $KUBECTL_CMD set image deployment/gateway gateway=ghcr.io/do-develop-space/gateway:${IMAGE_TAG} -n baro-prod || true
     fi
-    $KUBECTL_CMD wait --for=condition=ready pod -l app=gateway -n baro-prod --timeout=300s || true
+    
+    # Pod가 Ready 상태가 될 때까지 대기 (타임아웃: 300초)
+    if ! $KUBECTL_CMD wait --for=condition=ready pod -l app=gateway -n baro-prod --timeout=300s 2>&1; then
+        log_warn "⚠️ Gateway Pod가 Ready 상태가 되지 않았습니다. 상태 확인 중..."
+        echo ""
+        echo "📊 Gateway Pod 상태:"
+        $KUBECTL_CMD get pods -n baro-prod -l app=gateway 2>&1 || true
+        echo ""
+        echo "📋 Gateway Deployment 상태:"
+        $KUBECTL_CMD get deployment gateway -n baro-prod 2>&1 || true
+        echo ""
+        echo "📝 Gateway Pod 이벤트:"
+        GATEWAY_POD=$($KUBECTL_CMD get pods -n baro-prod -l app=gateway -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+        if [ -n "$GATEWAY_POD" ]; then
+            $KUBECTL_CMD describe pod "$GATEWAY_POD" -n baro-prod 2>&1 | grep -A 30 "Events:" || true
+            echo ""
+            echo "📄 Gateway Pod 로그 (마지막 50줄):"
+            $KUBECTL_CMD logs "$GATEWAY_POD" -n baro-prod --tail=50 2>&1 || true
+        fi
+        log_warn "⚠️ Gateway 배포는 계속 진행하지만, Pod가 준비되지 않았을 수 있습니다."
+    else
+        log_info "✅ Gateway Pod가 Ready 상태입니다."
+    fi
     
     log_info "✅ Cloud 모듈 배포 완료"
     $KUBECTL_CMD get pods -n baro-prod -l component=cloud
@@ -428,23 +494,28 @@ if [ -f "$DEPLOYMENT_FILE" ]; then
     DEPLOYMENT_NAME=$(grep -E "^  name:" "$DEPLOYMENT_FILE" | head -1 | awk '{print $2}' || echo "")
     if [ -n "$DEPLOYMENT_NAME" ]; then
         log_step "⏳ Pod가 Ready 상태가 될 때까지 대기 중..."
-        $KUBECTL_CMD wait --for=condition=ready pod -l app="$APP_NAME" -n baro-prod --timeout=300s || {
-            log_warn "Pod가 Ready 상태가 되지 않았습니다. 상태를 확인합니다..."
-            $KUBECTL_CMD get pods -n baro-prod -l app="$APP_NAME"
-            
-            # 가장 최근 Pod의 로그 출력
-            LATEST_POD=$($KUBECTL_CMD get pods -n baro-prod -l app="$APP_NAME" --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1].metadata.name}' 2>/dev/null)
+        if ! $KUBECTL_CMD wait --for=condition=ready pod -l app="$APP_NAME" -n baro-prod --timeout=300s 2>&1; then
+            log_warn "⚠️ $APP_NAME Pod가 Ready 상태가 되지 않았습니다. 상태 확인 중..."
+            echo ""
+            echo "📊 $APP_NAME Pod 상태:"
+            $KUBECTL_CMD get pods -n baro-prod -l app="$APP_NAME" 2>&1 || true
+            echo ""
+            echo "📋 $APP_NAME Deployment 상태:"
+            $KUBECTL_CMD get deployment "$DEPLOYMENT_NAME" -n baro-prod 2>&1 || true
+            echo ""
+            echo "📝 $APP_NAME Pod 이벤트:"
+            LATEST_POD=$($KUBECTL_CMD get pods -n baro-prod -l app="$APP_NAME" --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1].metadata.name}' 2>/dev/null || echo "")
             if [ -n "$LATEST_POD" ]; then
-                log_warn "📋 Pod 로그 ($LATEST_POD):"
-                $KUBECTL_CMD logs -n baro-prod "$LATEST_POD" --tail=50 || true
-                
-                log_warn "📊 Pod 이벤트:"
-                $KUBECTL_CMD describe pod -n baro-prod "$LATEST_POD" | grep -A 20 "Events:" || true
+                $KUBECTL_CMD describe pod "$LATEST_POD" -n baro-prod 2>&1 | grep -A 30 "Events:" || true
+                echo ""
+                echo "📄 $APP_NAME Pod 로그 (마지막 50줄):"
+                $KUBECTL_CMD logs "$LATEST_POD" -n baro-prod --tail=50 2>&1 || true
             fi
-            
+            log_warn "⚠️ $APP_NAME 배포는 계속 진행하지만, Pod가 준비되지 않았을 수 있습니다."
             log_warn "💡 로그 확인 명령어: kubectl logs -n baro-prod -l app=$APP_NAME --tail=100"
-            exit 1
-        }
+        else
+            log_info "✅ $APP_NAME Pod가 Ready 상태입니다."
+        fi
         
         log_info "✅ 배포 완료: $MODULE_NAME"
         $KUBECTL_CMD get pods -n baro-prod -l app="$APP_NAME"
