@@ -4,7 +4,8 @@ server:
 spring:
   application:
     name: gateway-service
-
+  config:
+    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://config:8888}
   cloud:
     gateway:
       globalcors:

@@ -22,6 +22,8 @@ services:
       - SPRING_MAIL_USERNAME=${SPRING_MAIL_USERNAME}
       - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
       - JAVA_OPTS=-Xms256m -Xmx384m
+    volumes:
+      - /mnt/s3:/mnt/s3:rw
     restart: unless-stopped
     networks:
       - baro-network

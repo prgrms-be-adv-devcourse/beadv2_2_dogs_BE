@@ -46,6 +46,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator' // 251211: actuator 노출로 health 확인 허용
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.cloud:spring-cloud-starter-config' // Config Server 클라이언트
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
 
     // 이메일 관련 인증 관련
