@@ -32,7 +32,8 @@ spec:
               name: http
               protocol: TCP
           env:
-            # SPRING_PROFILES_ACTIVE는 설정하지 않음 (기본값 application.yml 사용)
+            - name: SPRING_PROFILES_ACTIVE
+              value: "git"  # Git 모드 사용 (application.yml에 git 설정이 있으므로 필요)
             # 로컬 개발 시에만 SPRING_PROFILES_ACTIVE=local로 설정하여 application-local.yml 사용
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://localhost:8761/eureka/"  # hostNetwork: true 사용 시 localhost
