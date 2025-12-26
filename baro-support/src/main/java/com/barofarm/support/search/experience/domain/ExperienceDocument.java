@@ -42,6 +42,9 @@ public class ExperienceDocument {
     @JsonFormat(pattern = "uuuu-MM-dd'T'HH:mm:ssX", timezone = "UTC")
     private Instant updatedAt; // 검색 결과 반환 로직 내에서 최신순으로 정렬
 
+    @Field(type = FieldType.Keyword)
+    private String experienceNameChosung;
+
     public ExperienceDocument() {
     }
 
@@ -49,6 +52,7 @@ public class ExperienceDocument {
     public ExperienceDocument(
         UUID experienceId,
         String experienceName,
+        String experienceNameChosung,
         Long pricePerPerson,
         Integer capacity,
         Integer durationMinutes,
@@ -58,6 +62,7 @@ public class ExperienceDocument {
         Instant updatedAt) {
         this.experienceId = experienceId;
         this.experienceName = experienceName;
+        this.experienceNameChosung = experienceNameChosung;
         this.pricePerPerson = pricePerPerson;
         this.capacity = capacity;
         this.durationMinutes = durationMinutes;

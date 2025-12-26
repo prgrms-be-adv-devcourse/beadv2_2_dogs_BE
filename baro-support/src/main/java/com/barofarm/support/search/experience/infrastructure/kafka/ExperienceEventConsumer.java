@@ -13,10 +13,6 @@ public class ExperienceEventConsumer {
 
     private final ExperienceSearchService experienceSearchService;
 
-    // TODO: Producer 구현 후 테스트용 Controller 및 IndexRequest DTO 삭제 예정
-    // - ExperienceIndexingController
-    // - ExperienceIndexRequest
-
     // Experience 모듈에서 상품 CRUD 시 experience-events 토픽에 메세지 발행
     @KafkaListener(topics = "experience-events", groupId = "search-service")
     public void onMessage(ExperienceEvent event) {

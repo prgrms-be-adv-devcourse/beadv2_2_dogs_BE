@@ -15,10 +15,6 @@ public class ProductEventConsumer {
 
     private final ProductSearchService productSearchService;
 
-    // TODO: Producer 구현 후 테스트용 Controller 및 IndexRequest DTO 삭제 예정
-    // - ProductIndexingController
-    // - ProductIndexRequest
-
     // Product 모듈에서 상품 CRUD 시 product-events 토픽에 메세지 발행
     @KafkaListener(topics = "product-events", groupId = "search-service")
     public void onMessage(ProductEvent event) {
