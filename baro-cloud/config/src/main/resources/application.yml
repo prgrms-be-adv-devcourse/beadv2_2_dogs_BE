@@ -25,8 +25,15 @@ spring:
           clone-on-start: false
           # Git 저장소 검색 경로
           # 각 모듈 디렉토리의 src/main/resources/에서 설정 파일을 찾음
+          # Config Server 자체의 설정 파일(baro-cloud/config)은 제외
           search-paths:
-            - '**/src/main/resources'
+            - 'baro-auth/src/main/resources'
+            - 'baro-buyer/src/main/resources'
+            - 'baro-seller/src/main/resources'
+            - 'baro-order/src/main/resources'
+            - 'baro-support/src/main/resources'
+            - 'baro-cloud/gateway/src/main/resources'
+            - 'baro-cloud/eureka/src/main/resources'
 
 eureka:
   client:
