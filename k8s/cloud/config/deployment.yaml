@@ -30,7 +30,7 @@ spec:
             # SPRING_PROFILES_ACTIVE는 설정하지 않음 (기본값 application.yml 사용)
             # 로컬 개발 시에만 SPRING_PROFILES_ACTIVE=local로 설정하여 application-local.yml 사용
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-              value: "http://eureka:8761/eureka/"  # Kubernetes Service DNS 사용
+              value: "http://localhost:8761/eureka/"  # hostNetwork: true 사용 시 localhost
             - name: JAVA_OPTS
               value: "-Xms256m -Xmx512m"
             # Git 저장소 설정
