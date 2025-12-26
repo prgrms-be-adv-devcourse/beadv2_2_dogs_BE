@@ -17,6 +17,7 @@ spec:
         app: eureka
         component: cloud
     spec:
+      hostNetwork: true
       containers:
         - name: eureka
           image: ghcr.io/do-develop-space/eureka:latest
