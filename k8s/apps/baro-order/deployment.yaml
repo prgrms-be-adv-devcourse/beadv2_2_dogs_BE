@@ -29,8 +29,10 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
+            - name: SERVER_PORT
+              value: "8087"  # Config Server 설정 덮어쓰기 방지
             - name: SPRING_CONFIG_IMPORT
-              value: "optional:configserver:http://config:8888"
+              value: "optional:configserver:http://localhost:8888"  # hostNetwork: true 사용 시 localhost
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://localhost:8761/eureka/"  # hostNetwork: true 사용 시 localhost
             - name: JAVA_OPTS

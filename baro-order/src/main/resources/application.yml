@@ -1,5 +1,5 @@
 server:
-  port: 8087
+  port: ${SERVER_PORT:8087}  # 환경 변수로 오버라이드 가능 (Config Server 설정 덮어쓰기 방지)
 
 api:
   v1: /api/v1
