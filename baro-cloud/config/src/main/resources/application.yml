@@ -4,11 +4,9 @@ server:
 spring:
   application:
     name: config-server # [2] 설정 조회 URL과 Eureka 서비스 ID에 사용
-  profiles:
-    # 기본값은 git (프로덕션용)
-    # 로컬 개발 시에는 local 프로파일 사용 (application-local.yml)
-    # native 모드 사용 시: active: native 과 함께 spring.cloud.config.server.native.search-locations 설정
-    active: git
+  # profiles.active는 환경 변수 SPRING_PROFILES_ACTIVE로 설정
+  # 기본값은 git (프로덕션용), 로컬 개발 시에는 local 프로파일 사용 (application-local.yml)
+  # native 모드 사용 시: SPRING_PROFILES_ACTIVE=native 과 함께 spring.cloud.config.server.native.search-locations 설정
   cloud:
     config:
       server:
