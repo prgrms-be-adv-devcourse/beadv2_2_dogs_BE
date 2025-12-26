@@ -35,6 +35,9 @@ spring:
 
 eureka:
   client:
+    # Eureka 서버에 등록 (Config Server의 eureka-server 설정과 충돌 방지)
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
       # Docker 환경에서는 서비스 이름(eureka) 사용, 로컬에서는 localhost 사용
       # 환경 변수 EUREKA_CLIENT_SERVICEURL_DEFAULTZONE으로 오버라이드 가능
