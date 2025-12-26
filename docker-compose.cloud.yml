@@ -16,6 +16,8 @@ services:
       # Docker 환경에서는 서비스 이름(eureka) 사용 (기본값)
       # 로컬 개발 시 EUREKA_INSTANCE_HOSTNAME=localhost로 오버라이드 가능
       - EUREKA_INSTANCE_HOSTNAME=${EUREKA_INSTANCE_HOSTNAME:-eureka}
+    volumes:
+      - /mnt/s3:/mnt/s3:rw
     restart: unless-stopped
     networks:
       - baro-network
@@ -38,6 +40,9 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
       - JAVA_OPTS=-Xms128m -Xmx256m
+    volumes:
+      # S3 마운트 경로 (로그 저장용: /mnt/s3/logs/config/)
+      - /mnt/s3:/mnt/s3:rw
     depends_on:
       eureka:
         condition: service_healthy
@@ -65,6 +70,9 @@ services:
       # - SPRING_DATA_REDIS_HOST=redis
       # - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
       - JAVA_OPTS=-Xms256m -Xmx512m
+    volumes:
+      # S3 마운트 경로 (로그 저장용: /mnt/s3/logs/gateway/)
+      - /mnt/s3:/mnt/s3:rw
     depends_on:
       eureka:
         condition: service_healthy
