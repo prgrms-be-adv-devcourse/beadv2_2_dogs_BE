@@ -13,13 +13,13 @@ services:
     volumes:
       - redis-data:/data
       - /mnt/s3:/mnt/s3:rw
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123} --maxmemory 384mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123} --maxmemory 256mb --maxmemory-policy allkeys-lru
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
         reservations:
-          memory: 192M
+          memory: 128M
     restart: unless-stopped
     networks:
       - baro-network
@@ -40,10 +40,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 768M
+          memory: 512M
         reservations:
-          memory: 384M
-    command: --innodb-buffer-pool-size=512M --max-connections=100 --lower-case-table-names=1
+          memory: 256M
+    command: --innodb-buffer-pool-size=256M --max-connections=100 --lower-case-table-names=1
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
       - MYSQL_DATABASE=${MYSQL_DATABASE:-barofarm}
@@ -112,13 +112,13 @@ services:
       # 로그 설정
       KAFKA_LOG_DIRS: /var/lib/kafka/data
       # 메모리 제한
-      KAFKA_HEAP_OPTS: -Xmx256m -Xms192m
+      KAFKA_HEAP_OPTS: -Xmx192m -Xms128m
     deploy:
       resources:
         limits:
-          memory: 384M
+          memory: 256M
         reservations:
-          memory: 192M
+          memory: 128M
     volumes:
       - kafka-data:/var/lib/kafka/data
       - /mnt/s3:/mnt/s3:rw
