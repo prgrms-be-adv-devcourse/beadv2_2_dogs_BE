@@ -112,13 +112,13 @@ services:
       # 로그 설정
       KAFKA_LOG_DIRS: /var/lib/kafka/data
       # 메모리 제한
-      KAFKA_HEAP_OPTS: -Xmx192m -Xms128m
+      KAFKA_HEAP_OPTS: -Xmx256m -Xms192m
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 512M
         reservations:
-          memory: 128M
+          memory: 256M
     volumes:
       - kafka-data:/var/lib/kafka/data
       - /mnt/s3:/mnt/s3:rw
