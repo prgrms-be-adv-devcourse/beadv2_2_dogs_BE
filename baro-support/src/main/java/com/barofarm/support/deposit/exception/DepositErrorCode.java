@@ -1,6 +1,6 @@
 package com.barofarm.support.deposit.exception;
 
-import com.barofarm.support.common.exception.BaseErrorCode;
+import com.barofarm.exception.BaseErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

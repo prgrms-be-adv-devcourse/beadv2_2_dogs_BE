@@ -13,8 +13,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.barofarm.exception.CustomException;
 import com.barofarm.support.common.client.FarmClient;
-import com.barofarm.support.common.exception.CustomException;
 import com.barofarm.support.experience.application.dto.ReservationServiceRequest;
 import com.barofarm.support.experience.application.dto.ReservationServiceResponse;
 import com.barofarm.support.experience.application.event.ReservationEventPublisher;

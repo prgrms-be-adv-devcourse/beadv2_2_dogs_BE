@@ -20,6 +20,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.database.JpaItemWriter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,8 +37,8 @@ public class MonthSettlementBatchConfig{
 
     @Bean
     public Job monthlySettlementJob(JobRepository jobRepository,
-                                    Step settlementItemStep,
-                                    Step settlementStatementStep) {
+                                    @Qualifier("settlementItemStep") Step settlementItemStep,
+                                    @Qualifier("settlementStatementStep") Step settlementStatementStep) {
         return new JobBuilder("monthlySettlementJob", jobRepository)
             .start(settlementItemStep)
             .next(settlementStatementStep)

@@ -1,7 +1,7 @@
 package com.barofarm.support.review.client.order;
 
-import com.barofarm.support.common.exception.CommonErrorCode;
-import com.barofarm.support.common.exception.CustomException;
+import com.barofarm.exception.CommonErrorCode;
+import com.barofarm.exception.CustomException;
 import com.barofarm.support.review.exception.ReviewErrorCode;
 import feign.Response;
 import feign.codec.ErrorDecoder;

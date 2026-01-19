@@ -2,7 +2,7 @@ package com.barofarm.support.delivery.application;
 
 import static com.barofarm.support.delivery.exception.DeliveryErrorCode.DELIVERY_NOT_FOUND;
 
-import com.barofarm.support.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.support.delivery.application.dto.DeliveryCreateCommand;
 import com.barofarm.support.delivery.application.dto.DeliveryDetailInfo;
 import com.barofarm.support.delivery.application.dto.ShipDeliveryCommand;

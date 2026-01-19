@@ -1,12 +1,12 @@
 package com.barofarm.ai.search.application;
 
-import com.barofarm.ai.common.response.CustomPage;
 import com.barofarm.ai.search.application.dto.UnifiedAutoCompleteResponse;
 import com.barofarm.ai.search.application.dto.UnifiedSearchResponse;
 import com.barofarm.ai.search.application.dto.experience.ExperienceAutoCompleteResponse;
 import com.barofarm.ai.search.application.dto.experience.ExperienceSearchResponse;
 import com.barofarm.ai.search.application.dto.product.ProductAutoCompleteResponse;
 import com.barofarm.ai.search.application.dto.product.ProductSearchResponse;
+import com.barofarm.dto.CustomPage;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;

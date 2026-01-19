@@ -6,7 +6,9 @@ import com.barofarm.buyer.cart.domain.Cart;
 import com.barofarm.buyer.cart.domain.CartItem;
 import com.barofarm.buyer.cart.domain.CartRepository;
 import com.barofarm.buyer.cart.exception.CartErrorCode;
-import com.barofarm.buyer.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
+import com.barofarm.log.history.annotation.TrackHistory;
+import com.barofarm.log.history.model.HistoryEventType;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ public class CartService {
 
   // 장바구니에 상품 추가
   @Transactional
+  @TrackHistory(HistoryEventType.CART_ITEM_ADDED)
   public CartInfo addItem(UUID buyerId, String sessionKey, AddItemCommand command) {
     // 1. 장바구니 조회 또는 신규 생성
     Cart cart = findOrCreateCart(buyerId, sessionKey);
@@ -57,6 +60,7 @@ public class CartService {
 
   // 장바구니 항목 수량 변경
   @Transactional
+  @TrackHistory(HistoryEventType.CART_QUANTITY_UPDATED)
   public CartInfo updateQuantity(UUID buyerId, String sessionKey, UUID itemId, int quantity) {
     Cart cart = findCart(buyerId, sessionKey);
     boolean updated = cart.updateQuantity(itemId, quantity);
@@ -79,6 +83,7 @@ public class CartService {
 
   // 장바구니 항목 삭제
   @Transactional
+  @TrackHistory(HistoryEventType.CART_ITEM_REMOVED)
   public void removeItem(UUID buyerId, String sessionKey, UUID itemId) {
     Cart cart = findCart(buyerId, sessionKey);
     cart.removeItem(itemId);

@@ -1,6 +1,6 @@
 package com.barofarm.seller.seller.config;
 
-import com.barofarm.seller.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.seller.seller.exception.FeignErrorCode;
 import feign.Response;
 import feign.codec.ErrorDecoder;

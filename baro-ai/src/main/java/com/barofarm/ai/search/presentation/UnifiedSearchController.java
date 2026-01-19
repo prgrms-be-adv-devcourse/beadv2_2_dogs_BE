@@ -1,9 +1,9 @@
 package com.barofarm.ai.search.presentation;
 
-import com.barofarm.ai.common.response.ResponseDto;
 import com.barofarm.ai.search.application.UnifiedSearchService;
 import com.barofarm.ai.search.application.dto.UnifiedAutoCompleteResponse;
 import com.barofarm.ai.search.application.dto.UnifiedSearchResponse;
+import com.barofarm.dto.ResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,8 +1,8 @@
 package com.barofarm.buyer.cart.domain;
 
 import com.barofarm.buyer.cart.exception.CartErrorCode;
-import com.barofarm.buyer.common.entity.BaseEntity;
-import com.barofarm.buyer.common.exception.CustomException;
+import com.barofarm.common.entity.BaseEntity;
+import com.barofarm.exception.CustomException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

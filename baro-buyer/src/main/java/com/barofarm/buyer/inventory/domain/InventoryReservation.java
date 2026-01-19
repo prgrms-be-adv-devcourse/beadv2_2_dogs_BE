@@ -3,7 +3,7 @@ package com.barofarm.buyer.inventory.domain;
 import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.ALREADY_CANCELED;
 import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.ALREADY_CONFIRMED;
 
-import com.barofarm.buyer.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

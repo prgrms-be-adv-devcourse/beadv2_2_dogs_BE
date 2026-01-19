@@ -1,11 +1,11 @@
 package com.barofarm.auth.application;
 
 import com.barofarm.auth.application.port.out.EmailCodeSender;
-import com.barofarm.auth.common.exception.CustomException;
 import com.barofarm.auth.domain.verification.EmailVerification;
 import com.barofarm.auth.exception.VerificationErrorCode;
 import com.barofarm.auth.infrastructure.jpa.EmailVerificationJpaRepository;
 import com.barofarm.auth.infrastructure.mail.ConsoleEmailCodeSender;
+import com.barofarm.exception.CustomException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;

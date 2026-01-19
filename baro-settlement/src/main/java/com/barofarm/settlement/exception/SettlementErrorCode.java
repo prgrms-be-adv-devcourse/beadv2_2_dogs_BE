@@ -1,6 +1,6 @@
 package com.barofarm.settlement.exception;
 
-import com.barofarm.settlement.common.exception.BaseErrorCode;
+import com.barofarm.exception.BaseErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

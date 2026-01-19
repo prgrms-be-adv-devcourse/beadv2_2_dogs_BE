@@ -1,10 +1,10 @@
 package com.barofarm.buyer.product.application;
 
-import com.barofarm.buyer.common.exception.CustomException;
 import com.barofarm.buyer.product.application.dto.internal.ReviewProductInfo;
 import com.barofarm.buyer.product.domain.Product;
 import com.barofarm.buyer.product.domain.ProductRepository;
 import com.barofarm.buyer.product.exception.ProductErrorCode;
+import com.barofarm.exception.CustomException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

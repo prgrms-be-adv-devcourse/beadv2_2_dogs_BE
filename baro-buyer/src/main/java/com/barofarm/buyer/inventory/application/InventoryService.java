@@ -5,7 +5,6 @@ import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INVENTOR
 import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INVENTORY_NOT_FOUND;
 import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INVENTORY_RESERVATION_NOT_FOUND;
 
-import com.barofarm.buyer.common.exception.CustomException;
 import com.barofarm.buyer.inventory.application.dto.request.InventoryCancelCommand;
 import com.barofarm.buyer.inventory.application.dto.request.InventoryConfirmCommand;
 import com.barofarm.buyer.inventory.application.dto.request.InventoryCreateCommand;
@@ -15,6 +14,7 @@ import com.barofarm.buyer.inventory.domain.InventoryRepository;
 import com.barofarm.buyer.inventory.domain.InventoryReservation;
 import com.barofarm.buyer.inventory.domain.InventoryReservationRepository;
 import com.barofarm.buyer.inventory.domain.InventoryReservationStatus;
+import com.barofarm.exception.CustomException;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

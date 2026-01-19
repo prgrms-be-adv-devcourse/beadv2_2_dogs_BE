@@ -1,6 +1,5 @@
 package com.barofarm.buyer.inventory.infrastructure.kafka.consumer;
 
-import com.barofarm.buyer.common.exception.CustomException;
 import com.barofarm.buyer.inventory.application.InventoryFacadeService;
 import com.barofarm.buyer.inventory.domain.InventoryOutboxEvent;
 import com.barofarm.buyer.inventory.domain.InventoryOutboxEventRepository;
@@ -8,6 +7,7 @@ import com.barofarm.buyer.inventory.exception.InventoryErrorCode;
 import com.barofarm.buyer.inventory.infrastructure.kafka.consumer.dto.PaymentConfirmedEvent;
 import com.barofarm.buyer.inventory.infrastructure.kafka.producer.dto.InventoryConfirmedEvent;
 import com.barofarm.buyer.inventory.infrastructure.kafka.producer.dto.InventoryConfirmedFailEvent;
+import com.barofarm.exception.CustomException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;

@@ -2,7 +2,7 @@ package com.barofarm.order.order.infrastructure.kafka.consumer;
 
 import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 
-import com.barofarm.order.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.order.order.domain.Order;
 import com.barofarm.order.order.domain.OrderRepository;
 import com.barofarm.order.order.infrastructure.kafka.consumer.dto.InventoryConfirmedEvent;

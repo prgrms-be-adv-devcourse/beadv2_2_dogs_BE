@@ -1,6 +1,6 @@
 package com.barofarm.payment.payment.exception;
 
-import com.barofarm.payment.common.exception.BaseErrorCode;
+import com.barofarm.exception.BaseErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

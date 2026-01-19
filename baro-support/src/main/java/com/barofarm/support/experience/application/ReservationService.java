@@ -1,6 +1,6 @@
 package com.barofarm.support.experience.application;
 
-import com.barofarm.support.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.support.experience.application.dto.ReservationServiceRequest;
 import com.barofarm.support.experience.application.dto.ReservationServiceResponse;
 import com.barofarm.support.experience.application.event.ReservationEventPublisher;

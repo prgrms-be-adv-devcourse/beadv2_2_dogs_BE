@@ -1,6 +1,6 @@
 package com.barofarm.support.delivery.exception;
 
-import com.barofarm.support.common.exception.BaseErrorCode;
+import com.barofarm.exception.BaseErrorCode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

@@ -1,6 +1,6 @@
 package com.barofarm.support.delivery.presentation;
 
-import com.barofarm.support.common.response.ResponseDto;
+import com.barofarm.dto.ResponseDto;
 import com.barofarm.support.delivery.application.DeliveryService;
 import com.barofarm.support.delivery.application.dto.DeliveryDetailInfo;
 import com.barofarm.support.delivery.presentation.dto.ShipDeliveryRequest;

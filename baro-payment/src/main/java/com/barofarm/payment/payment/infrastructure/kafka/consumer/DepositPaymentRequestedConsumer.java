@@ -1,6 +1,6 @@
 package com.barofarm.payment.payment.infrastructure.kafka.consumer;
 
-import com.barofarm.payment.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.payment.payment.domain.Payment;
 import com.barofarm.payment.payment.domain.PaymentOutboxEvent;
 import com.barofarm.payment.payment.domain.PaymentOutboxEventRepository;

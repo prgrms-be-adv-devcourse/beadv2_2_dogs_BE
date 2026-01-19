@@ -2,7 +2,7 @@ package com.barofarm.seller.farm.domain;
 
 import static jakarta.persistence.EnumType.STRING;
 
-import com.barofarm.seller.common.entity.BaseEntity;
+import com.barofarm.common.entity.BaseEntity;
 import com.barofarm.seller.seller.domain.Seller;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

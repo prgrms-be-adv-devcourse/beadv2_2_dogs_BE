@@ -81,6 +81,15 @@ management:
       enabled: true
       show-details: always
 
+# History logging settings
+history:
+  log:
+    enabled: true
+    ai-topic: ai-history
+    cart-topic: cart-events
+    order-topic: order-events
+    user-id-header: X-User-Id
+
 # Swagger/OpenAPI 설정
 springdoc:
   api-docs:
@@ -96,6 +105,9 @@ springdoc:
 cloud:
   aws:
     s3:
+      enabled: true
+      log-upload:
+        enabled: true
       bucket: ${AWS_S3_BUCKET_NAME}
       public-base-url: https://${AWS_S3_BUCKET_NAME}.s3.ap-northeast-2.amazonaws.com
     credentials:

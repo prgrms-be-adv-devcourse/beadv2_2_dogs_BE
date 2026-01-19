@@ -4,10 +4,9 @@ import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_FORBIDDEN;
 import static com.barofarm.seller.farm.exception.FarmErrorCode.FARM_NOT_FOUND;
 import static com.barofarm.seller.seller.exception.SellerErrorCode.SELLER_NOT_FOUND;
 
-import com.barofarm.seller.common.exception.CustomException;
-import com.barofarm.seller.common.response.CustomPage;
-import com.barofarm.seller.common.response.ResponseDto;
-import com.barofarm.seller.config.S3.S3Uploader;
+import com.barofarm.dto.CustomPage;
+import com.barofarm.dto.ResponseDto;
+import com.barofarm.exception.CustomException;
 import com.barofarm.seller.farm.application.dto.request.FarmCreateCommand;
 import com.barofarm.seller.farm.application.dto.request.FarmUpdateCommand;
 import com.barofarm.seller.farm.application.dto.response.FarmCreateInfo;
@@ -20,6 +19,7 @@ import com.barofarm.seller.farm.domain.FarmImageRepository;
 import com.barofarm.seller.farm.domain.FarmRepository;
 import com.barofarm.seller.seller.domain.Seller;
 import com.barofarm.seller.seller.domain.SellerRepository;
+import com.barofarm.storage.s3.S3ImageUploader;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class FarmService {
     private final FarmRepository farmRepository;
     private final SellerRepository sellerRepository;
-    private final S3Uploader s3Uploader;
+    private final S3ImageUploader s3ImageUploader;
     private final FarmImageRepository farmImageRepository;
     private final FarmEventPublisher farmEventPublisher;
 
@@ -59,13 +59,14 @@ public class FarmService {
         Farm farm = Farm.of(details, seller);
 
         if (image != null && !image.isEmpty()) {
-            S3Uploader.UploadedObject uploaded = null;
+            S3ImageUploader.UploadedImage uploaded = null;
             try {
-                uploaded = s3Uploader.uploadFarmImage(farm.getId(), image);
+                String category = "farms/" + farm.getId();
+                uploaded = s3ImageUploader.uploadWebpImage(category, image);
                 farm.setImage(uploaded.url(), uploaded.key());
             } catch (Exception e) {
                 if (uploaded != null) {
-                    s3Uploader.deleteObject(uploaded.key());
+                    s3ImageUploader.deleteObject(uploaded.key());
                 }
                 throw e;
             }
@@ -119,17 +120,18 @@ public class FarmService {
         String oldKey = (farm.getImage() != null) ? farm.getImage().getS3Key() : null;
 
         if (image != null && !image.isEmpty()) {
-            S3Uploader.UploadedObject uploaded = null;
+            S3ImageUploader.UploadedImage uploaded = null;
             try {
-                uploaded = s3Uploader.uploadFarmImage(farm.getId(), image);
+                String category = "farms/" + farm.getId();
+                uploaded = s3ImageUploader.uploadWebpImage(category, image);
                 farm.setImage(uploaded.url(), uploaded.key());
 
                 if (oldKey != null) {
-                    s3Uploader.deleteObject(oldKey);
+                    s3ImageUploader.deleteObject(oldKey);
                 }
             } catch (Exception e) {
                 if (uploaded != null) {
-                    s3Uploader.deleteObject(uploaded.key());
+                    s3ImageUploader.deleteObject(uploaded.key());
                 }
                 throw e;
             }
@@ -137,7 +139,7 @@ public class FarmService {
             if (oldKey != null) {
                 farm.removeImage();
 
-                s3Uploader.deleteObject(oldKey);
+                s3ImageUploader.deleteObject(oldKey);
             }
         }
 

@@ -4,8 +4,8 @@ import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INSUFFIC
 import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INVALID_REQUEST;
 import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.RESERVED_QUANTITY_NOT_ENOUGH;
 
-import com.barofarm.buyer.common.entity.BaseEntity;
-import com.barofarm.buyer.common.exception.CustomException;
+import com.barofarm.common.entity.BaseEntity;
+import com.barofarm.exception.CustomException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

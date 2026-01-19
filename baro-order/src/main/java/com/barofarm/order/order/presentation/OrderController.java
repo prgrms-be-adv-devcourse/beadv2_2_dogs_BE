@@ -1,7 +1,7 @@
 package com.barofarm.order.order.presentation;
 
-import com.barofarm.order.common.response.CustomPage;
-import com.barofarm.order.common.response.ResponseDto;
+import com.barofarm.dto.CustomPage;
+import com.barofarm.dto.ResponseDto;
 import com.barofarm.order.order.application.OrderOrchestrator;
 import com.barofarm.order.order.application.OrderService;
 import com.barofarm.order.order.application.dto.response.OrderCancelInfo;

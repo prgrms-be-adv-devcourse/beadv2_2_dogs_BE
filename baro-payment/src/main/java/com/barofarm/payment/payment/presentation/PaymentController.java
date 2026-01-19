@@ -1,6 +1,6 @@
 package com.barofarm.payment.payment.presentation;
 
-import com.barofarm.payment.common.response.ResponseDto;
+import com.barofarm.dto.ResponseDto;
 import com.barofarm.payment.payment.application.PaymentService;
 import com.barofarm.payment.payment.application.dto.response.TossPaymentConfirmInfo;
 import com.barofarm.payment.payment.presentation.dto.TossPaymentConfirmRequest;

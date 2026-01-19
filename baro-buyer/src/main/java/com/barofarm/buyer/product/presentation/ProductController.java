@@ -1,12 +1,12 @@
 package com.barofarm.buyer.product.presentation;
 
-import com.barofarm.buyer.common.response.CustomPage;
-import com.barofarm.buyer.common.response.ResponseDto;
 import com.barofarm.buyer.product.application.ProductService;
 import com.barofarm.buyer.product.application.dto.ProductDetailInfo;
 import com.barofarm.buyer.product.domain.UserType;
 import com.barofarm.buyer.product.presentation.dto.ProductCreateRequest;
 import com.barofarm.buyer.product.presentation.dto.ProductUpdateRequest;
+import com.barofarm.dto.CustomPage;
+import com.barofarm.dto.ResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.util.UUID;

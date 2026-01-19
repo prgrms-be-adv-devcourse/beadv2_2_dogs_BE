@@ -9,8 +9,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.barofarm.support.common.response.CustomPage;
-import com.barofarm.support.common.response.ResponseDto;
+import com.barofarm.dto.CustomPage;
+import com.barofarm.dto.ResponseDto;
 import com.barofarm.support.experience.application.ReservationService;
 import com.barofarm.support.experience.application.dto.ReservationServiceResponse;
 import com.barofarm.support.experience.domain.ReservationStatus;

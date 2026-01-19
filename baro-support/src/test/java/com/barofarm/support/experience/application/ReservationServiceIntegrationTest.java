@@ -2,7 +2,7 @@ package com.barofarm.support.experience.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.barofarm.support.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.support.experience.application.dto.ReservationServiceRequest;
 import com.barofarm.support.experience.application.dto.ReservationServiceResponse;
 import com.barofarm.support.experience.domain.Experience;

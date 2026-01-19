@@ -1,6 +1,6 @@
 package com.barofarm.order.order.application;
 
-import com.barofarm.order.common.response.ResponseDto;
+import com.barofarm.dto.ResponseDto;
 import com.barofarm.order.order.application.dto.request.OrderCreateCommand;
 import com.barofarm.order.order.application.dto.response.OrderCreateInfo;
 import com.barofarm.order.order.infrastructure.rest.InventoryClient;

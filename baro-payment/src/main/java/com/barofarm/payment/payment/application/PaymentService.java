@@ -3,8 +3,8 @@ package com.barofarm.payment.payment.application;
 import static com.barofarm.payment.payment.domain.Purpose.DEPOSIT_CHARGE;
 import static com.barofarm.payment.payment.domain.Purpose.ORDER_PAYMENT;
 
-import com.barofarm.payment.common.exception.CustomException;
-import com.barofarm.payment.common.response.ResponseDto;
+import com.barofarm.dto.ResponseDto;
+import com.barofarm.exception.CustomException;
 import com.barofarm.payment.payment.application.dto.request.TossPaymentConfirmCommand;
 import com.barofarm.payment.payment.application.dto.response.TossPaymentConfirmInfo;
 import com.barofarm.payment.payment.domain.Payment;

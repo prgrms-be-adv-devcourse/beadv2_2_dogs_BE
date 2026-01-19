@@ -33,6 +33,8 @@ spec:
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
+      securityContext:
+        fsGroup: 1001  # 로그 디렉토리 소유권 설정 (1001:1001)
       containers:
         - name: baro-settlement
           image: ghcr.io/do-develop-space/baro-settlement:latest
@@ -89,6 +91,12 @@ spec:
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: "CHANGE_ME_TO_EC2_IP:29092"  # 배포 스크립트가 자동으로 Public EC2 IP로 치환
               # value: "http://localhost:29092" # Kafka는 같은 Private EC2에 docker-compose로 실행됨
+            # 로그 디렉토리 설정
+            - name: LOG_DIR
+              value: "/mnt/s3/logs/settlement"
+          volumeMounts:
+            - name: log-volume
+              mountPath: /mnt/s3/logs/settlement
           # resources:
           #   requests:
           #     cpu: "100m"
@@ -123,3 +131,8 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 10
             failureThreshold: 30
+      volumes:
+        - name: log-volume
+          hostPath:
+            path: /mnt/s3/logs/settlement
+            type: DirectoryOrCreate

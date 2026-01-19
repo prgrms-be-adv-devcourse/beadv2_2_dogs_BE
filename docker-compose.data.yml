@@ -221,4 +221,3 @@ networks:
     # Docker Compose가 프로젝트 이름을 접두사로 붙이므로 be_baro-network 사용
     name: be_baro-network  # 네트워크 이름 명시적으로 지정
     external: true
-

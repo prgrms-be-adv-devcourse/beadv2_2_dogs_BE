@@ -23,3 +23,4 @@ include 'baro-ai'        // H. AI 모듈 (search, recommend, chatbot, season)
 include 'baro-cloud:gateway'
 include 'baro-cloud:config'
 include 'baro-cloud:eureka'
+include 'baro-common'

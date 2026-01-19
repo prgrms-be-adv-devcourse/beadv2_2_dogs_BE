@@ -1,8 +1,8 @@
 package com.barofarm.buyer.product.presentation;
 
-import com.barofarm.buyer.common.response.ResponseDto;
 import com.barofarm.buyer.product.application.CategoryQueryService;
 import com.barofarm.buyer.product.application.dto.CategoryListItem;
+import com.barofarm.dto.ResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import java.util.List;
 import java.util.UUID;

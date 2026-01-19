@@ -2,7 +2,7 @@ package com.barofarm.payment.payment.infrastructure.kafka.consumer;
 
 import static com.barofarm.payment.payment.exception.PaymentErrorCode.PAYMENT_NOT_FOUND;
 
-import com.barofarm.payment.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.payment.payment.application.dto.request.TossPaymentRefundCommand;
 import com.barofarm.payment.payment.domain.Payment;
 import com.barofarm.payment.payment.domain.PaymentRepository;

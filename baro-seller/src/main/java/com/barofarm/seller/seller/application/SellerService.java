@@ -2,7 +2,7 @@ package com.barofarm.seller.seller.application;
 
 import static com.barofarm.seller.seller.exception.SellerErrorCode.SELLER_NOT_FOUND;
 
-import com.barofarm.seller.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.seller.seller.domain.Seller;
 import com.barofarm.seller.seller.domain.SellerRepository;
 import com.barofarm.seller.seller.domain.validation.BusinessValidator;

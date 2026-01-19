@@ -172,10 +172,10 @@ class ExperienceServiceTest {
 
         // when & then
         assertThatThrownBy(() -> experienceService.createExperience(userId, invalidRequest))
-                .isInstanceOf(com.barofarm.support.common.exception.CustomException.class)
+                .isInstanceOf(com.barofarm.exception.CustomException.class)
                 .satisfies(exception -> {
-                    com.barofarm.support.common.exception.CustomException customException =
-                            (com.barofarm.support.common.exception.CustomException) exception;
+                    com.barofarm.exception.CustomException customException =
+                            (com.barofarm.exception.CustomException) exception;
                     assertThat(customException.getErrorCode())
                             .isEqualTo(com.barofarm.support.experience.exception.ExperienceErrorCode.INVALID_DATE_RANGE);
                 });

@@ -1,7 +1,7 @@
 package com.barofarm.settlement.client;
 
-import com.barofarm.settlement.common.exception.CommonErrorCode;
-import com.barofarm.settlement.common.exception.CustomException;
+import com.barofarm.exception.CommonErrorCode;
+import com.barofarm.exception.CustomException;
 import com.barofarm.settlement.exception.SettlementErrorCode;
 import feign.Response;
 import feign.codec.ErrorDecoder;

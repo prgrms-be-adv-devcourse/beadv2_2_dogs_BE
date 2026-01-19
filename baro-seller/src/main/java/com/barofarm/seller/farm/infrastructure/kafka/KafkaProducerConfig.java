@@ -57,9 +57,9 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        config.put(ProducerConfig.ACKS_CONFIG, "1"); 
+        config.put(ProducerConfig.ACKS_CONFIG, "1");
         config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true); // 중복 방지
-        
+
         ProducerFactory<String, Object> producerFactory = new DefaultKafkaProducerFactory<>(config);
         return new KafkaTemplate<>(producerFactory);
     }

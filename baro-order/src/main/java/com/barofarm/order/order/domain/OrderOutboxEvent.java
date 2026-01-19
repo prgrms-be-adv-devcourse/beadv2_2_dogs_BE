@@ -1,6 +1,6 @@
 package com.barofarm.order.order.domain;
 
-import com.barofarm.order.common.entity.BaseEntity;
+import com.barofarm.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

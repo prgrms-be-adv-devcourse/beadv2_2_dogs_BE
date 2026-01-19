@@ -1,6 +1,6 @@
 package com.barofarm.order.order.infrastructure.rest;
 
-import com.barofarm.order.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.order.order.exception.OrderErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.Response;

@@ -1,6 +1,6 @@
 package com.barofarm.payment.payment.infrastructure.rest;
 
-import com.barofarm.payment.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.payment.payment.application.dto.request.TossPaymentConfirmCommand;
 import com.barofarm.payment.payment.application.dto.request.TossPaymentRefundCommand;
 import com.barofarm.payment.payment.config.TossPaymentProperties;

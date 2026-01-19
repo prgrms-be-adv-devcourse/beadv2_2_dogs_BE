@@ -5,7 +5,7 @@ import com.barofarm.buyer.cart.application.dto.CartInfo;
 import com.barofarm.buyer.cart.presentation.dto.AddItemRequest;
 import com.barofarm.buyer.cart.presentation.dto.UpdateOptionRequest;
 import com.barofarm.buyer.cart.presentation.dto.UpdateQuantityRequest;
-import com.barofarm.buyer.common.response.ResponseDto;
+import com.barofarm.dto.ResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;

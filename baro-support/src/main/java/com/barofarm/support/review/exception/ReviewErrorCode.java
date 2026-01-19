@@ -1,6 +1,6 @@
 package com.barofarm.support.review.exception;
 
-import com.barofarm.support.common.exception.BaseErrorCode;
+import com.barofarm.exception.BaseErrorCode;
 import org.springframework.http.HttpStatus;
 
 public enum ReviewErrorCode implements BaseErrorCode {

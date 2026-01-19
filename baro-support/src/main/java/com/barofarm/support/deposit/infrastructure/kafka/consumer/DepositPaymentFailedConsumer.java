@@ -1,6 +1,6 @@
 package com.barofarm.support.deposit.infrastructure.kafka.consumer;
 
-import com.barofarm.support.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.support.deposit.domain.Deposit;
 import com.barofarm.support.deposit.domain.DepositRepository;
 import com.barofarm.support.deposit.exception.DepositErrorCode;

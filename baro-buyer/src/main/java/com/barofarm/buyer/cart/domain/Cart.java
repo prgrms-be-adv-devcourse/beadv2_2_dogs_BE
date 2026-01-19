@@ -1,6 +1,6 @@
 package com.barofarm.buyer.cart.domain;
 
-import com.barofarm.buyer.common.entity.BaseEntity;
+import com.barofarm.common.entity.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

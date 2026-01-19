@@ -4,7 +4,7 @@ import static com.barofarm.seller.seller.exception.ValidationErrorCode.DUPLICATE
 import static com.barofarm.seller.seller.exception.ValidationErrorCode.INVALID_BUSINESS_NO_FORMAT;
 import static com.barofarm.seller.seller.exception.ValidationErrorCode.REQUIRED_FIELD_MISSING;
 
-import com.barofarm.seller.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.seller.seller.exception.SellerErrorCode;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

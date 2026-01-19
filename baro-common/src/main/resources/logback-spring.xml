@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <!-- 로그 디렉토리: 환경 변수 LOG_DIR 사용, 기본값은 logs -->
+  <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
+  <property name="LOG_PATTERN"
+            value="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"/>
+  <property name="HISTORY_PATTERN" value="%msg%n"/>
+
+  <!-- 콘솔: WARN 이상 -->
+  <appender name="ERROR_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>${LOG_PATTERN}</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>WARN</level>
+    </filter>
+  </appender>
+
+  <!-- ERROR 파일 -->
+  <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_DIR}/error.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_DIR}/error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>100MB</maxFileSize>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>${LOG_PATTERN}</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>ERROR</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+  </appender>
+
+  <!-- WARN(access) 파일 -->
+  <appender name="ACCESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_DIR}/access.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_DIR}/access.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>100MB</maxFileSize>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>${LOG_PATTERN}</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>WARN</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+  </appender>
+
+  <!-- CART history 파일 -->
+  <appender name="CART_HISTORY_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_DIR}/cart-history.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_DIR}/cart-history.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>500MB</maxFileSize>
+      <maxHistory>90</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>${HISTORY_PATTERN}</pattern>
+    </encoder>
+  </appender>
+
+  <!-- ORDER history 파일 -->
+  <appender name="ORDER_HISTORY_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_DIR}/order-history.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_DIR}/order-history.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>500MB</maxFileSize>
+      <maxHistory>90</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>${HISTORY_PATTERN}</pattern>
+    </encoder>
+  </appender>
+
+  <!-- logger name으로 history 분리 -->
+  <logger name="CART_HISTORY" level="INFO" additivity="false">
+    <appender-ref ref="CART_HISTORY_FILE"/>
+  </logger>
+
+  <logger name="ORDER_HISTORY" level="INFO" additivity="false">
+    <appender-ref ref="ORDER_HISTORY_FILE"/>
+  </logger>
+
+  <!-- root: WARN/ERROR는 콘솔, ERROR만 파일 -->
+  <root level="WARN">
+    <appender-ref ref="ERROR_CONSOLE"/>
+    <appender-ref ref="ERROR_FILE"/>
+    <appender-ref ref="ACCESS_FILE"/>
+  </root>
+
+</configuration>

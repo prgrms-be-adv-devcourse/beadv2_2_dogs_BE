@@ -1,6 +1,6 @@
 package com.barofarm.seller.seller.exception;
 
-import com.barofarm.seller.common.exception.BaseErrorCode;
+import com.barofarm.exception.BaseErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

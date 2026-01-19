@@ -1,6 +1,6 @@
 package com.barofarm.buyer.product.domain;
 
-import com.barofarm.buyer.common.entity.BaseEntity;
+import com.barofarm.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

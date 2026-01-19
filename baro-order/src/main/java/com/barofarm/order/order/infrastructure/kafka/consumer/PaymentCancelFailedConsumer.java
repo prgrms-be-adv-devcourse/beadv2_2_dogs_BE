@@ -1,6 +1,6 @@
 package com.barofarm.order.order.infrastructure.kafka.consumer;
 
-import com.barofarm.order.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.order.order.domain.Order;
 import com.barofarm.order.order.domain.OrderRepository;
 import com.barofarm.order.order.domain.OrderStatus;

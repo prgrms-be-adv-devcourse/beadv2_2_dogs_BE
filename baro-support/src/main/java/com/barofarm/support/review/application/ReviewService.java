@@ -1,7 +1,7 @@
 package com.barofarm.support.review.application;
 
-import com.barofarm.support.common.exception.CustomException;
-import com.barofarm.support.common.response.CustomPage;
+import com.barofarm.dto.CustomPage;
+import com.barofarm.exception.CustomException;
 import com.barofarm.support.review.application.dto.request.ReviewCreateCommand;
 import com.barofarm.support.review.application.dto.request.ReviewUpdateCommand;
 import com.barofarm.support.review.application.dto.response.ReviewDetailInfo;

@@ -39,6 +39,8 @@ spec:
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
+      securityContext:
+        fsGroup: 1001  # 로그 디렉토리 소유권 설정 (1001:1001)
       containers:
         - name: baro-order
           image: ghcr.io/do-develop-space/baro-order:latest
@@ -117,6 +119,12 @@ spec:
                 secretKeyRef:
                   name: baro-secrets
                   key: AWS_S3_BUCKET_NAME
+            # 로그 디렉토리 설정
+            - name: LOG_DIR
+              value: "/mnt/s3/logs/order"
+          volumeMounts:
+            - name: log-volume
+              mountPath: /mnt/s3/logs/order
           # resources:
           #   requests:
           #     cpu: "100m"
@@ -148,4 +156,9 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 20
+      volumes:
+        - name: log-volume
+          hostPath:
+            path: /mnt/s3/logs/order
+            type: DirectoryOrCreate
 

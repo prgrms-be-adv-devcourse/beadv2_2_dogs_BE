@@ -51,7 +51,7 @@ public class FarmEventProducer {
      * 지수 백오프를 사용한 재시도 로직
      */
     private void sendWithRetry(FarmEvent event, String partitionKey, BackOffExecution backOffExecution) {
-        CompletableFuture<SendResult<String, FarmEvent>> future = 
+        CompletableFuture<SendResult<String, FarmEvent>> future =
             kafkaTemplate.send(TOPIC, partitionKey, event);
 
         future.whenComplete((result, ex) -> {
@@ -69,9 +69,9 @@ public class FarmEventProducer {
                     log.warn(
                         "⚠️ [PRODUCER] Failed to send farm event, retrying after {}ms - "
                             + "Topic: {}, Type: {}, Farm ID: {}, Partition Key: {}, Error: {}",
-                        nextBackOff, TOPIC, event.getType(), event.getData().getFarmId(), 
+                        nextBackOff, TOPIC, event.getType(), event.getData().getFarmId(),
                         partitionKey, ex.getMessage());
-                    
+
                     try {
                         Thread.sleep(nextBackOff);
                     } catch (InterruptedException ie) {
@@ -80,7 +80,7 @@ public class FarmEventProducer {
                         sendToDlq(event, partitionKey, ex);
                         return;
                     }
-                    
+
                     // 재시도
                     sendWithRetry(event, partitionKey, backOffExecution);
                 } else {
@@ -108,13 +108,13 @@ public class FarmEventProducer {
                                 + "Original Topic: {}, DLQ Topic: {}, Type: {}, Farm ID: {}, "
                                 + "Partition: {}, Offset: {}",
                             TOPIC, PRODUCER_DLQ_TOPIC, event.getType(), event.getData().getFarmId(),
-                            dlqResult.getRecordMetadata().partition(), 
+                            dlqResult.getRecordMetadata().partition(),
                             dlqResult.getRecordMetadata().offset());
                     } else {
                         log.error(
                             "💀 [PRODUCER_DLQ] CRITICAL: Failed to send to Producer DLQ - "
                                 + "Original Topic: {}, DLQ Topic: {}, Type: {}, Farm ID: {}, Error: {}",
-                            TOPIC, PRODUCER_DLQ_TOPIC, event.getType(), event.getData().getFarmId(), 
+                            TOPIC, PRODUCER_DLQ_TOPIC, event.getType(), event.getData().getFarmId(),
                             dlqEx.getMessage(), dlqEx);
                     }
                 });
@@ -122,7 +122,7 @@ public class FarmEventProducer {
             log.error(
                 "💀 [PRODUCER_DLQ] CRITICAL: Exception while sending to Producer DLQ - "
                     + "Original Topic: {}, DLQ Topic: {}, Type: {}, Farm ID: {}, Error: {}",
-                TOPIC, PRODUCER_DLQ_TOPIC, event.getType(), event.getData().getFarmId(), 
+                TOPIC, PRODUCER_DLQ_TOPIC, event.getType(), event.getData().getFarmId(),
                 dlqException.getMessage(), dlqException);
         }
     }

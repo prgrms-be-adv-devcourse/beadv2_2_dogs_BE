@@ -1,6 +1,6 @@
 package com.barofarm.auth.domain.credential;
 
-import com.barofarm.auth.common.entity.BaseEntity;
+import com.barofarm.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

@@ -1,7 +1,7 @@
 package com.barofarm.seller.farm.presentation;
 
-import com.barofarm.seller.common.response.CustomPage;
-import com.barofarm.seller.common.response.ResponseDto;
+import com.barofarm.dto.CustomPage;
+import com.barofarm.dto.ResponseDto;
 import com.barofarm.seller.farm.application.dto.response.FarmCreateInfo;
 import com.barofarm.seller.farm.application.dto.response.FarmDetailInfo;
 import com.barofarm.seller.farm.application.dto.response.FarmListInfo;

@@ -1,6 +1,6 @@
 package com.barofarm.support.review.presentation;
 
-import com.barofarm.support.common.response.ResponseDto;
+import com.barofarm.dto.ResponseDto;
 import com.barofarm.support.review.application.dto.response.ReviewDetailInfo;
 import com.barofarm.support.review.presentation.dto.ReviewUpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;

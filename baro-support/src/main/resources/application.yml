@@ -116,6 +116,9 @@ springdoc:
 cloud:
   aws:
     s3:
+      enabled: true
+      log-upload:
+        enabled: true
       bucket: ${AWS_S3_BUCKET_NAME}
       public-base-url: https://${AWS_S3_BUCKET_NAME}.s3.ap-northeast-2.amazonaws.com
     credentials:

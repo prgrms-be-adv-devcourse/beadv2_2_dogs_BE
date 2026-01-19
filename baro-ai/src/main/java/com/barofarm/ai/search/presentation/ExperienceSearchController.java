@@ -1,10 +1,10 @@
 package com.barofarm.ai.search.presentation;
 
-import com.barofarm.ai.common.response.CustomPage;
 import com.barofarm.ai.search.application.ExperienceSearchService;
 import com.barofarm.ai.search.application.dto.experience.ExperienceAutoCompleteResponse;
 import com.barofarm.ai.search.application.dto.experience.ExperienceSearchRequest;
 import com.barofarm.ai.search.application.dto.experience.ExperienceSearchResponse;
+import com.barofarm.dto.CustomPage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

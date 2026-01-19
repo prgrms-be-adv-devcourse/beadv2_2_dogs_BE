@@ -1,7 +1,7 @@
 package com.barofarm.support.experience.presentation;
 
-import com.barofarm.support.common.response.CustomPage;
-import com.barofarm.support.common.response.ResponseDto;
+import com.barofarm.dto.CustomPage;
+import com.barofarm.dto.ResponseDto;
 import com.barofarm.support.experience.presentation.dto.ExperienceCreateRequest;
 import com.barofarm.support.experience.presentation.dto.ExperienceResponse;
 import com.barofarm.support.experience.presentation.dto.ExperienceUpdateRequest;

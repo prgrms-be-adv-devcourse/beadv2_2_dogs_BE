@@ -1,7 +1,7 @@
 package com.barofarm.support.review.presentation;
 
-import com.barofarm.support.common.response.CustomPage;
-import com.barofarm.support.common.response.ResponseDto;
+import com.barofarm.dto.CustomPage;
+import com.barofarm.dto.ResponseDto;
 import com.barofarm.support.review.application.dto.response.ReviewDetailInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

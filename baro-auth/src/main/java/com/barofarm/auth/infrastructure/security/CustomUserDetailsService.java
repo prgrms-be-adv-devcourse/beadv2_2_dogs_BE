@@ -1,9 +1,9 @@
 package com.barofarm.auth.infrastructure.security;
 
-import com.barofarm.auth.common.exception.CustomException;
 import com.barofarm.auth.domain.user.User;
 import com.barofarm.auth.exception.AuthErrorCode;
 import com.barofarm.auth.infrastructure.jpa.UserJpaRepository;
+import com.barofarm.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

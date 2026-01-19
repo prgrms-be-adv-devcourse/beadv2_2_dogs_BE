@@ -1,6 +1,6 @@
 package com.barofarm.auth.exception;
 
-import com.barofarm.auth.common.exception.BaseErrorCode;
+import com.barofarm.exception.BaseErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

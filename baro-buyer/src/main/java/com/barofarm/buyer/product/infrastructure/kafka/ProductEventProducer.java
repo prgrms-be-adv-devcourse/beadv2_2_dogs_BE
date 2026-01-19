@@ -3,6 +3,7 @@ package com.barofarm.buyer.product.infrastructure.kafka;
 import com.barofarm.buyer.product.event.ProductEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProductEventProducer {
 
+    @Qualifier("productEventKafkaTemplate")
     private final KafkaTemplate<String, ProductEvent> kafkaTemplate;
 
     private static final String TOPIC = "product-events"; // 토픽 이름

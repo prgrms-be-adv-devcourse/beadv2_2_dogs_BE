@@ -39,6 +39,8 @@ spec:
               - matchExpressions:
                   - key: node-role.kubernetes.io/control-plane
                     operator: DoesNotExist
+      securityContext:
+        fsGroup: 1001  # 로그 디렉토리 소유권 설정 (1001:1001)
       containers:
         - name: baro-ai
           image: ghcr.io/do-develop-space/baro-ai:latest
@@ -119,6 +121,12 @@ spec:
                 secretKeyRef:
                   name: baro-secrets
                   key: SPRING_AI_OPENAI_API_KEY
+            # 로그 디렉토리 설정
+            - name: LOG_DIR
+              value: "/mnt/s3/logs/ai"
+          volumeMounts:
+            - name: log-volume
+              mountPath: /mnt/s3/logs/ai
           # resources:
           #   requests:
           #     cpu: "100m"
@@ -153,4 +161,9 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 10
             failureThreshold: 30
+      volumes:
+        - name: log-volume
+          hostPath:
+            path: /mnt/s3/logs/ai
+            type: DirectoryOrCreate
 

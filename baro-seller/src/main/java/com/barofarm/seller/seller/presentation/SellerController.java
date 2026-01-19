@@ -1,6 +1,6 @@
 package com.barofarm.seller.seller.presentation;
 
-import com.barofarm.seller.common.response.ResponseDto;
+import com.barofarm.dto.ResponseDto;
 import com.barofarm.seller.seller.application.SellerService;
 import com.barofarm.seller.seller.presentation.dto.SellerApplyRequestDto;
 import com.barofarm.seller.seller.presentation.dto.SellerInfoDto;

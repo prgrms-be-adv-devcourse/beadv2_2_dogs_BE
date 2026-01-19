@@ -2,10 +2,10 @@ package com.barofarm.buyer.inventory.application;
 
 import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.RESERVATION_RETRY_EXCEEDED;
 
-import com.barofarm.buyer.common.exception.CustomException;
 import com.barofarm.buyer.inventory.application.dto.request.InventoryCancelCommand;
 import com.barofarm.buyer.inventory.application.dto.request.InventoryConfirmCommand;
 import com.barofarm.buyer.inventory.application.dto.request.InventoryReserveCommand;
+import com.barofarm.exception.CustomException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;

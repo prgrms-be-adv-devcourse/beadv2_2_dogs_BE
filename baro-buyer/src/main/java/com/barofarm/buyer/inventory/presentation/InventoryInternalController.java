@@ -1,10 +1,10 @@
 package com.barofarm.buyer.inventory.presentation;
 
-import com.barofarm.buyer.common.response.ResponseDto;
 import com.barofarm.buyer.inventory.application.InventoryFacadeService;
 import com.barofarm.buyer.inventory.application.InventoryService;
 import com.barofarm.buyer.inventory.presentation.dto.InventoryCancelRequest;
 import com.barofarm.buyer.inventory.presentation.dto.InventoryReserveRequest;
+import com.barofarm.dto.ResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

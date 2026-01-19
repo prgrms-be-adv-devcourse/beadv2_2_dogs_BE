@@ -1,6 +1,6 @@
 package com.barofarm.support.experience.application;
 
-import com.barofarm.support.common.exception.CustomException;
+import com.barofarm.exception.CustomException;
 import com.barofarm.support.experience.application.dto.ExperienceServiceRequest;
 import com.barofarm.support.experience.application.dto.ExperienceServiceResponse;
 import com.barofarm.support.experience.application.event.ExperienceTransactionEvent;

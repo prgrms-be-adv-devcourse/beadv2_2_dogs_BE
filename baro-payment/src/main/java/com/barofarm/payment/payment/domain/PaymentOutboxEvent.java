@@ -1,6 +1,6 @@
 package com.barofarm.payment.payment.domain;
 
-import com.barofarm.payment.common.entity.BaseEntity;
+import com.barofarm.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
