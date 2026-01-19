@@ -1,3 +1,4 @@
 com.barofarm.config.HistoryLogAutoConfiguration
 com.barofarm.config.S3AutoConfiguration
 com.barofarm.config.S3LogUploadAutoConfiguration
+com.barofarm.config.FeignTracePropagationConfig
