@@ -58,7 +58,14 @@ dependencies {
     // Kafka 연결
     implementation 'org.springframework.kafka:spring-kafka'
 
+    // Database
     runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // monitoring
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    implementation "io.micrometer:micrometer-tracing-bridge-otel"
+    implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 }
 
 tasks.named('test') {

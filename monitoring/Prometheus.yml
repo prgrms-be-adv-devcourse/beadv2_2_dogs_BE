@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "spring-local-8080"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets:
+          # 컨테이너에서 "로컬 머신의 8080" 접근
+          - "host.docker.internal:8080"

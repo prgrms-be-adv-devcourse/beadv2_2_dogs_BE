@@ -1,0 +1,89 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=12h"
+    ports:
+      - "9090:9090"
+    mem_limit: 512m
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  k6:
+    image: grafana/k6:latest
+    container_name: k6
+    depends_on:
+      - otel-collector
+    working_dir: /scripts
+    volumes:
+      - ./:/scripts
+    environment:
+      - K6_OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4318
+      - K6_OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - K6_OTEL_EXPORTER_OTLP_INSECURE=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    entrypoint: [ "k6" ]
+
+  grafana:
+    image: grafana/grafana:11.1.4
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    mem_limit: 512m
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    container_name: tempo
+    command: [ "-config.file=/etc/tempo/tempo.yml" ]
+    volumes:
+      - ./tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "3200:3200"
+    mem_limit: 512m
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.110.0
+    container_name: otel-collector
+    command: [ "--config=/etc/otelcol-contrib/config.yml" ]
+    volumes:
+      - ./otel-collector.yml:/etc/otelcol-contrib/config.yml:ro
+    ports:
+      - "4318:4318"
+      - "8889:8889"
+    depends_on:
+      - tempo
+    mem_limit: 512m
+    restart: unless-stopped
+
+  influxdb:
+    image: influxdb:1.8
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=k6
+    volumes:
+      - influxdb-data:/var/lib/influxdb
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  tempo-data:
+  influxdb-data:
