@@ -12,9 +12,9 @@
     <encoder>
       <pattern>${LOG_PATTERN}</pattern>
     </encoder>
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+    <!-- <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>WARN</level>
-    </filter>
+    </filter> -->
   </appender>
 
   <!-- ERROR 파일 -->
@@ -88,8 +88,9 @@
     <appender-ref ref="ORDER_HISTORY_FILE"/>
   </logger>
 
-  <!-- root: WARN/ERROR는 콘솔, ERROR만 파일 -->
-  <root level="WARN">
+  <!-- 콘솔에는 application.yml 설정에 따라 출력, 파일에는 ERROR/WARN 저장 -->
+  <!-- <root level="WARN"> -->
+  <root level="INFO">
     <appender-ref ref="ERROR_CONSOLE"/>
     <appender-ref ref="ERROR_FILE"/>
     <appender-ref ref="ACCESS_FILE"/>
