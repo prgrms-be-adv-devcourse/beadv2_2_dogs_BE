@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CartEventData {
-    private UUID cartId;
-    private UUID cartItemId;
-    private UUID productId;
-    private String productName;
-    private Integer quantity;
-    private String categoryName;
+public class PaymentEventData {
+    private UUID paymentId;
+    private UUID orderId;
+    private UUID userId;
+    private Long amount;
+    private String purpose; // ORDER_PAYMENT, DEPOSIT_CHARGE 등
 }
+

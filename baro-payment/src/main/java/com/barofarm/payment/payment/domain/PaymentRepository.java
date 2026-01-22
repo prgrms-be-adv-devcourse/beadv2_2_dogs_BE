@@ -10,4 +10,6 @@ public interface PaymentRepository {
     Optional<Payment> findByPaymentKey(String paymentKey);
 
     Optional<Payment> findByOrderId(UUID orderId);
+
+    Optional<Payment> findTopByUserIdAndPurposeOrderByCreatedAtDesc(UUID userId, Purpose purpose);
 }

@@ -10,10 +10,6 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-/**
- * Order 이벤트 Kafka Consumer
- * 개인화 추천을 위한 주문 행동 로그 수집
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -30,40 +26,49 @@ public class OrderEventConsumer {
     public void onMessage(OrderLogEvent event) {
         OrderLogEvent.OrderEventData data = event.payload();
 
-        log.info("🛍️ [ORDER_CONSUMER] Received order event - Type: {}, User ID: {}, Order ID: {}",
-                event.event(), event.userId(), data.orderId());
+        log.info(
+            "[ORDER_CONSUMER] Received order event - Type: {}, User ID: {}, Order ID: {}",
+            event.event(), event.userId(), data.orderId());
 
         try {
             switch (event.event()) {
                 case ORDER_CONFIRMED -> {
-                    log.info("📝 [ORDER_CONSUMER] Processing ORDER_CONFIRMED - User: {}, Order: {}",
-                            event.userId(), data.orderId());
+                    log.info(
+                        "[ORDER_CONSUMER] Processing ORDER_CONFIRMED - User: {}, Order: {}",
+                        event.userId(), data.orderId());
 
-                    // 주문 생성 시 각 상품별로 로그 저장
-                    if (data.orderItems() != null) {
-                        for (OrderLogEvent.OrderEventData.OrderItemData item : data.orderItems()) {
-                            logWriteService.saveOrderEventLog(event.userId(), item.productId(),
-                                    item.productName(), "ORDER_CONFIRMED",
-                                item.quantity(), convertToInstant(event.ts()));
-                        }
-                    }
-
-                    log.info("✅ [ORDER_CONSUMER] Successfully saved order confirmed event - User: {}, Items: {}",
-                            event.userId(), data.orderItems() != null ? data.orderItems().size() : 0);
-                    // 프로필 벡터 비동기 업데이트
-                    updateUserProfileAsync(event.userId());
-                }
-                case ORDER_CANCELLED -> {
-                    log.info("❌ [ORDER_CONSUMER] Processing ORDER_CANCELLED - User: {}, Order: {}",
-                            event.userId(), data.orderId());
-
-                    // 주문 취소 시 각 상품별로 로그 저장
                     if (data.orderItems() != null) {
                         for (OrderLogEvent.OrderEventData.OrderItemData item : data.orderItems()) {
                             logWriteService.saveOrderEventLog(
                                 event.userId(),
                                 item.productId(),
                                 item.productName(),
+                                item.categoryName(),
+                                "ORDER_CONFIRMED",
+                                item.quantity(),
+                                convertToInstant(event.ts())
+                            );
+                        }
+                    }
+
+                    log.info(
+                        "[ORDER_CONSUMER] Saved ORDER_CONFIRMED logs - User: {}, Items: {}",
+                        event.userId(),
+                        data.orderItems() != null ? data.orderItems().size() : 0);
+                    updateUserProfileAsync(event.userId());
+                }
+                case ORDER_CANCELLED -> {
+                    log.info(
+                        "[ORDER_CONSUMER] Processing ORDER_CANCELLED - User: {}, Order: {}",
+                        event.userId(), data.orderId());
+
+                    if (data.orderItems() != null) {
+                        for (OrderLogEvent.OrderEventData.OrderItemData item : data.orderItems()) {
+                            logWriteService.saveOrderEventLog(
+                                event.userId(),
+                                item.productId(),
+                                item.productName(),
+                                item.categoryName(),
                                 "ORDER_CANCELLED",
                                 item.quantity(),
                                 convertToInstant(event.ts())
@@ -71,21 +76,21 @@ public class OrderEventConsumer {
                         }
                     }
 
-                    log.info("✅ [ORDER_CONSUMER] Successfully saved order cancelled event - User: {}, Items: {}",
-                            event.userId(), data.orderItems() != null ? data.orderItems().size() : 0);
-                    // 프로필 벡터 비동기 업데이트
+                    log.info(
+                        "[ORDER_CONSUMER] Saved ORDER_CANCELLED logs - User: {}, Items: {}",
+                        event.userId(),
+                        data.orderItems() != null ? data.orderItems().size() : 0);
                     updateUserProfileAsync(event.userId());
                 }
-                default -> {
-                    log.warn("⚠️ [ORDER_CONSUMER] Unknown order event type received - Type: {}, User: {}, Order: {}",
-                            event.event(), event.userId(), data.orderId());
-                }
+                default -> log.warn(
+                    "[ORDER_CONSUMER] Unknown order event type - Type: {}, User: {}, Order: {}",
+                    event.event(), event.userId(), data.orderId());
             }
         } catch (Exception e) {
-            log.error("❌ [ORDER_CONSUMER] Failed to process order event - " +
-                    "Type: {}, User: {}, Order: {}, Error: {}",
+            log.error(
+                "[ORDER_CONSUMER] Failed to process order event - Type: {}, User: {}, Order: {}, Error: {}",
                 event.event(), event.userId(), data.orderId(), e.getMessage(), e);
-            throw e; // 예외를 다시 던져서 Kafka가 재시도하도록 함
+            throw e;
         }
     }
 
@@ -93,20 +98,16 @@ public class OrderEventConsumer {
         return offsetDateTime.toInstant();
     }
 
-    /**
-     * 사용자 프로필 벡터를 비동기로 업데이트합니다.
-     * 이벤트 처리 속도에 영향을 주지 않도록 별도 스레드에서 실행됩니다.
-     */
     @Async("profileUpdateExecutor")
     public void updateUserProfileAsync(java.util.UUID userId) {
         try {
-            log.debug("🔄 [ORDER_CONSUMER] Updating user profile embedding for user: {}", userId);
+            log.debug("[ORDER_CONSUMER] Updating user profile embedding for user: {}", userId);
             userProfileEmbeddingService.updateUserProfileEmbedding(userId);
-            log.debug("✅ [ORDER_CONSUMER] Successfully updated user profile embedding for user: {}", userId);
+            log.debug("[ORDER_CONSUMER] Successfully updated user profile embedding for user: {}", userId);
         } catch (Exception e) {
-            log.warn("⚠️ [ORDER_CONSUMER] Failed to update user profile embedding for user: {}, error: {}",
-                    userId, e.getMessage());
-            // 프로필 업데이트 실패는 이벤트 처리에 영향을 주지 않음
+            log.warn(
+                "[ORDER_CONSUMER] Failed to update user profile embedding for user: {}, error: {}",
+                userId, e.getMessage());
         }
     }
 }

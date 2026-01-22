@@ -212,6 +212,7 @@ public class UserLogGenerationService {
                 .userId(userId)
                 .productId(productId) // Elasticsearch에서 가져온 실제 productId
                 .productName(productName)
+                .categoryName(product.getCategory()) // 가짜 로그용, 검색 인덱스의 category 사용
                 .eventType(eventType)
                 .quantity(quantity)
                 .occurredAt(occurredAt)
@@ -242,6 +243,7 @@ public class UserLogGenerationService {
                 .userId(userId)
                 .productId(productId) // Elasticsearch에서 가져온 실제 productId
                 .productName(productName)
+                .categoryName(product.getCategory()) // 검색 인덱스의 category를 그대로 사용
                 .eventType(eventType)
                 .quantity(quantity)
                 .occurredAt(occurredAt)

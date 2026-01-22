@@ -20,11 +20,15 @@ public class HistoryLogWriter {
     private static final Logger INTERNAL_LOG =
         LoggerFactory.getLogger(HistoryLogWriter.class);
 
+    private static final Logger PAYMENT_HISTORY_LOG =
+        LoggerFactory.getLogger("PAYMENT_HISTORY");
+
     private final ObjectMapper objectMapper;
     private final KafkaTemplate kafkaTemplate;
     private final String aiHistoryTopic;
     private final String cartHistoryTopic;
     private final String orderHistoryTopic;
+    private final String paymentHistoryTopic;
 
     public HistoryLogWriter(
         ObjectMapper objectMapper,
@@ -36,6 +40,7 @@ public class HistoryLogWriter {
         this.aiHistoryTopic = properties.getAiTopic();
         this.cartHistoryTopic = properties.getCartTopic();
         this.orderHistoryTopic = properties.getOrderTopic();
+        this.paymentHistoryTopic = properties.getPaymentTopic();
     }
 
     public void write(HistoryEventType type, HistoryEnvelope<?> envelope) {
@@ -55,11 +60,9 @@ public class HistoryLogWriter {
     private void routeToFile(HistoryEventType type, String json) {
         switch (type.getDomain()) {
             case CART -> CART_HISTORY_LOG.info(json);
-
             case ORDER -> ORDER_HISTORY_LOG.info(json);
-
-            default ->
-                INTERNAL_LOG.warn("Unhandled history event type: {}", type);
+            case PAYMENT -> PAYMENT_HISTORY_LOG.info(json);
+            default -> INTERNAL_LOG.warn("Unhandled history event type: {}", type);
         }
     }
 
@@ -82,6 +85,7 @@ public class HistoryLogWriter {
         return switch (type.getDomain()) {
             case CART -> cartHistoryTopic;
             case ORDER -> orderHistoryTopic;
+            case PAYMENT -> paymentHistoryTopic;
             default -> aiHistoryTopic;
         };
     }

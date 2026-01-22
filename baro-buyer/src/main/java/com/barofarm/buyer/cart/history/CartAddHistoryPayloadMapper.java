@@ -26,10 +26,15 @@ public class CartAddHistoryPayloadMapper implements HistoryPayloadMapper {
 
         UUID cartId = null;
         UUID cartItemId = null;
+        String categoryName = null;
         if (returnValue instanceof CartInfo cartInfo) {
             cartId = cartInfo.cartId();
             if (command != null) {
-                cartItemId = findItemId(cartInfo, command);
+                CartItemInfo matchedItem = findItem(cartInfo, command);
+                if (matchedItem != null) {
+                    cartItemId = matchedItem.itemId();
+                    categoryName = matchedItem.productCategoryName();
+                }
             }
         }
 
@@ -38,10 +43,11 @@ public class CartAddHistoryPayloadMapper implements HistoryPayloadMapper {
             .cartItemId(cartItemId)
             .productId(command != null ? command.productId() : null)
             .quantity(command != null ? command.quantity() : null)
+            .categoryName(categoryName)
             .build();
     }
 
-    private UUID findItemId(CartInfo cartInfo, CartItemCreateCommand command) {
+    private CartItemInfo findItem(CartInfo cartInfo, CartItemCreateCommand command) {
         if (cartInfo.items() == null) {
             return null;
         }
@@ -49,7 +55,7 @@ public class CartAddHistoryPayloadMapper implements HistoryPayloadMapper {
             if (item.productId().equals(command.productId())) {
                 if (command.inventoryId() == null
                     || command.inventoryId().equals(item.inventoryId())) {
-                    return item.itemId();
+                    return item;
                 }
             }
         }

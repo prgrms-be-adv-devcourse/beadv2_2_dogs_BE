@@ -12,5 +12,6 @@ public class HistoryLogProperties {
     private String aiTopic = "ai-history";
     private String cartTopic = "cart-events";
     private String orderTopic = "order-events";
+    private String paymentTopic = "payment-events";
     private String userIdHeader = "X-User-Id";
 }

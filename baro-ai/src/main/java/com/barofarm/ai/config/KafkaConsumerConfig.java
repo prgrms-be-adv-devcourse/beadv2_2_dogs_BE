@@ -3,6 +3,7 @@ package com.barofarm.ai.config;
 import com.barofarm.ai.event.model.CartLogEvent;
 import com.barofarm.ai.event.model.OrderLogEvent;
 import com.barofarm.ai.event.model.ReviewEvent;
+import com.barofarm.ai.event.model.PaymentLogEvent;
 import com.barofarm.ai.search.infrastructure.event.ExperienceEvent;
 import com.barofarm.ai.search.infrastructure.event.ProductEvent;
 import java.util.HashMap;
@@ -155,6 +156,29 @@ public class KafkaConsumerConfig {
         ConcurrentKafkaListenerContainerFactory<String, ReviewEvent> factory =
             new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(reviewEventConsumerFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, PaymentLogEvent> paymentEventConsumerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, groupId + "-payment");
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+        JsonDeserializer<PaymentLogEvent> deserializer = new JsonDeserializer<>(PaymentLogEvent.class);
+        deserializer.setRemoveTypeHeaders(true);
+        deserializer.setUseTypeHeaders(false);
+        deserializer.addTrustedPackages("*");
+
+        return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), deserializer);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, PaymentLogEvent> paymentEventListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, PaymentLogEvent> factory =
+            new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(paymentEventConsumerFactory());
         return factory;
     }
 }

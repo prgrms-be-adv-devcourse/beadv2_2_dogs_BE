@@ -3,19 +3,17 @@ package com.barofarm.ai.log.application;
 import com.barofarm.ai.log.domain.CartLogDocument;
 import com.barofarm.ai.log.domain.OrderLogDocument;
 import com.barofarm.ai.log.domain.SearchLogDocument;
+import com.barofarm.ai.log.domain.PaymentLogDocument;
 import com.barofarm.ai.log.infrastructure.elasticsearch.CartLogRepository;
 import com.barofarm.ai.log.infrastructure.elasticsearch.OrderLogRepository;
 import com.barofarm.ai.log.infrastructure.elasticsearch.SearchLogRepository;
+import com.barofarm.ai.log.infrastructure.elasticsearch.PaymentLogRepository;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-/**
- * 개인화 추천을 위한 로그 쓰기 서비스
- * Kafka Consumer에서 호출되어 사용자 행동 로그를 Elasticsearch에 저장
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -24,58 +22,87 @@ public class LogWriteService {
     private final CartLogRepository cartLogRepository;
     private final OrderLogRepository orderLogRepository;
     private final SearchLogRepository searchLogRepository;
+    private final PaymentLogRepository paymentLogRepository;
 
-    /**
-     * 장바구니 이벤트 로그 저장
-     */
-    public void saveCartEventLog(UUID userId, UUID productId, String productName,
-                                String eventType, Integer quantity, Instant occurredAt) {
+    public void saveCartEventLog(UUID userId,
+                                 UUID productId,
+                                 String productName,
+                                 String categoryName,
+                                 String eventType,
+                                 Integer quantity,
+                                 Instant occurredAt) {
         CartLogDocument document = CartLogDocument.builder()
-                .userId(userId)
-                .productId(productId)
-                .productName(productName)
-                .eventType(eventType)
-                .quantity(quantity)
-                .occurredAt(occurredAt)
-                .build();
+            .userId(userId)
+            .productId(productId)
+            .productName(productName)
+            .categoryName(categoryName)
+            .eventType(eventType)
+            .quantity(quantity)
+            .occurredAt(occurredAt)
+            .build();
 
         CartLogDocument saved = cartLogRepository.save(document);
-        log.info("✅ [LOG_WRITE] Saved cart event log - ID: {}, User: {}, Product: {}",
-                saved.getId(), userId, productName);
+        log.info("Saved cart event log - ID: {}, User: {}, Product: {}, Category: {}",
+            saved.getId(), userId, productName, categoryName);
     }
 
-    /**
-     * 주문 이벤트 로그 저장
-     */
-    public void saveOrderEventLog(UUID userId, UUID productId, String productName,
-                                 String eventType, Integer quantity, Instant occurredAt) {
+    public void saveOrderEventLog(UUID userId,
+                                  UUID productId,
+                                  String productName,
+                                  String categoryName,
+                                  String eventType,
+                                  Integer quantity,
+                                  Instant occurredAt) {
         OrderLogDocument document = OrderLogDocument.builder()
-                .userId(userId)
-                .productId(productId)
-                .productName(productName)
-                .eventType(eventType)
-                .quantity(quantity)
-                .occurredAt(occurredAt)
-                .build();
+            .userId(userId)
+            .productId(productId)
+            .productName(productName)
+            .categoryName(categoryName)
+            .eventType(eventType)
+            .quantity(quantity)
+            .occurredAt(occurredAt)
+            .build();
 
         OrderLogDocument saved = orderLogRepository.save(document);
-        log.info("✅ [LOG_WRITE] Saved order event log - ID: {}, User: {}, Product: {}",
-                saved.getId(), userId, productName);
+        log.info("Saved order event log - ID: {}, User: {}, Product: {}, Category: {}",
+            saved.getId(), userId, productName, categoryName);
     }
 
-    /**
-     * 검색 로그 저장
-     */
-    public void saveSearchLog(UUID userId, String searchQuery, String category, Instant searchedAt) {
+    public void saveSearchLog(UUID userId,
+                              String searchQuery,
+                              String category,
+                              Instant searchedAt) {
         SearchLogDocument document = SearchLogDocument.builder()
-                .userId(userId)
-                .searchQuery(searchQuery)
-                .category(category)
-                .searchedAt(searchedAt)
-                .build();
+            .userId(userId)
+            .searchQuery(searchQuery)
+            .category(category)
+            .searchedAt(searchedAt)
+            .build();
 
         SearchLogDocument saved = searchLogRepository.save(document);
-        log.info("✅ [LOG_WRITE] Saved search log - ID: {}, User: {}, Query: '{}'",
-                saved.getId(), userId, searchQuery);
+        log.info("Saved search log - ID: {}, User: {}, Query: '{}'",
+            saved.getId(), userId, searchQuery);
+    }
+
+    public void savePaymentEventLog(UUID userId,
+                                    UUID paymentId,
+                                    UUID orderId,
+                                    Long amount,
+                                    String purpose,
+                                    String eventType,
+                                    Instant occurredAt) {
+        PaymentLogDocument document = PaymentLogDocument.builder()
+            .userId(userId)
+            .paymentId(paymentId)
+            .orderId(orderId)
+            .amount(amount)
+            .purpose(purpose)
+            .eventType(eventType)
+            .occurredAt(occurredAt)
+            .build();
+
+        PaymentLogDocument saved = paymentLogRepository.save(document);
+        log.info("Saved payment event log - ID: {}, User: {}, Payment: {}, Order: {}, Purpose: {}, Amount: {}",
+            saved.getId(), userId, paymentId, orderId, purpose, amount);
     }
 }

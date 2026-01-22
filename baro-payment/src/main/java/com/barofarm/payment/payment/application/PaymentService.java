@@ -18,6 +18,8 @@ import com.barofarm.payment.payment.infrastructure.rest.TossPaymentClient;
 import com.barofarm.payment.payment.infrastructure.rest.dto.TossPaymentResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.barofarm.log.history.annotation.TrackHistory;
+import com.barofarm.log.history.model.HistoryEventType;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,7 @@ public class PaymentService {
     private final ObjectMapper objectMapper;
 
     @Transactional
+    @TrackHistory(HistoryEventType.PAYMENT_CONFIRMED)
     public ResponseDto<TossPaymentConfirmInfo> confirmPayment(UUID userId, TossPaymentConfirmCommand command) {
         TossPaymentResponse tossPayment = tossPaymentClient.confirm(command);
 
@@ -63,8 +66,6 @@ public class PaymentService {
         }
         return ResponseDto.ok(TossPaymentConfirmInfo.from(saved));
     }
-
-
     @Transactional
     public ResponseDto<TossPaymentConfirmInfo> confirmDeposit(UUID userId, TossPaymentConfirmCommand command) {
         TossPaymentResponse tossPayment = tossPaymentClient.confirm(command);

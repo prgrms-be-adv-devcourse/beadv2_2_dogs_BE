@@ -2,11 +2,16 @@ package com.barofarm.ai.event.model;
 
 public enum HistoryEventType {
     // Cart Events
-    CART_ITEM_ADDED, // 유저가 해당 상품에 관심을 보임
-    CART_ITEM_REMOVED, // 유저가 해당 상품에 관심이 약해짐
-    CART_QUANTITY_UPDATED, // 수량 변경
+    CART_ITEM_ADDED,
+    CART_ITEM_REMOVED,
+    CART_QUANTITY_UPDATED,
 
     // Order Events
-    ORDER_CONFIRMED, // 주문 완료
-    ORDER_CANCELLED, // 주문 취소
+    ORDER_CONFIRMED,
+    ORDER_CANCELLED,
+
+    // Payment Events
+    PAYMENT_CONFIRMED,
+    DEPOSIT_CONFIRMED
 }
+

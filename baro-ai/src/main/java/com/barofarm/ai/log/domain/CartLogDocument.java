@@ -16,38 +16,41 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 public class CartLogDocument {
 
     @Id
-    private String id; // Elasticsearch에서는 String ID 사용
+    private String id;
 
-    // 개인화 추천의 핵심 축: 누가 (userId)
     @Field(type = FieldType.Keyword)
     private UUID userId;
 
-    // 개인화 추천의 핵심 축: 무엇에 (productId)
     @Field(type = FieldType.Keyword)
     private UUID productId;
 
-    // 임베딩용 텍스트 데이터 - 검색 가능하도록 Text 타입
     @Field(type = FieldType.Text, analyzer = "nori")
     private String productName;
 
-    // 이벤트 타입: ADD, REMOVE, UPDATE
+    @Field(type = FieldType.Keyword)
+    private String categoryName;
+
     @Field(type = FieldType.Keyword)
     private String eventType;
 
-    // 관심 강도 (수량)
     @Field(type = FieldType.Integer)
     private Integer quantity;
 
-    // 시간 가중치 계산용
     @Field(type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private Instant occurredAt;
 
     @Builder
-    public CartLogDocument(UUID userId, UUID productId, String productName,
-                           String eventType, Integer quantity, Instant occurredAt) {
+    public CartLogDocument(UUID userId,
+                           UUID productId,
+                           String productName,
+                           String categoryName,
+                           String eventType,
+                           Integer quantity,
+                           Instant occurredAt) {
         this.userId = userId;
         this.productId = productId;
         this.productName = productName;
+        this.categoryName = categoryName;
         this.eventType = eventType;
         this.quantity = quantity;
         this.occurredAt = occurredAt;
