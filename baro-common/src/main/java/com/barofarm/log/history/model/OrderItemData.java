@@ -14,4 +14,5 @@ public class OrderItemData {
     private UUID productId;
     private String productName;
     private Integer quantity;
+    private String categoryName;
 }

@@ -12,73 +12,76 @@ import java.util.UUID;
 
 public record OrderCreateRequest(
 
-    @NotBlank(message = "받는 분 이름은 필수입니다.")
+    @NotBlank(message = "ë°›ëŠ” ë¶??´ë¦„?€ ?„ìˆ˜?…ë‹ˆ??")
     String receiverName,
 
-    @NotBlank(message = "휴대폰 번호는 필수입니다.")
+    @NotBlank(message = "?´ë???ë²ˆí˜¸???„ìˆ˜?…ë‹ˆ??")
     String phone,
 
-    @NotBlank(message = "이메일은 필수입니다.")
-    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    @NotBlank(message = "?´ë©”?¼ì? ?„ìˆ˜?…ë‹ˆ??")
+    @Email(message = "?¬ë°”ë¥??´ë©”???•ì‹???„ë‹™?ˆë‹¤.")
     String email,
 
-    @NotBlank(message = "우편번호는 필수입니다.")
+    @NotBlank(message = "?°íŽ¸ë²ˆí˜¸???„ìˆ˜?…ë‹ˆ??")
     String zipCode,
 
-    @NotBlank(message = "주소는 필수입니다.")
+    @NotBlank(message = "ì£¼ì†Œ???„ìˆ˜?…ë‹ˆ??")
     String address,
 
-    @NotBlank(message = "상세주소는 필수입니다.")
+    @NotBlank(message = "?ì„¸ì£¼ì†Œ???„ìˆ˜?…ë‹ˆ??")
     String addressDetail,
 
     String deliveryMemo,
 
-    @NotEmpty(message = "주문 상품은 최소 1개 이상이어야 합니다.")
+    @NotEmpty(message = "ì£¼ë¬¸ ?í’ˆ?€ ìµœì†Œ 1ê°??´ìƒ?´ì–´???©ë‹ˆ??")
     @Valid
     List<OrderItemRequest> items
 
 ) {
     public OrderCreateCommand toCommand() {
         List<OrderCreateCommand.OrderItemCreateCommand> itemCommands = items.stream()
-                .map(i -> new OrderCreateCommand.OrderItemCreateCommand(
-                        i.productId(),
-                        i.productName,
-                        i.inventoryId,
-                        i.sellerId(),
-                        i.quantity(),
-                        i.unitPrice()
-                ))
-                .toList();
+            .map(i -> new OrderCreateCommand.OrderItemCreateCommand(
+                i.productId(),
+                i.productName,
+                i.categoryName(),
+                i.inventoryId,
+                i.sellerId(),
+                i.quantity(),
+                i.unitPrice()
+            ))
+            .toList();
 
         return new OrderCreateCommand(
-                receiverName,
-                phone,
-                email,
-                zipCode,
-                address,
-                addressDetail,
-                deliveryMemo,
-                itemCommands
+            receiverName,
+            phone,
+            email,
+            zipCode,
+            address,
+            addressDetail,
+            deliveryMemo,
+            itemCommands
         );
     }
 
     public record OrderItemRequest(
-        @NotNull(message = "상품 ID는 필수입니다.")
+        @NotNull(message = "?í’ˆ ID???„ìˆ˜?…ë‹ˆ??")
         UUID productId,
 
-        @NotBlank(message = "상품 이름은 필수입니다.")
+        @NotBlank(message = "?í’ˆ ?´ë¦„?€ ?„ìˆ˜?…ë‹ˆ??")
         String productName,
 
-        @Positive(message = "수량은 1개 이상이어야 합니다.")
+        String categoryName,
+
+        @Positive(message = "?˜ëŸ‰?€ 1ê°??´ìƒ?´ì–´???©ë‹ˆ??")
         Long quantity,
 
-        @NotNull(message = "재고 ID는 필수입니다.")
+        @NotNull(message = "?¬ê³  ID???„ìˆ˜?…ë‹ˆ??")
         UUID inventoryId,
 
-        @NotNull(message = "판매자 ID는 필수입니다.")
+        @NotNull(message = "?ë§¤??ID???„ìˆ˜?…ë‹ˆ??")
         UUID sellerId,
 
-        @Positive(message = "단가(unitPrice)는 0보다 커야 합니다.")
+        @Positive(message = "?¨ê?(unitPrice)??0ë³´ë‹¤ ì»¤ì•¼ ?©ë‹ˆ??")
         long unitPrice
     ) { }
 }

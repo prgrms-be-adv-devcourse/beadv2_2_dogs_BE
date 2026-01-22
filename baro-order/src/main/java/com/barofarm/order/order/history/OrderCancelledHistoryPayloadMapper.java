@@ -52,6 +52,7 @@ public class OrderCancelledHistoryPayloadMapper implements HistoryPayloadMapper 
                     .productId(item.getProductId())
                     .productName(resolveProductName(item))
                     .quantity(Math.toIntExact(item.getQuantity()))
+                    .categoryName(resolveCategoryName(item))
                     .build())
                 .toList();
         }
@@ -66,6 +67,16 @@ public class OrderCancelledHistoryPayloadMapper implements HistoryPayloadMapper 
         // TODO: remove reflection once OrderItem has getProductName()
         try {
             Method method = item.getClass().getMethod("getProductName");
+            Object value = method.invoke(item);
+            return value != null ? value.toString() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String resolveCategoryName(Object item) {
+        try {
+            Method method = item.getClass().getMethod("getCategoryName");
             Object value = method.invoke(item);
             return value != null ? value.toString() : null;
         } catch (Exception e) {

@@ -48,8 +48,12 @@ public class OrderItem extends BaseEntity {
     @Column(name = "inventory_id", columnDefinition = "BINARY(16)", nullable = false)
     private UUID inventoryId;
 
+    @Column(name = "category_name")
+    private String categoryName;
+
     private OrderItem(UUID id, Order order, UUID productId, String productName,
-                      UUID sellerId, Long quantity, Long unitPrice, UUID inventoryId) {
+                      UUID sellerId, Long quantity, Long unitPrice, UUID inventoryId,
+                      String categoryName) {
         this.id = id;
         this.order = order;
         this.productId = productId;
@@ -59,10 +63,17 @@ public class OrderItem extends BaseEntity {
         this.unitPrice = unitPrice;
         this.totalPrice = unitPrice*quantity;
         this.inventoryId = inventoryId;
+        this.categoryName = categoryName;
     }
 
     public static OrderItem of(Order order, UUID productId, String productName,
                                UUID sellerId, Long quantity, Long unitPrice, UUID inventoryId) {
+        return OrderItem.of(order, productId, productName, sellerId, quantity, unitPrice, inventoryId, null);
+    }
+
+    public static OrderItem of(Order order, UUID productId, String productName,
+                               UUID sellerId, Long quantity, Long unitPrice, UUID inventoryId,
+                               String categoryName) {
         return new OrderItem(
             UUID.randomUUID(),
             order,
@@ -71,7 +82,8 @@ public class OrderItem extends BaseEntity {
             sellerId,
             quantity,
             unitPrice,
-            inventoryId
+            inventoryId,
+            categoryName
         );
     }
 }
