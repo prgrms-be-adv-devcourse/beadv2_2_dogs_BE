@@ -36,4 +36,9 @@ public class ProductRepositoryAdapter implements ProductRepository {
   public void deleteById(UUID id) {
     productJpaRepository.deleteById(id);
   }
+
+  @Override
+  public Page<Product> findAllWithoutSeasonality(Pageable pageable) {
+    return productJpaRepository.findAllWithoutSeasonality(pageable);
+  }
 }

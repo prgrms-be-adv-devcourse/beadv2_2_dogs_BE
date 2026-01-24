@@ -13,4 +13,9 @@ public interface ProductRepository {
   Product save(Product product);
 
   void deleteById(UUID id);
+
+  /**
+   * 제철 정보가 없는 상품 목록 조회
+   */
+  Page<Product> findAllWithoutSeasonality(Pageable pageable);
 }
