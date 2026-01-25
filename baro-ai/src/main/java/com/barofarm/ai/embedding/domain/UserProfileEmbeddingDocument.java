@@ -39,4 +39,8 @@ public class UserProfileEmbeddingDocument {
     // 빠른 상품 제외를 위한 productId 목록 (cart+order에서 추출, UUID 문자열)
     @Field(type = FieldType.Keyword)
     private List<String> sourceProductIds;    // 최대 10개 (중복 제거)
+
+    // 사용자 선호 카테고리 코드 (cart/order 로그에서 도출한 최빈 카테고리)
+    @Field(type = FieldType.Keyword)
+    private String preferredCategoryCode;
 }

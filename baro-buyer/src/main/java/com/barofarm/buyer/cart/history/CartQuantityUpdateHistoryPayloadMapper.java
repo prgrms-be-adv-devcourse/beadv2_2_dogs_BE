@@ -3,6 +3,7 @@ package com.barofarm.buyer.cart.history;
 import com.barofarm.buyer.cart.domain.Cart;
 import com.barofarm.buyer.cart.domain.CartItem;
 import com.barofarm.buyer.cart.domain.CartRepository;
+import com.barofarm.buyer.product.domain.ProductRepository;
 import com.barofarm.log.history.mapper.HistoryPayloadMapper;
 import com.barofarm.log.history.model.CartEventData;
 import com.barofarm.log.history.model.HistoryEventType;
@@ -14,9 +15,14 @@ import org.springframework.stereotype.Component;
 public class CartQuantityUpdateHistoryPayloadMapper implements HistoryPayloadMapper {
 
     private final CartRepository cartRepository;
+    private final ProductRepository productRepository;
 
-    public CartQuantityUpdateHistoryPayloadMapper(CartRepository cartRepository) {
+    public CartQuantityUpdateHistoryPayloadMapper(
+        CartRepository cartRepository,
+        ProductRepository productRepository
+    ) {
         this.cartRepository = cartRepository;
+        this.productRepository = productRepository;
     }
 
     @Override
@@ -46,7 +52,16 @@ public class CartQuantityUpdateHistoryPayloadMapper implements HistoryPayloadMap
         Optional<CartItem> item = cart.get().getItems().stream()
             .filter(cartItem -> cartItem.getId().equals(itemId))
             .findFirst();
-        item.ifPresent(cartItem -> builder.productId(cartItem.getProductId()));
+        if (item.isPresent()) {
+            UUID productId = item.get().getProductId();
+            builder.productId(productId);
+            productRepository.findById(productId).ifPresent(product -> {
+                builder.productName(product.getProductName());
+                if (product.getCategory() != null) {
+                    builder.categoryCode(product.getCategory().getCode());
+                }
+            });
+        }
 
         return builder.build();
     }

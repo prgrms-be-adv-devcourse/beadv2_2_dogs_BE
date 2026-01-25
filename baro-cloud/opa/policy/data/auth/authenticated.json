@@ -1,0 +1,38 @@
+{
+    "rules_by_id":  {
+                        "auth:auth-me":  {
+                                             "name":  "auth:auth-me",
+                                             "path":  "^(/auth-service)?/api/v1/auth/me$",
+                                             "methods":  [
+                                                             "GET"
+                                                         ],
+                                             "roles":  [
+                                                           "CUSTOMER",
+                                                           "SELLER",
+                                                           "ADMIN"
+                                                       ]
+                                         },
+                        "auth:auth-withdraw":  {
+                                                   "name":  "auth:auth-withdraw",
+                                                   "path":  "^(/auth-service)?/api/v1/auth/me/withdraw$",
+                                                   "methods":  [
+                                                                   "POST"
+                                                               ],
+                                                   "roles":  [
+                                                                 "CUSTOMER",
+                                                                 "SELLER",
+                                                                 "ADMIN"
+                                                             ]
+                                               }
+                    },
+    "index":  {
+                  "method":  {
+                                 "GET":  [
+                                             "auth:auth-me"
+                                         ],
+                                 "POST":  [
+                                              "auth:auth-withdraw"
+                                          ]
+                             }
+              }
+}

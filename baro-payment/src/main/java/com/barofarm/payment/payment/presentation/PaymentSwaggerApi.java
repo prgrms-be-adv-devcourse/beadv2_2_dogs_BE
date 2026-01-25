@@ -2,9 +2,7 @@ package com.barofarm.payment.payment.presentation;
 
 import com.barofarm.dto.ResponseDto;
 import com.barofarm.payment.payment.application.dto.response.TossPaymentConfirmInfo;
-import com.barofarm.payment.payment.application.dto.response.TossPaymentRefundInfo;
 import com.barofarm.payment.payment.presentation.dto.TossPaymentConfirmRequest;
-import com.barofarm.payment.payment.presentation.dto.TossPaymentRefundRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -53,47 +51,6 @@ public interface PaymentSwaggerApi {
         @Valid @RequestBody TossPaymentConfirmRequest confirmRequest
     );
 
-    @Operation(
-        summary = "Toss 결제 취소(환불)",
-        description = "Toss Payments 결제 취소(환불) API를 호출하여 결제를 취소하고, 주문 상태를 취소 상태로 변경합니다."
-    )
-    @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "환불 성공",
-            content = @Content(mediaType = "application/json")
-        ),
-        @ApiResponse(
-            responseCode = "400",
-            description = "잘못된 환불 요청 (TOSS_PAYMENT_INVALID_REQUEST)",
-            content = @Content(mediaType = "application/json")
-        ),
-        @ApiResponse(
-            responseCode = "401",
-            description = "Toss 인증 실패 / Secret Key 오류 (INVALID_SECRET_KEY, TOSS_PAYMENT_UNAUTHORIZED)",
-            content = @Content(mediaType = "application/json")
-        ),
-        @ApiResponse(
-            responseCode = "404",
-            description = "주문을 찾을 수 없음 (ORDER_NOT_FOUND)",
-            content = @Content(mediaType = "application/json")
-        ),
-        @ApiResponse(
-            responseCode = "409",
-            description = "이미 취소되었거나 취소 불가 상태 (TOSS_PAYMENT_CONFLICT)",
-            content = @Content(mediaType = "application/json")
-        ),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Toss 서버 오류로 인한 취소 실패 (TOSS_PAYMENT_SERVER_ERROR, TOSS_PAYMENT_CANCEL_FAILED)",
-            content = @Content(mediaType = "application/json")
-        )
-    })
-    @PostMapping("/refund")
-    ResponseDto<TossPaymentRefundInfo> refundPayment(
-        @RequestHeader("X-User-Id") UUID userId,
-        @Valid @RequestBody TossPaymentRefundRequest refundRequest
-    );
 
     @Operation(
         summary = "Toss 예치금 충전 결제 승인",

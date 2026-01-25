@@ -61,6 +61,7 @@ if [ -z "$MODULE_NAME" ]; then
     echo "  - order      (주문 모듈)"
     echo "  - payment    (결제 모듈)"
     echo "  - support    (지원 모듈)"
+    echo "  - settlement (정산 모듈, Deployment + CronJob)"
     echo "  - ai         (AI 모듈)"
     echo "  - redis      (Redis 캐시)"
     echo "  - data       (데이터 인프라: MySQL, Kafka, Elasticsearch - docker-compose로 배포)"
@@ -108,47 +109,86 @@ log_info "k8s 디렉토리: $K8S_BASE_DIR"
 # kubectl 확인 및 테스트
 # ===================================
 log_step "🔍 Checking kubectl..."
-KUBECTL_CMD=""
 
-# 1. kubectl이 있는지 확인하고 실제로 동작하는지 테스트
-if command -v kubectl &> /dev/null; then
-    # kubectl이 실제로 클러스터에 접근할 수 있는지 테스트
-    if kubectl get nodes &> /dev/null 2>&1; then
-        KUBECTL_CMD="kubectl"
-        log_info "✅ 일반 kubectl 사용 가능 (클러스터 접근 성공)"
-    elif command -v k3s &> /dev/null; then
-        # kubectl이 있지만 클러스터에 접근 실패, sudo k3s kubectl 시도
+# kubectl 명령어를 결정하는 함수 (재사용 가능)
+# 주의: 이 함수는 stdout에만 명령어를 출력하고, 로그는 출력하지 않음
+determine_kubectl_cmd() {
+    local cmd=""
+    
+    # k3s가 설치되어 있으면 우선적으로 sudo k3s kubectl 사용 (권한 문제 방지)
+    if command -v k3s &> /dev/null; then
         if sudo k3s kubectl get nodes &> /dev/null 2>&1; then
-            KUBECTL_CMD="sudo k3s kubectl"
-            log_info "✅ sudo k3s kubectl 사용 (일반 kubectl은 permission 문제)"
+            cmd="sudo k3s kubectl"
+            echo "$cmd"      # stdout으로만 반환 (로그 없음)
+            return 0
         fi
     fi
-fi
-
-# 2. kubectl이 없거나 동작하지 않으면 sudo k3s kubectl 시도
-if [ -z "$KUBECTL_CMD" ] && command -v k3s &> /dev/null; then
-    if sudo k3s kubectl get nodes &> /dev/null 2>&1; then
-        KUBECTL_CMD="sudo k3s kubectl"
-        log_info "✅ sudo k3s kubectl 사용"
+    
+    # k3s가 없거나 sudo k3s kubectl이 실패하면 일반 kubectl 시도
+    if command -v kubectl &> /dev/null; then
+        # kubectl이 실제로 클러스터에 접근할 수 있는지 테스트
+        if kubectl get nodes &> /dev/null 2>&1; then
+            cmd="kubectl"
+            echo "$cmd"      # stdout으로만 반환 (로그 없음)
+            return 0
+        fi
     fi
-fi
+    
+    return 1
+}
 
-# 3. 최종 확인
+# kubectl 명령어 결정
+KUBECTL_CMD=$(determine_kubectl_cmd)
+
+# 최종 확인 및 로그 출력
 if [ -z "$KUBECTL_CMD" ]; then
     log_error "kubectl 또는 k3s가 설치되어 있지 않거나 클러스터에 연결할 수 없습니다."
     echo "디버깅 정보:"
-    if command -v kubectl &> /dev/null; then
-        echo "kubectl get nodes 결과:"
-        kubectl get nodes 2>&1 || true
-    fi
     if command -v k3s &> /dev/null; then
         echo "sudo k3s kubectl get nodes 결과:"
         sudo k3s kubectl get nodes 2>&1 || true
     fi
+    if command -v kubectl &> /dev/null; then
+        echo "kubectl get nodes 결과:"
+        kubectl get nodes 2>&1 || true
+    fi
     exit 1
 fi
 
+# kubectl 명령어 타입에 따라 로그 출력
+if [[ "$KUBECTL_CMD" == "sudo k3s kubectl" ]]; then
+    log_info "✅ sudo k3s kubectl 사용 (k3s 환경 감지)"
+elif [[ "$KUBECTL_CMD" == "kubectl" ]]; then
+    log_info "✅ 일반 kubectl 사용 가능 (클러스터 접근 성공)"
+fi
 log_info "📦 사용할 kubectl 명령어: $KUBECTL_CMD"
+
+# kubectl 명령어 검증 함수 (실행 전 확인용)
+verify_kubectl() {
+    # KUBECTL_CMD가 비어있으면 재확인
+    if [ -z "$KUBECTL_CMD" ]; then
+        log_warn "⚠️ kubectl 명령어가 설정되지 않았습니다. 재확인 중..."
+        KUBECTL_CMD=$(determine_kubectl_cmd)
+        if [ -z "$KUBECTL_CMD" ]; then
+            log_error "❌ kubectl 명령어를 재확인할 수 없습니다."
+            return 1
+        fi
+        log_info "✅ kubectl 명령어 재확인 완료: $KUBECTL_CMD"
+        return 0
+    fi
+    
+    # kubectl 명령어가 작동하는지 확인
+    if ! $KUBECTL_CMD get nodes &> /dev/null 2>&1; then
+        log_warn "⚠️ kubectl 명령어가 작동하지 않습니다. 재확인 중..."
+        KUBECTL_CMD=$(determine_kubectl_cmd)
+        if [ -z "$KUBECTL_CMD" ]; then
+            log_error "❌ kubectl 명령어를 재확인할 수 없습니다."
+            return 1
+        fi
+        log_info "✅ kubectl 명령어 재확인 완료: $KUBECTL_CMD"
+    fi
+    return 0
+}
 
 # ===================================
 # Data EC2 Private IP 설정
@@ -198,6 +238,7 @@ log_info "💡 다른 EC2의 Data 서비스(MySQL, Kafka, Redis, ES)에 접근�
 # Namespace 생성 (base kustomization 사용)
 # ===================================
 log_step "📦 Applying base resources (namespace)..."
+verify_kubectl || exit 1
 if $KUBECTL_CMD apply -k "$K8S_BASE_DIR/base/"; then
     log_info "✅ Base resources (namespace) 적용 완료"
 else
@@ -213,7 +254,7 @@ case "$MODULE_NAME" in
         DEPLOY_PATH=""
         APP_NAME="cloud"
         ;;
-    eureka|config|gateway)
+    eureka|config|gateway|opa)
         DEPLOY_PATH="$K8S_BASE_DIR/cloud/$MODULE_NAME"
         APP_NAME="$MODULE_NAME"
         ;;
@@ -245,6 +286,10 @@ case "$MODULE_NAME" in
         DEPLOY_PATH="$K8S_BASE_DIR/apps/baro-support"
         APP_NAME="baro-support"
         ;;
+    settlement|baro-settlement)
+        DEPLOY_PATH="$K8S_BASE_DIR/apps/baro-settlement"
+        APP_NAME="baro-settlement"
+        ;;
     ai|baro-ai)
         DEPLOY_PATH="$K8S_BASE_DIR/apps/baro-ai"
         APP_NAME="baro-ai"
@@ -274,8 +319,7 @@ case "$MODULE_NAME" in
         ;;
     *)
         log_error "알 수 없는 모듈: $MODULE_NAME"
-        log_info "사용 가능한 모듈: cloud, eureka, config, gateway, redis, auth, buyer, seller, order, payment, support, ai, data"
-        log_info "💡 DaemonSet 배포는 deploy-daemonset.sh를 사용하세요."
+        log_info "사용 가능한 모듈: cloud, eureka, config, gateway, redis, auth, buyer, seller, order, payment, support, settlement, ai, data"
         exit 1
         ;;
 esac
@@ -406,6 +450,102 @@ if [ "$MODULE_NAME" = "cloud" ]; then
         log_info "✅ Gateway Pod가 Ready 상태입니다."
     fi
     
+    log_step "4️⃣ OPA 배포 중..."
+    # kustomization.yaml에서 이미지 태그 업데이트
+    KUSTOMIZATION_FILE="$K8S_BASE_DIR/cloud/opa/kustomization.yaml"
+    if [ -f "$KUSTOMIZATION_FILE" ] && [ "$IMAGE_TAG" != "latest" ]; then
+        log_info "🏷️  OPA 이미지 태그 업데이트: $IMAGE_TAG"
+        sed -i.bak "s|newTag: latest|newTag: ${IMAGE_TAG}|g" "$KUSTOMIZATION_FILE" 2>/dev/null || \
+        sed -i "s|newTag: latest|newTag: ${IMAGE_TAG}|g" "$KUSTOMIZATION_FILE" 2>/dev/null || true
+        rm -f "${KUSTOMIZATION_FILE}.bak" 2>/dev/null || true
+    fi
+    
+    # OPA Bundle 배포 전 Eureka 확인
+    log_step "⏳ OPA Bundle 배포 전 Eureka 준비 상태 확인 중..."
+    if ! $KUBECTL_CMD wait --for=condition=ready pod -l app=eureka -n baro-prod --timeout=60s 2>&1; then
+        log_warn "⚠️ Eureka Pod가 Ready 상태가 아닙니다. OPA Bundle 배포를 계속 진행하지만, initContainer에서 대기합니다."
+    else
+        log_info "✅ Eureka Pod가 Ready 상태입니다."
+    fi
+    
+    # OPA Bundle 배포 (Deployment)
+    log_step "📦 OPA Bundle 배포 중..."
+    $KUBECTL_CMD apply -k "$K8S_BASE_DIR/cloud/opa-bundle/"
+    
+    # IMAGE_TAG가 latest일 때는 Deployment spec이 변경되지 않으므로 rollout restart로 Pod 재시작
+    if [ "$IMAGE_TAG" = "latest" ]; then
+        log_info "🔄 latest 태그 사용 중이므로 Pod 재시작 (rollout restart)..."
+        verify_kubectl || exit 1
+        $KUBECTL_CMD rollout restart deployment/opa-bundle -n baro-prod || true
+    fi
+    
+    # Pod가 Ready 상태가 될 때까지 대기 (타임아웃: 300초)
+    verify_kubectl || exit 1
+    if ! $KUBECTL_CMD wait --for=condition=ready pod -l app=opa-bundle -n baro-prod --timeout=300s 2>&1; then
+        log_warn "⚠️ OPA Bundle Pod가 Ready 상태가 되지 않았습니다. 상태 확인 중..."
+        echo ""
+        echo "📊 OPA Bundle Pod 상태:"
+        $KUBECTL_CMD get pods -n baro-prod -l app=opa-bundle 2>&1 || true
+        echo ""
+        echo "📋 OPA Bundle Deployment 상태:"
+        $KUBECTL_CMD get deployment opa-bundle -n baro-prod 2>&1 || true
+        echo ""
+        echo "📝 OPA Bundle Pod 이벤트:"
+        OPA_BUNDLE_POD=$($KUBECTL_CMD get pods -n baro-prod -l app=opa-bundle -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+        if [ -n "$OPA_BUNDLE_POD" ]; then
+            $KUBECTL_CMD describe pod "$OPA_BUNDLE_POD" -n baro-prod 2>&1 | grep -A 30 "Events:" || true
+            echo ""
+            echo "📄 OPA Bundle Pod 로그 (마지막 50줄):"
+            $KUBECTL_CMD logs "$OPA_BUNDLE_POD" -n baro-prod --tail=50 2>&1 || true
+        fi
+        log_warn "⚠️ OPA Bundle 배포는 계속 진행하지만, Pod가 준비되지 않았을 수 있습니다."
+    else
+        log_info "✅ OPA Bundle Pod가 Ready 상태입니다."
+    fi
+    
+    # OPA 배포 전 OPA Bundle Ready 상태 재확인
+    log_step "⏳ OPA 배포 전 OPA Bundle Ready 상태 확인 중..."
+    if ! $KUBECTL_CMD wait --for=condition=ready pod -l app=opa-bundle -n baro-prod --timeout=30s 2>&1; then
+        log_warn "⚠️ OPA Bundle Pod가 Ready 상태가 아닙니다. OPA 배포를 계속 진행하지만, OPA가 번들을 가져올 수 없을 수 있습니다."
+    else
+        log_info "✅ OPA Bundle Pod가 Ready 상태입니다. OPA 배포를 진행합니다."
+    fi
+    
+    # OPA 배포 (DaemonSet)
+    log_step "📦 OPA 배포 중..."
+    $KUBECTL_CMD apply -k "$K8S_BASE_DIR/cloud/opa/"
+    
+    # IMAGE_TAG가 latest일 때는 DaemonSet spec이 변경되지 않으므로 rollout restart로 Pod 재시작
+    if [ "$IMAGE_TAG" = "latest" ]; then
+        log_info "🔄 latest 태그 사용 중이므로 Pod 재시작 (rollout restart)..."
+        verify_kubectl || exit 1
+        $KUBECTL_CMD rollout restart daemonset/opa -n baro-prod || true
+    fi
+    
+    # Pod가 Ready 상태가 될 때까지 대기 (타임아웃: 300초)
+    verify_kubectl || exit 1
+    if ! $KUBECTL_CMD wait --for=condition=ready pod -l app=opa -n baro-prod --timeout=300s 2>&1; then
+        log_warn "⚠️ OPA Pod가 Ready 상태가 되지 않았습니다. 상태 확인 중..."
+        echo ""
+        echo "📊 OPA Pod 상태:"
+        $KUBECTL_CMD get pods -n baro-prod -l app=opa 2>&1 || true
+        echo ""
+        echo "📋 OPA DaemonSet 상태:"
+        $KUBECTL_CMD get daemonset opa -n baro-prod 2>&1 || true
+        echo ""
+        echo "📝 OPA Pod 이벤트:"
+        OPA_POD=$($KUBECTL_CMD get pods -n baro-prod -l app=opa -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+        if [ -n "$OPA_POD" ]; then
+            $KUBECTL_CMD describe pod "$OPA_POD" -n baro-prod 2>&1 | grep -A 30 "Events:" || true
+            echo ""
+            echo "📄 OPA Pod 로그 (마지막 50줄):"
+            $KUBECTL_CMD logs "$OPA_POD" -n baro-prod --tail=50 2>&1 || true
+        fi
+        log_warn "⚠️ OPA 배포는 계속 진행하지만, Pod가 준비되지 않았을 수 있습니다."
+    else
+        log_info "✅ OPA Pod가 Ready 상태입니다."
+    fi
+    
     log_info "✅ Cloud 모듈 배포 완료"
     $KUBECTL_CMD get pods -n baro-prod -l component=cloud
     exit 0
@@ -416,6 +556,32 @@ fi
 # ===================================
 if [ ! -d "$DEPLOY_PATH" ]; then
     log_error "배포 경로를 찾을 수 없습니다: $DEPLOY_PATH"
+    log_error "디버깅 정보:"
+    log_error "  - K8S_BASE_DIR: $K8S_BASE_DIR"
+    log_error "  - MODULE_NAME: $MODULE_NAME"
+    log_error "  - 예상 경로: $K8S_BASE_DIR/apps/baro-$MODULE_NAME 또는 $K8S_BASE_DIR/cloud/$MODULE_NAME"
+    
+    # 가능한 경로 확인
+    log_error "가능한 경로 확인:"
+    if [ -d "$K8S_BASE_DIR/apps" ]; then
+        log_error "  - apps 디렉토리 내용:"
+        ls -la "$K8S_BASE_DIR/apps" 2>&1 | head -10 || true
+    fi
+    if [ -d "$K8S_BASE_DIR/cloud" ]; then
+        log_error "  - cloud 디렉토리 내용:"
+        ls -la "$K8S_BASE_DIR/cloud" 2>&1 | head -10 || true
+    fi
+    exit 1
+fi
+
+# 배포 경로에 deployment.yaml 또는 daemonset.yaml이 있는지 확인
+if [ ! -f "$DEPLOY_PATH/deployment.yaml" ] && [ ! -f "$DEPLOY_PATH/daemonset.yaml" ]; then
+    log_error "배포 파일을 찾을 수 없습니다: $DEPLOY_PATH"
+    log_error "다음 파일 중 하나가 필요합니다:"
+    log_error "  - $DEPLOY_PATH/deployment.yaml"
+    log_error "  - $DEPLOY_PATH/daemonset.yaml"
+    log_error "디렉토리 내용:"
+    ls -la "$DEPLOY_PATH" 2>&1 || true
     exit 1
 fi
 
@@ -437,17 +603,41 @@ if [ -f "$KUSTOMIZATION_FILE" ] && [ "$IMAGE_TAG" != "latest" ]; then
 fi
 
 # ===================================
-# Deployment 파일에 EC2 IP 설정 (임시 파일 사용)
+# Deployment/DaemonSet 파일에 EC2 IP 설정 (임시 파일 사용)
 # ===================================
 DEPLOYMENT_FILE="$DEPLOY_PATH/deployment.yaml"
+DAEMONSET_FILE="$DEPLOY_PATH/daemonset.yaml"
 TEMP_DEPLOYMENT=""
 
-log_info "🔍 Deployment 파일 확인: $DEPLOYMENT_FILE"
+# Deployment 또는 DaemonSet 파일 확인
 if [ -f "$DEPLOYMENT_FILE" ]; then
-    log_info "✅ Deployment 파일 존재 확인됨"
+    DEPLOYMENT_FILE_TO_USE="$DEPLOYMENT_FILE"
+    log_info "🔍 Deployment 파일 확인: $DEPLOYMENT_FILE"
+elif [ -f "$DAEMONSET_FILE" ]; then
+    DEPLOYMENT_FILE_TO_USE="$DAEMONSET_FILE"
+    log_info "🔍 DaemonSet 파일 확인: $DAEMONSET_FILE"
+else
+    log_error "❌ Deployment 또는 DaemonSet 파일을 찾을 수 없습니다"
+    log_error "디버깅 정보:"
+    log_error "  - DEPLOY_PATH: $DEPLOY_PATH"
+    log_error "  - K8S_BASE_DIR: $K8S_BASE_DIR"
+    log_error "  - MODULE_NAME: $MODULE_NAME"
+    
+    # 디렉토리 내용 확인
+    if [ -d "$DEPLOY_PATH" ]; then
+        log_error "  - 디렉토리 내용:"
+        ls -la "$DEPLOY_PATH" 2>&1 | head -20 || true
+    else
+        log_error "  - 디렉토리도 존재하지 않습니다: $DEPLOY_PATH"
+    fi
+    exit 1
+fi
+
+if [ -f "$DEPLOYMENT_FILE_TO_USE" ]; then
+    log_info "✅ 파일 존재 확인됨: $DEPLOYMENT_FILE_TO_USE"
     # 임시 파일 생성 (원본 파일 보존)
     TEMP_DEPLOYMENT=$(mktemp)
-    cp "$DEPLOYMENT_FILE" "$TEMP_DEPLOYMENT"
+    cp "$DEPLOYMENT_FILE_TO_USE" "$TEMP_DEPLOYMENT"
     
     log_step "🔧 Deployment 파일 설정 중..."
     
@@ -536,36 +726,31 @@ if [ -f "$DEPLOYMENT_FILE" ]; then
         fi
         
         # Kafka Bootstrap Servers 처리
-        # DEPLOY_KAFKA=true일 때: Public EC2에 배포되므로 DATA_EC2_IP 사용
-        # DEPLOY_KAFKA=false일 때: Private EC2에 배포되거나 미배포이므로 localhost 사용
+        # Kafka가 Public EC2에서 실행 중이므로 모든 모듈이 Public EC2 IP 사용
+        # DEPLOY_KAFKA=true일 때: Kafka는 Public EC2에 배포되므로 Public EC2 IP 사용
+        # DEPLOY_KAFKA=false일 때: Kafka가 Public EC2에 있다면 Public EC2 IP 사용, Private EC2에 있다면 localhost 사용
         if grep -q "SPRING_KAFKA_BOOTSTRAP_SERVERS" "$TEMP_DEPLOYMENT"; then
             log_info "🔍 Kafka Bootstrap Servers 치환 전 확인:"
             grep -A 1 "SPRING_KAFKA_BOOTSTRAP_SERVERS" "$TEMP_DEPLOYMENT" || true
             
-            if [ "${DEPLOY_KAFKA:-false}" = "true" ]; then
-                log_info "📦 DEPLOY_KAFKA=true: Kafka는 Public EC2에 배포되므로 $DATA_EC2_IP:29092 사용"
-                # 127.0.0.1:29092 패턴을 Data EC2 IP로 변경
-                sed "s|127\.0\.0\.1:29092|$DATA_EC2_IP:29092|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
-                mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
-                # localhost:29092 패턴도 Data EC2 IP로 변경
-                sed "s|localhost:29092|$DATA_EC2_IP:29092|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
-                mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
-                # http://localhost:29092 패턴도 처리
-                sed "s|http://localhost:29092|$DATA_EC2_IP:29092|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
-                mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
-                # CHANGE_ME_TO_EC2_IP:29092는 이미 전역 치환으로 DATA_EC2_IP:29092로 변경됨
-                if grep -q "$DATA_EC2_IP:29092" "$TEMP_DEPLOYMENT"; then
-                    log_info "✅ SPRING_KAFKA_BOOTSTRAP_SERVERS: $DATA_EC2_IP:29092 사용 (Public EC2에서 실행 중)"
-                fi
-            else
-                log_info "📦 DEPLOY_KAFKA=false: Kafka는 Private EC2에 배포되거나 미배포이므로 localhost:29092 유지"
-                # CHANGE_ME_TO_EC2_IP:29092를 localhost:29092로 변경
-                sed "s|$DATA_EC2_IP:29092|localhost:29092|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
-                mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
-                # localhost:29092가 이미 설정되어 있으면 유지
-                if grep -q "localhost:29092\|127\.0\.0\.1:29092" "$TEMP_DEPLOYMENT"; then
-                    log_info "✅ SPRING_KAFKA_BOOTSTRAP_SERVERS: localhost:29092 사용 (Private EC2에서 실행 중 또는 미배포)"
-                fi
+            # Kafka 위치 확인: Public EC2에서 실행 중이므로 항상 Public EC2 IP 사용
+            # DATA_EC2_IP는 Public EC2 IP를 의미 (Kafka가 실행되는 EC2)
+            KAFKA_IP="$DATA_EC2_IP"
+            log_info "📦 Kafka는 Public EC2($KAFKA_IP)에서 실행 중이므로 모든 모듈이 $KAFKA_IP:29092 사용"
+            
+            # 모든 모듈(Public/Private EC2 모두)이 Public EC2 IP 사용
+            # 127.0.0.1:29092 패턴을 Public EC2 IP로 변경
+            sed "s|127\.0\.0\.1:29092|$KAFKA_IP:29092|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+            mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+            # localhost:29092 패턴도 Public EC2 IP로 변경
+            sed "s|localhost:29092|$KAFKA_IP:29092|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+            mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+            # http://localhost:29092 패턴도 처리
+            sed "s|http://localhost:29092|$KAFKA_IP:29092|g" "$TEMP_DEPLOYMENT" > "${TEMP_DEPLOYMENT}.tmp"
+            mv "${TEMP_DEPLOYMENT}.tmp" "$TEMP_DEPLOYMENT"
+            # CHANGE_ME_TO_EC2_IP:29092는 이미 전역 치환으로 Public EC2 IP:29092로 변경됨
+            if grep -q "$KAFKA_IP:29092" "$TEMP_DEPLOYMENT"; then
+                log_info "✅ SPRING_KAFKA_BOOTSTRAP_SERVERS: $KAFKA_IP:29092 사용 (Kafka는 Public EC2에서 실행 중)"
             fi
             
             log_info "🔍 Kafka Bootstrap Servers 치환 후 확인:"
@@ -644,47 +829,108 @@ if [ -f "$DEPLOYMENT_FILE" ]; then
         fi
     fi
     
-    # 임시 deployment.yaml을 원본 위치에 복사 (kustomize가 읽을 수 있도록)
+    # 임시 파일을 원본 위치에 복사 (kustomize가 읽을 수 있도록)
     # 매 배포마다 GitHub Actions가 최신 k8s 디렉토리를 복사하므로, 수정된 파일을 그대로 사용
-    cp "$TEMP_DEPLOYMENT" "$DEPLOYMENT_FILE"
+    cp "$TEMP_DEPLOYMENT" "$DEPLOYMENT_FILE_TO_USE"
     rm -f "$TEMP_DEPLOYMENT"
-    log_info "✅ Deployment 파일 업데이트 완료 (수정된 파일로 배포 예정)"
-    log_info "📝 수정된 deployment.yaml 내용 확인:"
-    grep -A 2 "SPRING_KAFKA_BOOTSTRAP_SERVERS\|SPRING_ELASTICSEARCH_URIS" "$DEPLOYMENT_FILE" || true
-else
-    log_error "Deployment 파일을 찾을 수 없습니다: $DEPLOYMENT_FILE"
-    exit 1
+    log_info "✅ 파일 업데이트 완료 (수정된 파일로 배포 예정): $DEPLOYMENT_FILE_TO_USE"
+    log_info "📝 수정된 내용 확인:"
+    grep -A 2 "SPRING_KAFKA_BOOTSTRAP_SERVERS\|SPRING_ELASTICSEARCH_URIS" "$DEPLOYMENT_FILE_TO_USE" || true
+    
+    # Deployment 또는 DaemonSet 파일 변수 설정 (나중에 사용)
+    DEPLOYMENT_FILE="$DEPLOYMENT_FILE_TO_USE"
 fi
 
 # ===================================
-# Deployment 이름 추출 (selector 충돌 처리에 필요)
+# Settlement CronJob 패치 (baro-settlement 모듈만)
+# ===================================
+CRONJOB_FILE="$DEPLOY_PATH/cronjob.yaml"
+if [[ "$DEPLOY_PATH" == *"baro-settlement"* ]] && [ -f "$CRONJOB_FILE" ]; then
+    log_step "🔧 CronJob 파일 패치 중: $CRONJOB_FILE"
+    TEMP_CRONJOB=$(mktemp)
+    cp "$CRONJOB_FILE" "$TEMP_CRONJOB"
+    if grep -q "CHANGE_ME_TO_EC2_IP" "$TEMP_CRONJOB"; then
+        sed "s/CHANGE_ME_TO_EC2_IP/$DATA_EC2_IP/g" "$TEMP_CRONJOB" > "${TEMP_CRONJOB}.tmp"
+        mv "${TEMP_CRONJOB}.tmp" "$TEMP_CRONJOB"
+        cp "$TEMP_CRONJOB" "$CRONJOB_FILE"
+        rm -f "$TEMP_CRONJOB"
+        log_info "✅ CronJob IP 치환 완료: $DATA_EC2_IP"
+    else
+        rm -f "$TEMP_CRONJOB"
+    fi
+fi
+
+# ===================================
+# Deployment/DaemonSet 이름 추출 (selector 충돌 처리에 필요)
 # ===================================
 DEPLOYMENT_NAME=""
-if [ -f "$DEPLOYMENT_FILE" ]; then
+DAEMONSET_NAME=""
+RESOURCE_TYPE=""
+
+# DaemonSet 확인 (우선순위)
+if [ -f "$DAEMONSET_FILE" ]; then
+    RESOURCE_TYPE="DaemonSet"
+    # daemonset.yaml에서 metadata.name 추출
+    DAEMONSET_NAME=$(grep -E "^  name:" "$DAEMONSET_FILE" | head -1 | awk '{print $2}' 2>/dev/null)
+    
+    if [ -z "$DAEMONSET_NAME" ]; then
+        DAEMONSET_NAME=$(grep -E "^\s+name:" "$DAEMONSET_FILE" | grep -v "namespace:" | head -1 | awk '{print $2}' 2>/dev/null)
+    fi
+    
+    if [ -z "$DAEMONSET_NAME" ]; then
+        DAEMONSET_NAME=$(sed -n '/^metadata:/,/^spec:/p' "$DAEMONSET_FILE" | grep "name:" | head -1 | awk '{print $2}' 2>/dev/null)
+    fi
+    
+    if [ -z "$DAEMONSET_NAME" ] && [ -n "$APP_NAME" ]; then
+        DAEMONSET_NAME="$APP_NAME"
+        log_info "💡 DAEMONSET_NAME을 APP_NAME으로 설정: $DAEMONSET_NAME"
+    fi
+# Deployment 확인
+elif [ -f "$DEPLOYMENT_FILE" ]; then
+    RESOURCE_TYPE="Deployment"
     # deployment.yaml에서 metadata.name 추출 (여러 방법 시도)
-    # 방법 1: 일반적인 패턴 (들여쓰기 2칸)
     DEPLOYMENT_NAME=$(grep -E "^  name:" "$DEPLOYMENT_FILE" | head -1 | awk '{print $2}' 2>/dev/null)
     
-    # 방법 2: 다른 들여쓰기 패턴
     if [ -z "$DEPLOYMENT_NAME" ]; then
         DEPLOYMENT_NAME=$(grep -E "^\s+name:" "$DEPLOYMENT_FILE" | grep -v "namespace:" | head -1 | awk '{print $2}' 2>/dev/null)
     fi
     
-    # 방법 3: metadata 섹션 내의 name 찾기
     if [ -z "$DEPLOYMENT_NAME" ]; then
         DEPLOYMENT_NAME=$(sed -n '/^metadata:/,/^spec:/p' "$DEPLOYMENT_FILE" | grep "name:" | head -1 | awk '{print $2}' 2>/dev/null)
     fi
+    
+    if [ -z "$DEPLOYMENT_NAME" ] && [ -n "$APP_NAME" ]; then
+        DEPLOYMENT_NAME="$APP_NAME"
+        log_info "💡 DEPLOYMENT_NAME을 APP_NAME으로 설정: $DEPLOYMENT_NAME"
+    fi
 fi
 
-# 여전히 없으면 APP_NAME 사용 (fallback)
-if [ -z "$DEPLOYMENT_NAME" ] && [ -n "$APP_NAME" ]; then
-    DEPLOYMENT_NAME="$APP_NAME"
-    log_info "💡 DEPLOYMENT_NAME을 APP_NAME으로 설정: $DEPLOYMENT_NAME"
+# 최종 확인
+if [ -z "$DAEMONSET_NAME" ] && [ -z "$DEPLOYMENT_NAME" ]; then
+    log_warn "⚠️  리소스 이름을 추출할 수 없습니다. APP_NAME: $APP_NAME"
 fi
 
-# 최종 확인: DEPLOYMENT_NAME이 설정되었는지
-if [ -z "$DEPLOYMENT_NAME" ]; then
-    log_warn "⚠️  DEPLOYMENT_NAME을 추출할 수 없습니다. APP_NAME: $APP_NAME"
+if [ -n "$RESOURCE_TYPE" ]; then
+    log_info "📋 리소스 타입: $RESOURCE_TYPE"
+fi
+
+# ===================================
+# opa 배포 전 Eureka 및 OPA Bundle 확인
+# ===================================
+if [ "$MODULE_NAME" = "opa" ]; then
+    log_step "⏳ OPA 배포 전 Eureka 준비 상태 확인 중..."
+    if ! $KUBECTL_CMD wait --for=condition=ready pod -l app=eureka -n baro-prod --timeout=60s 2>&1; then
+        log_warn "⚠️ Eureka Pod가 Ready 상태가 아닙니다. OPA 배포를 계속 진행하지만, initContainer에서 대기합니다."
+    else
+        log_info "✅ Eureka Pod가 Ready 상태입니다."
+    fi
+    
+    log_step "⏳ OPA 배포 전 OPA Bundle 준비 상태 확인 중..."
+    if ! $KUBECTL_CMD wait --for=condition=ready pod -l app=opa-bundle -n baro-prod --timeout=60s 2>&1; then
+        log_warn "⚠️ OPA Bundle Pod가 Ready 상태가 아닙니다. OPA 배포를 계속 진행하지만, OPA가 번들을 가져올 수 없을 수 있습니다."
+    else
+        log_info "✅ OPA Bundle Pod가 Ready 상태입니다."
+    fi
 fi
 
 # ===================================
@@ -710,39 +956,72 @@ if [ $APPLY_EXIT_CODE -ne 0 ]; then
     echo "$APPLY_OUTPUT"
     # selector immutable 에러 확인
     if echo "$APPLY_OUTPUT" | grep -q "selector.*immutable\|field is immutable"; then
-        log_warn "⚠️  Deployment selector 충돌 감지. 기존 Deployment를 삭제하고 재생성합니다..."
-        
-        # DEPLOYMENT_NAME이 없으면 APP_NAME으로 시도
-        if [ -z "$DEPLOYMENT_NAME" ] && [ -n "$APP_NAME" ]; then
-            DEPLOYMENT_NAME="$APP_NAME"
-        fi
-        
-        if [ -n "$DEPLOYMENT_NAME" ]; then
-            log_info "기존 Deployment 삭제: $DEPLOYMENT_NAME"
-            $KUBECTL_CMD delete deployment "$DEPLOYMENT_NAME" -n baro-prod --ignore-not-found=true
-            sleep 2
-            log_info "Deployment 재생성 중..."
+        if [ "$RESOURCE_TYPE" = "DaemonSet" ]; then
+            log_warn "⚠️  DaemonSet selector 충돌 감지. 기존 DaemonSet을 삭제하고 재생성합니다..."
             
-            # 재생성 시도 (에러 캡처)
-            set +e
-            RECREATE_OUTPUT=$($KUBECTL_CMD apply -k "$DEPLOY_PATH" 2>&1)
-            RECREATE_EXIT_CODE=$?
-            set -e
+            if [ -z "$DAEMONSET_NAME" ] && [ -n "$APP_NAME" ]; then
+                DAEMONSET_NAME="$APP_NAME"
+            fi
             
-            if [ $RECREATE_EXIT_CODE -eq 0 ]; then
-                log_info "✅ Deployment 재생성 완료"
-                echo "$RECREATE_OUTPUT"
+            if [ -n "$DAEMONSET_NAME" ]; then
+                log_info "기존 DaemonSet 삭제: $DAEMONSET_NAME"
+                $KUBECTL_CMD delete daemonset "$DAEMONSET_NAME" -n baro-prod --ignore-not-found=true
+                sleep 2
+                log_info "DaemonSet 재생성 중..."
+                
+                set +e
+                RECREATE_OUTPUT=$($KUBECTL_CMD apply -k "$DEPLOY_PATH" 2>&1)
+                RECREATE_EXIT_CODE=$?
+                set -e
+                
+                if [ $RECREATE_EXIT_CODE -eq 0 ]; then
+                    log_info "✅ DaemonSet 재생성 완료"
+                    echo "$RECREATE_OUTPUT"
+                else
+                    log_error "❌ DaemonSet 재생성 실패 (exit code: $RECREATE_EXIT_CODE)"
+                    echo "$RECREATE_OUTPUT"
+                    exit 1
+                fi
             else
-                log_error "❌ Deployment 재생성 실패 (exit code: $RECREATE_EXIT_CODE)"
-                echo "$RECREATE_OUTPUT"
+                log_error "❌ DaemonSet 이름을 찾을 수 없습니다. (APP_NAME: $APP_NAME)"
+                log_error "수동으로 다음 명령어를 실행하세요:"
+                log_error "  kubectl delete daemonset <daemonset-name> -n baro-prod"
+                log_error "  kubectl apply -k $DEPLOY_PATH"
                 exit 1
             fi
         else
-            log_error "❌ Deployment 이름을 찾을 수 없습니다. (APP_NAME: $APP_NAME)"
-            log_error "수동으로 다음 명령어를 실행하세요:"
-            log_error "  kubectl delete deployment <deployment-name> -n baro-prod"
-            log_error "  kubectl apply -k $DEPLOY_PATH"
-            exit 1
+            log_warn "⚠️  Deployment selector 충돌 감지. 기존 Deployment를 삭제하고 재생성합니다..."
+            
+            if [ -z "$DEPLOYMENT_NAME" ] && [ -n "$APP_NAME" ]; then
+                DEPLOYMENT_NAME="$APP_NAME"
+            fi
+            
+            if [ -n "$DEPLOYMENT_NAME" ]; then
+                log_info "기존 Deployment 삭제: $DEPLOYMENT_NAME"
+                $KUBECTL_CMD delete deployment "$DEPLOYMENT_NAME" -n baro-prod --ignore-not-found=true
+                sleep 2
+                log_info "Deployment 재생성 중..."
+                
+                set +e
+                RECREATE_OUTPUT=$($KUBECTL_CMD apply -k "$DEPLOY_PATH" 2>&1)
+                RECREATE_EXIT_CODE=$?
+                set -e
+                
+                if [ $RECREATE_EXIT_CODE -eq 0 ]; then
+                    log_info "✅ Deployment 재생성 완료"
+                    echo "$RECREATE_OUTPUT"
+                else
+                    log_error "❌ Deployment 재생성 실패 (exit code: $RECREATE_EXIT_CODE)"
+                    echo "$RECREATE_OUTPUT"
+                    exit 1
+                fi
+            else
+                log_error "❌ Deployment 이름을 찾을 수 없습니다. (APP_NAME: $APP_NAME)"
+                log_error "수동으로 다음 명령어를 실행하세요:"
+                log_error "  kubectl delete deployment <deployment-name> -n baro-prod"
+                log_error "  kubectl apply -k $DEPLOY_PATH"
+                exit 1
+            fi
         fi
     else
         # 다른 종류의 에러
@@ -800,7 +1079,12 @@ fi
 # ===================================
 # 1. IMAGE_TAG가 latest일 때
 # 2. 또는 deployment.yaml이 수정되었는데 unchanged가 나왔을 때
-if [ -n "$DEPLOYMENT_NAME" ]; then
+if [ -n "$DAEMONSET_NAME" ]; then
+    if [ "$IMAGE_TAG" = "latest" ]; then
+        log_info "🔄 latest 태그 사용 중이므로 Pod 재시작 (rollout restart)..."
+        $KUBECTL_CMD rollout restart daemonset/"$DAEMONSET_NAME" -n baro-prod || true
+    fi
+elif [ -n "$DEPLOYMENT_NAME" ]; then
     if [ "$IMAGE_TAG" = "latest" ]; then
         log_info "🔄 latest 태그 사용 중이므로 Pod 재시작 (rollout restart)..."
         $KUBECTL_CMD rollout restart deployment/"$DEPLOYMENT_NAME" -n baro-prod || true
@@ -813,7 +1097,38 @@ fi
 # ===================================
 # 배포 상태 확인
 # ===================================
-if [ -f "$DEPLOYMENT_FILE" ]; then
+if [ -f "$DAEMONSET_FILE" ]; then
+    if [ -n "$DAEMONSET_NAME" ]; then
+        log_step "⏳ Pod가 Ready 상태가 될 때까지 대기 중..."
+        if ! $KUBECTL_CMD wait --for=condition=ready pod -l app="$APP_NAME" -n baro-prod --timeout=300s 2>&1; then
+            log_warn "⚠️ $APP_NAME Pod가 Ready 상태가 되지 않았습니다. 상태 확인 중..."
+            echo ""
+            echo "📊 $APP_NAME Pod 상태:"
+            $KUBECTL_CMD get pods -n baro-prod -l app="$APP_NAME" 2>&1 || true
+            echo ""
+            echo "📋 $APP_NAME DaemonSet 상태:"
+            $KUBECTL_CMD get daemonset "$DAEMONSET_NAME" -n baro-prod 2>&1 || true
+            echo ""
+            echo "📝 $APP_NAME Pod 이벤트:"
+            LATEST_POD=$($KUBECTL_CMD get pods -n baro-prod -l app="$APP_NAME" --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1].metadata.name}' 2>/dev/null || echo "")
+            if [ -n "$LATEST_POD" ]; then
+                $KUBECTL_CMD describe pod "$LATEST_POD" -n baro-prod 2>&1 | grep -A 30 "Events:" || true
+                echo ""
+                echo "📄 $APP_NAME Pod 로그 (마지막 50줄):"
+                $KUBECTL_CMD logs "$LATEST_POD" -n baro-prod --tail=50 2>&1 || true
+            fi
+            log_warn "⚠️ $APP_NAME 배포는 계속 진행하지만, Pod가 준비되지 않았을 수 있습니다."
+            log_warn "💡 로그 확인 명령어: kubectl logs -n baro-prod -l app=$APP_NAME --tail=100"
+        else
+            log_info "✅ $APP_NAME Pod가 Ready 상태입니다."
+        fi
+        
+        log_info "✅ 배포 완료: $MODULE_NAME"
+        $KUBECTL_CMD get pods -n baro-prod -l app="$APP_NAME"
+    else
+        log_info "✅ 리소스 적용 완료: $MODULE_NAME"
+    fi
+elif [ -f "$DEPLOYMENT_FILE" ]; then
     DEPLOYMENT_NAME=$(grep -E "^  name:" "$DEPLOYMENT_FILE" | head -1 | awk '{print $2}' || echo "")
     if [ -n "$DEPLOYMENT_NAME" ]; then
         log_step "⏳ Pod가 Ready 상태가 될 때까지 대기 중..."

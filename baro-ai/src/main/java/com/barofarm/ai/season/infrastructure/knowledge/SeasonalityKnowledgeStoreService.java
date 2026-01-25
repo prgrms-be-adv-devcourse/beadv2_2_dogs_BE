@@ -88,7 +88,7 @@ public class SeasonalityKnowledgeStoreService {
 
     /**
      * VectorStore에서 중복 체크
-     * 
+     *
      * @param productName 상품명
      * @param category 카테고리
      * @return 중복 여부
@@ -101,9 +101,9 @@ public class SeasonalityKnowledgeStoreService {
                 .query(query)
                 .topK(10)  // 상위 10개 결과 확인
                 .build();
-            
+
             List<Document> documents = vectorStore.similaritySearch(searchRequest);
-            
+
             // 검색 결과에서 정확히 일치하는 productName과 category가 있는지 확인
             return documents.stream()
                 .anyMatch(doc -> {

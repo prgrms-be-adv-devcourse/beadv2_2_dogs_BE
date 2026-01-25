@@ -1,0 +1,14 @@
+﻿services:
+  opa-bundle:
+    url: http://host.docker.internal:8095
+
+bundles:
+  baro:
+    service: opa-bundle
+    resource: /opa/bundle
+    polling:
+      min_delay_seconds: 10
+      max_delay_seconds: 60
+
+decision_logs:
+  console: true

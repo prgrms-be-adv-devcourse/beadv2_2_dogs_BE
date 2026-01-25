@@ -1,6 +1,6 @@
 package com.barofarm.support.delivery.domain;
 
-import com.barofarm.common.entity.BaseEntity;
+import com.barofarm.entity.BaseEntity;
 import com.barofarm.support.delivery.exception.InvalidDeliveryStatusException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;

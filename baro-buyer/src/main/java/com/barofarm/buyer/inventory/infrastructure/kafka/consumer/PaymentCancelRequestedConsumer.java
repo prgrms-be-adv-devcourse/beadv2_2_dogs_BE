@@ -12,6 +12,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,10 @@ public class PaymentCancelRequestedConsumer {
             "spring.json.value.default.type="
                 + "com.barofarm.buyer.inventory.infrastructure.kafka.consumer.dto.PaymentCanceledEvent"
         }
+    )
+    @RetryableTopic(
+        attempts = "3",
+        backoff = @Backoff(delay = 1000, multiplier = 2)
     )
     @Transactional
     public void handle(PaymentCanceledEvent event) {

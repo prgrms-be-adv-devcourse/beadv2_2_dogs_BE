@@ -1,0 +1,109 @@
+{
+    "rules_by_id":  {
+                        "support:experiences-list":  {
+                                                         "name":  "support:experiences-list",
+                                                         "path":  "^/api/v1/experiences$",
+                                                         "methods":  [
+                                                                         "GET"
+                                                                     ],
+                                                         "roles":  [
+                                                                       "*"
+                                                                   ]
+                                                     },
+                        "support:experiences-detail":  {
+                                                           "name":  "support:experiences-detail",
+                                                           "path":  "^/api/v1/experiences/[^/]+$",
+                                                           "methods":  [
+                                                                           "GET"
+                                                                       ],
+                                                           "roles":  [
+                                                                         "*"
+                                                                     ]
+                                                       },
+                        "support:product-reviews-read":  {
+                                                             "name":  "support:product-reviews-read",
+                                                             "path":  "^(/support-service)?/api/v1/products/[^/]+/reviews$",
+                                                             "methods":  [
+                                                                             "GET"
+                                                                         ],
+                                                             "roles":  [
+                                                                           "*"
+                                                                       ]
+                                                         },
+                        "support:reviews-read":  {
+                                                     "name":  "support:reviews-read",
+                                                     "path":  "^/api/v1/reviews/[^/]+$",
+                                                     "methods":  [
+                                                                     "GET"
+                                                                 ],
+                                                     "roles":  [
+                                                                   "*"
+                                                               ]
+                                                 },
+                        "support:search":  {
+                                               "name":  "support:search",
+                                               "path":  "^/api/v1/search$",
+                                               "methods":  [
+                                                               "GET"
+                                                           ],
+                                               "roles":  [
+                                                             "*"
+                                                         ]
+                                           },
+                        "support:search-autocomplete":  {
+                                                            "name":  "support:search-autocomplete",
+                                                            "path":  "^/api/v1/search/autocomplete$",
+                                                            "methods":  [
+                                                                            "GET"
+                                                                        ],
+                                                            "roles":  [
+                                                                          "*"
+                                                                      ]
+                                                        },
+                        "support:search-experience-autocomplete":  {
+                                                                       "name":  "support:search-experience-autocomplete",
+                                                                       "path":  "^/api/v1/search/experience/autocomplete$",
+                                                                       "methods":  [
+                                                                                       "GET"
+                                                                                   ],
+                                                                       "roles":  [
+                                                                                     "*"
+                                                                                 ]
+                                                                   },
+                        "support:search-farm-autocomplete":  {
+                                                                 "name":  "support:search-farm-autocomplete",
+                                                                 "path":  "^/api/v1/search/farm/autocomplete$",
+                                                                 "methods":  [
+                                                                                 "GET"
+                                                                             ],
+                                                                 "roles":  [
+                                                                               "*"
+                                                                           ]
+                                                             },
+                        "support:search-product-autocomplete":  {
+                                                                    "name":  "support:search-product-autocomplete",
+                                                                    "path":  "^(/support-service)?/api/v1/search/product/autocomplete$",
+                                                                    "methods":  [
+                                                                                    "GET"
+                                                                                ],
+                                                                    "roles":  [
+                                                                                  "*"
+                                                                              ]
+                                                                }
+                    },
+    "index":  {
+                  "method":  {
+                                 "GET":  [
+                                             "support:experiences-list",
+                                             "support:experiences-detail",
+                                             "support:product-reviews-read",
+                                             "support:reviews-read",
+                                             "support:search",
+                                             "support:search-autocomplete",
+                                             "support:search-experience-autocomplete",
+                                             "support:search-farm-autocomplete",
+                                             "support:search-product-autocomplete"
+                                         ]
+                             }
+              }
+}

@@ -1,20 +1,16 @@
 package com.barofarm.storage.s3;
 
 import com.barofarm.config.AwsProperties;
+import com.sksamuel.scrimage.ImmutableImage;
+import com.sksamuel.scrimage.webp.WebpWriter;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
-import java.util.Iterator;
 import java.util.UUID;
-import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.ImageOutputStream;
 import org.springframework.web.multipart.MultipartFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,8 +91,9 @@ public class S3ImageUploader {
             }
 
             BufferedImage resized = resizeIfNeeded(input);
-            byte[] bytes = writeWebp(resized);
-            return new WebpResult(bytes, resized.getWidth(), resized.getHeight());
+            BufferedImage rgb = ensureRgb(resized);
+            byte[] bytes = writeWebp(rgb);
+            return new WebpResult(bytes, rgb.getWidth(), rgb.getHeight());
         } catch (IOException e) {
             throw new IllegalStateException("Failed to process image.", e);
         }
@@ -119,7 +116,7 @@ public class S3ImageUploader {
         int targetW = Math.max(1, (int) Math.round(width * scale));
         int targetH = Math.max(1, (int) Math.round(height * scale));
 
-        BufferedImage resized = new BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage resized = new BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2d = resized.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -131,28 +128,19 @@ public class S3ImageUploader {
     }
 
     private byte[] writeWebp(BufferedImage image) throws IOException {
-        Iterator<ImageWriter> writers = ImageIO.getImageWritersByMIMEType(WEBP_CONTENT_TYPE);
-        if (!writers.hasNext()) {
-            throw new IllegalStateException("No WebP writer available.");
+        ImmutableImage immutable = ImmutableImage.fromAwt(image);
+        WebpWriter writer = new WebpWriter();
+        Float quality = properties.getS3().getWebpQuality();
+        if (quality != null) {
+            int q = Math.max(0, Math.min(100, Math.round(quality * 100f)));
+            writer = writer.withQ(q);
         }
 
-        ImageWriter writer = writers.next();
-        ImageWriteParam param = writer.getDefaultWriteParam();
-        if (param.canWriteCompressed()) {
-            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-            Float quality = properties.getS3().getWebpQuality();
-            if (quality != null) {
-                param.setCompressionQuality(quality);
-            }
+        byte[] bytes = immutable.bytes(writer);
+        if (bytes.length == 0) {
+            throw new IllegalStateException("WebP conversion produced empty bytes.");
         }
-
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageOutputStream ios = ImageIO.createImageOutputStream(baos)) {
-            writer.setOutput(ios);
-            writer.write(null, new IIOImage(image, null, null), param);
-            writer.dispose();
-            return baos.toByteArray();
-        }
+        return bytes;
     }
 
     private String buildKey(String category) {
@@ -177,6 +165,17 @@ public class S3ImageUploader {
             return base.endsWith("/") ? base + key : base + "/" + key;
         }
         return "https://%s.s3.amazonaws.com/%s".formatted(properties.getS3().getBucket(), key);
+    }
+
+    private BufferedImage ensureRgb(BufferedImage input) {
+        if (input.getType() == BufferedImage.TYPE_INT_RGB) {
+            return input;
+        }
+        BufferedImage rgb = new BufferedImage(input.getWidth(), input.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = rgb.createGraphics();
+        g2d.drawImage(input, 0, 0, java.awt.Color.WHITE, null);
+        g2d.dispose();
+        return rgb;
     }
 
     public record UploadedImage(

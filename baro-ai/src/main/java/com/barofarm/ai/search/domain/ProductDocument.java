@@ -35,6 +35,9 @@ public class ProductDocument {
     private UUID productCategoryId; // 카테고리 ID
 
     @Field(type = FieldType.Keyword)
+    private String productCategoryCode; // 카테고리 코드
+
+    @Field(type = FieldType.Keyword)
     private String productCategoryName; // 카테고리 이름
 
     @Field(type = FieldType.Long)
@@ -53,10 +56,12 @@ public class ProductDocument {
     public ProductDocument() {
     }
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
     public ProductDocument(
         UUID productId,
         String productName,
         UUID productCategoryId,
+        String productCategoryCode,
         String productCategoryName,
         Long price,
         String status,
@@ -65,6 +70,7 @@ public class ProductDocument {
         this.productId = productId;
         this.productName = productName;
         this.productCategoryId = productCategoryId;
+        this.productCategoryCode = productCategoryCode;
         this.productCategoryName = productCategoryName;
         this.price = price;
         this.status = status;

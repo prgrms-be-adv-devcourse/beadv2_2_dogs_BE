@@ -33,6 +33,21 @@ spring:
       cron:
         settlement: "0 0 0 1 * *"
 
+# Deployment + CronJob 사용 시 false (CronJob이 배치 실행). 로컬/기존 동작은 true.
+settlement:
+  scheduler:
+    enabled: ${SETTLEMENT_SCHEDULER_ENABLED:true}
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      group-id: settlement-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: latest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
 eureka:
   client:
     # Eureka 서버에 등록 (Config Server의 eureka-server 설정과 충돌 방지)

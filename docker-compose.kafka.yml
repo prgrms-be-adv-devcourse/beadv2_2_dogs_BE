@@ -12,29 +12,30 @@ services:
       # KRaft 모드 설정
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@127.0.0.1:29093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@baro-kafka:29093
       # CLUSTER_ID는 기존 볼륨에 저장된 값을 사용 (변경 시 데이터 손실)
       # 새로 초기화하려면 .env에서 다른 값으로 설정
       KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID:-}
       CLUSTER_ID: ${KAFKA_CLUSTER_ID:-}
-      
+
       # Listeners 설정
       # KAFKA_ADVERTISED_LISTENERS: 클라이언트가 Kafka에 연결할 때 사용하는 주소
       # - Public EC2에 배포 시: Public EC2의 IP 사용 (다른 EC2에서 접근 가능)
       # - Private EC2에 배포 시: 127.0.0.1 사용 (같은 EC2 내에서만 접근)
       # 컨테이너 내부에서 0.0.0.0으로 리스닝하여 호스트에서 접근 가능하도록 설정
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${DATA_EC2_IP:-127.0.0.1}:29092
+      # INTERNAL: 컨테이너 간 통신용, EXTERNAL: 호스트/로컬 테스트용
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://baro-kafka:9092,EXTERNAL://localhost:29092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
       # 토픽 설정
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      
+
       # 로그 설정
       KAFKA_LOG_DIRS: /var/lib/kafka/data
       # 메모리 제한
@@ -47,7 +48,7 @@ services:
     #       memory: 256M
     volumes:
       - kafka-data:/var/lib/kafka/data
-      - /mnt/s3:/mnt/s3:rw
+      - ${S3_MOUNT_PATH:-/mnt/s3}:/mnt/s3:rw
     restart: unless-stopped
     networks:
       - baro-network

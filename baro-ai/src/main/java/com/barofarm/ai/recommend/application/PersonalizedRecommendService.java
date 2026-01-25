@@ -4,6 +4,7 @@ import com.barofarm.ai.embedding.domain.UserProfileEmbeddingDocument;
 import com.barofarm.ai.embedding.infrastructure.elasticsearch.UserProfileEmbeddingRepository;
 import com.barofarm.ai.recommend.application.dto.ProductRecommendResponse;
 import com.barofarm.ai.search.application.VectorProductSearchService;
+import com.barofarm.ai.search.domain.ProductDocument;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class PersonalizedRecommendService {
 
     private final UserProfileEmbeddingRepository userProfileEmbeddingRepository;
     private final VectorProductSearchService vectorProductSearchService;
+    private final MedoidDiversityService medoidDiversityService;
 
     // 사용자 프로필 벡터를 기반으로 개인화된 상품을 추천
     public List<ProductRecommendResponse> recommendProducts(UUID userId, int topK) {
@@ -48,32 +50,57 @@ public class PersonalizedRecommendService {
 
         float[] userVector = convertToFloatArray(userProfileVector);
 
-        // 4. Elasticsearch 벡터 유사도 검색
-        List<ProductRecommendResponse> results =
-            findSimilarProductsByVector(userVector, topK, experiencedProductIds);
+        // 4. 사용자 선호 카테고리 코드 가져오기
+        String preferredCategoryCode = profile.getPreferredCategoryCode();
 
-        return results;
+        // 5. Elasticsearch 벡터 유사도 검색 + 메도이드 다양성 적용
+        return findSimilarProductsByVector(userVector, topK, experiencedProductIds, preferredCategoryCode);
     }
 
-    // Elasticsearch에서 벡터 유사도 검색을 수행
+    // Elasticsearch에서 벡터 유사도 검색을 수행하고,
+    // 메도이드 알고리즘을 적용해 다양성을 확보한 최종 추천 결과를 생성합니다.
     private List<ProductRecommendResponse> findSimilarProductsByVector(
         float[] userVector,
         int topK,
-        List<String> experiencedProductIds
+        List<String> experiencedProductIds,
+        String preferredCategoryCode
     ) {
         // String을 UUID로 변환
         List<UUID> excludeProductIds = experiencedProductIds.stream()
             .map(UUID::fromString)
             .toList();
 
-        // VectorProductSearchService의 메소드 사용
-        return vectorProductSearchService.findSimilarProductsByVector(
+        // 같은 카테고리 보너스 점수 설정 (0.3 = 30% 보너스, SimilarProductRecommendService와 동일)
+        Double categoryMatchBonus = preferredCategoryCode != null ? 0.3 : null;
+
+        // 메도이드 적용을 위해 topK보다 넉넉한 후보를 가져온다.
+        int candidateSize = Math.min(topK * 3, 100);
+
+        List<ProductDocument> candidates = vectorProductSearchService.findSimilarProductDocumentsByVector(
             userVector,
-            topK,
-            excludeProductIds,  // 제외할 상품 ID들
-            null,               // 자기 자신 제외하지 않음
-            true                // 중복 제거 활성화
+            candidateSize,
+            excludeProductIds,   // 제외할 상품 ID들 (이미 경험한 상품들)
+            preferredCategoryCode, // 사용자 선호 카테고리 코드
+            categoryMatchBonus   // 카테고리 일치 보너스
         );
+
+        if (candidates.isEmpty()) {
+            return List.of();
+        }
+
+        // 메도이드 알고리즘으로 다양성을 확보한 대표 상품 선택
+        List<ProductDocument> medoids =
+            medoidDiversityService.selectDiverseMedoids(userVector, candidates, topK);
+
+        // 최종 추천 응답 DTO로 변환
+        return medoids.stream()
+            .map(product -> new ProductRecommendResponse(
+                product.getProductId(),
+                product.getProductName(),
+                product.getProductCategoryName(),
+                product.getPrice()
+            ))
+            .toList();
     }
 
     // List<Double>을 float[]로 변환합니다.

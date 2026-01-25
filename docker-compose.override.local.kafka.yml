@@ -1,0 +1,7 @@
+services:
+  kafka:
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    environment:
+      - DATA_EC2_IP=baro-kafka
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://baro-kafka:29092

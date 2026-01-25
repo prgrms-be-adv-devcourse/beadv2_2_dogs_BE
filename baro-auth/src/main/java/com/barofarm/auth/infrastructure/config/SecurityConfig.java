@@ -19,7 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableMethodSecurity // 메소드별로 보안 설정을 활성화
 public class SecurityConfig {
-    private final JwtAuthenticationFilter jwtAuthenticationFilter; // 요청마다 JWT를 검증
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
@@ -60,14 +60,18 @@ public class SecurityConfig {
                             "/api/v1/auth/signup",
                             "/api/v1/auth/refresh",
                             "/api/v1/auth/logout",
+                            "/api/v1/auth/oauth/callback",
+                            "/api/v1/auth/oauth/state",
                             "/api/v1/auth/verification/**",
                             "/api/v1/auth/password/**",
-                            "/api/v1/auth/*/grant-seller", // TODO: 이후에 삭제하고 SELLER와 내부 토큰으로
+                            "/api/v1/auth/*/grant-seller",
                             "/swagger-ui/**",
                             "/swagger-ui.html",
                             "/v3/api-docs",
                             "/v3/api-docs/**",
-                            "/swagger-resources/**", "/webjars/**", "/configuration/**")
+                            "/swagger-resources/**",
+                            "/webjars/**",
+                            "/configuration/**")
                         .permitAll()
                         // 2) 나머지는 인증 필요
                         .anyRequest().authenticated())

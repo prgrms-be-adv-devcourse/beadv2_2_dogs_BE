@@ -1,0 +1,18 @@
+services:
+  baro-seller:
+    build:
+      context: .
+      dockerfile: docker/baro-seller/Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_CONFIG_IMPORT=
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=baro-kafka:9092
+      - SPRING_DATASOURCE_URL=jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE_SELLER}
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - AWS_ACCESS_KEY=
+      - AWS_SECRET_KEY=
+      - AWS_S3_BUCKET_NAME=
+    volumes: []

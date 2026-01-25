@@ -1,0 +1,10 @@
+baro:
+  ai:
+    recommend:
+      # 레시피 추천에서 제외할 상품 카테고리 코드 (과일 계열)
+      exclude-recipe-category-codes:
+        - AGRI_FRUIT
+        - AGRI_FRUIT_SEASONAL
+        - AGRI_FRUIT_STORAGE
+        - AGRI_FRUIT_BERRY
+

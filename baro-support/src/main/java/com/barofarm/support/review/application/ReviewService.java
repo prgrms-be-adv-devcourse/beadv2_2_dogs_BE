@@ -5,6 +5,8 @@ import com.barofarm.exception.CustomException;
 import com.barofarm.support.review.application.dto.request.ReviewCreateCommand;
 import com.barofarm.support.review.application.dto.request.ReviewUpdateCommand;
 import com.barofarm.support.review.application.dto.response.ReviewDetailInfo;
+import com.barofarm.support.review.application.event.ReviewTransactionEvent;
+import com.barofarm.support.review.application.event.ReviewTransactionEvent.ReviewOperation;
 import com.barofarm.support.review.client.order.OrderClient;
 import com.barofarm.support.review.client.order.dto.OrderItemResponse;
 import com.barofarm.support.review.client.order.dto.OrderStatus;
@@ -12,26 +14,37 @@ import com.barofarm.support.review.client.product.ProductClient;
 import com.barofarm.support.review.client.product.dto.ProductResponse;
 import com.barofarm.support.review.client.product.dto.ProductStatus;
 import com.barofarm.support.review.domain.Review;
+import com.barofarm.support.review.domain.ReviewImage;
 import com.barofarm.support.review.domain.ReviewRepository;
 import com.barofarm.support.review.domain.ReviewStatus;
 import com.barofarm.support.review.exception.ReviewErrorCode;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReviewService {
 
     private final OrderClient orderClient;
     private final ProductClient productClient;
     private final ReviewRepository reviewRepository;
+    private final ApplicationEventPublisher publisher;
+    private final ReviewImageService reviewImageService;
 
-    public ReviewDetailInfo createReview(ReviewCreateCommand command) {
+    @Transactional
+    public ReviewDetailInfo createReview(ReviewCreateCommand command, List<MultipartFile> images) {
         // 1. 주문 정보 조회
         OrderItemResponse item = getOrderItem(command.orderItemId());
 
@@ -60,12 +73,33 @@ public class ReviewService {
             command.content()
         );
 
-        // 8. 저장
+        // 8. 이미지 업로드
+        reviewImageService.createReviewImagesSafely(
+            review,
+            images,
+            command.productId(),
+            command.orderItemId(),
+            command.userId()
+        );
+
+        // 8. 저장 (리뷰는 무조건 저장)
         Review saved = savedReview(review);
+
+        // 9. 내부 이벤트 발행
+        List<String> imageUrls = extractImageUrls(saved);
+        publisher.publishEvent(new ReviewTransactionEvent(
+            ReviewOperation.CREATED,
+            saved.getId(),
+            saved.getProductId(),
+            saved.getRating(),
+            saved.getContent(),
+            imageUrls,
+            LocalDateTime.now()
+        ));
+
         return ReviewDetailInfo.from(saved);
     }
 
-    @Transactional
     public Review savedReview(Review review) {
         return reviewRepository.save(review);
     }
@@ -109,7 +143,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewDetailInfo updateReview(ReviewUpdateCommand command) {
+    public ReviewDetailInfo updateReview(ReviewUpdateCommand command, List<MultipartFile> images) {
 
         Review review = findReview(command.reviewId());
 
@@ -119,11 +153,30 @@ public class ReviewService {
         // 2. 업데이트 가능한 리뷰인지 확인
         validateReviewUpdatable(review);
 
+        // 3. 객체 업데이트 (사진 제외)
         review.update(
             command.rating(),
             command.toReviewStatus(),
             command.content()
         );
+
+        // 4. 이미지 업데이트
+        reviewImageService.updateReviewImagesSafely(
+            review,
+            images,
+            command.imageUpdateMode(),
+            command.userId()
+        );
+
+        // 5. 내부 이벤트 발행
+        List<String> imageUrls = extractImageUrls(review);
+        publisher.publishEvent(new ReviewTransactionEvent(ReviewOperation.UPDATED,
+            review.getId(),
+            review.getProductId(),
+            review.getRating(),
+            review.getContent(),
+            imageUrls,
+            LocalDateTime.now()));
 
         return ReviewDetailInfo.from(review);
     }
@@ -131,6 +184,7 @@ public class ReviewService {
     @Transactional
     public void deleteReview(UUID userId, UUID reviewId) {
         Review review = findReview(reviewId);
+        UUID productId = review.getProductId();
 
         // 1. 로그인한 사용자가 리뷰 작성자가 맞는지 검증
         validateReviewOwner(review, userId);
@@ -138,7 +192,22 @@ public class ReviewService {
         // 2. 삭제 가능한지 검증
         validateReviewDeletable(review);
 
+        // 3. 이미지 삭제
+        List<String> imageUrls = extractImageUrls(review);
+        reviewImageService.deleteReviewImagesSafely(review, userId);
+
+        // 4. review 객체 삭제
         review.delete();
+
+        // 5. 내부 이벤트 발행
+        publisher.publishEvent(new ReviewTransactionEvent(ReviewOperation.DELETED,
+            reviewId,
+            productId,
+            review.getRating(),
+            review.getContent(),
+            imageUrls,
+            LocalDateTime.now()));
+
     }
 
     private OrderItemResponse getOrderItem(UUID orderItemId) {
@@ -202,5 +271,13 @@ public class ReviewService {
         if (reviewRepository.existsByOrderItemId(orderItemId)) {
             throw new CustomException(ReviewErrorCode.DUPLICATE_REVIEW);
         }
+    }
+
+    private List<String> extractImageUrls(Review review) {
+        return review.getImages()
+            .stream()
+            .sorted(Comparator.comparingInt(ReviewImage::getSortOrder))
+            .map(ReviewImage::getImageUrl)
+            .toList();
     }
 }

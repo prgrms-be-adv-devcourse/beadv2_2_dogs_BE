@@ -1,0 +1,34 @@
+{
+    "rules_by_id":  {
+                        "order:payments-legacy":  {
+                                                      "name":  "order:payments-legacy",
+                                                      "path":  "^/api/payments/.*$",
+                                                      "methods":  [
+                                                                      "*"
+                                                                  ],
+                                                      "roles":  [
+                                                                    "*"
+                                                                ]
+                                                  },
+                        "order:payments-result":  {
+                                                      "name":  "order:payments-result",
+                                                      "path":  "^/api/v1/payments/(success|fail)$",
+                                                      "methods":  [
+                                                                      "GET"
+                                                                  ],
+                                                      "roles":  [
+                                                                    "*"
+                                                                ]
+                                                  }
+                    },
+    "index":  {
+                  "method":  {
+                                 "*":  [
+                                           "order:payments-legacy"
+                                       ],
+                                 "GET":  [
+                                             "order:payments-result"
+                                         ]
+                             }
+              }
+}

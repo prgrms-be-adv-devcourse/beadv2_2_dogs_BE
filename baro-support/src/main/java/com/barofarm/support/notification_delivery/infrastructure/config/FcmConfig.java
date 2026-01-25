@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class FcmConfig {
 
-    @Value("${notification.delivery.fcm.enabled:true}")
+    @Value("${notification.delivery.fcm.enabled:false}")
     private boolean enabled;
 
     @Value("${notification.delivery.fcm.credential-path:/mnt/s3/firebase/serviceAccount.json}")

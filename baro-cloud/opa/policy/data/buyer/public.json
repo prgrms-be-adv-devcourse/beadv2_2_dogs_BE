@@ -1,0 +1,32 @@
+{
+    "rules_by_id":  {
+                        "buyer:products-list":  {
+                                                    "name":  "buyer:products-list",
+                                                    "path":  "^(/buyer-service)?/api/v1/products$",
+                                                    "methods":  [
+                                                                    "GET"
+                                                                ],
+                                                    "roles":  [
+                                                                  "*"
+                                                              ]
+                                                },
+                        "buyer:products-detail":  {
+                                                      "name":  "buyer:products-detail",
+                                                      "path":  "^(/buyer-service)?/api/v1/products/[^/]+$",
+                                                      "methods":  [
+                                                                      "GET"
+                                                                  ],
+                                                      "roles":  [
+                                                                    "*"
+                                                                ]
+                                                  }
+                    },
+    "index":  {
+                  "method":  {
+                                 "GET":  [
+                                             "buyer:products-list",
+                                             "buyer:products-detail"
+                                         ]
+                             }
+              }
+}

@@ -1,5 +1,6 @@
 package com.barofarm.ai.event.model;
 
+import com.barofarm.log.history.model.HistoryEventType;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -15,6 +16,7 @@ public record CartLogEvent(
         UUID cartItemId,
         UUID productId,
         String productName,
+        String categoryCode,
         Integer quantity
     ) { }
 }

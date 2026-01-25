@@ -8,7 +8,11 @@ spring:
   application:
     name: ai-service
   config:
-    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://config:8888}
+    import:
+      - ${SPRING_CONFIG_IMPORT:optional:configserver:http://config:8888}
+      - classpath:review-sentiment.yml
+      - classpath:review-negative-keywords.yml
+      - classpath:recipe-recommend.yml
   main:
     allow-bean-definition-overriding: true
   autoconfigure:
@@ -105,4 +109,3 @@ seasonality:
     compact-format: ${SEASONALITY_RAG_COMPACT_FORMAT:true}  # 간결한 형식 사용 (제철 값만, 토큰 절감)
   csv:
     path: ${SEASONALITY_CSV_PATH:/mnt/s3/dataset/season/seasonality-data.csv}  # CSV 파일 경로
-

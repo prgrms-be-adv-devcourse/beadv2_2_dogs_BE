@@ -1,0 +1,99 @@
+{
+    "rules_by_id":  {
+                        "support:my-reviews":  {
+                                                   "name":  "support:my-reviews",
+                                                   "path":  "^(/support-service)?/api/v1/me/reviews$",
+                                                   "methods":  [
+                                                                   "GET"
+                                                               ],
+                                                   "roles":  [
+                                                                 "CUSTOMER",
+                                                                 "ADMIN"
+                                                             ]
+                                               },
+                        "support:product-reviews-create":  {
+                                                               "name":  "support:product-reviews-create",
+                                                               "path":  "^(/support-service)?/api/v1/products/[^/]+/reviews$",
+                                                               "methods":  [
+                                                                               "POST"
+                                                                           ],
+                                                               "roles":  [
+                                                                             "CUSTOMER",
+                                                                             "ADMIN"
+                                                                         ],
+                                                               "deny_flags":  [
+                                                                                  "REVIEW_BLOCKED"
+                                                                              ]
+                                                           },
+                        "support:reservations-list":  {
+                                                          "name":  "support:reservations-list",
+                                                          "path":  "^(/support-service)?/api/v1/reservations$",
+                                                          "methods":  [
+                                                                          "GET"
+                                                                      ],
+                                                          "roles":  [
+                                                                        "CUSTOMER",
+                                                                        "ADMIN"
+                                                                    ]
+                                                      },
+                        "support:reservations-create":  {
+                                                            "name":  "support:reservations-create",
+                                                            "path":  "^(/support-service)?/api/v1/reservations$",
+                                                            "methods":  [
+                                                                            "POST"
+                                                                        ],
+                                                            "roles":  [
+                                                                          "CUSTOMER",
+                                                                          "ADMIN"
+                                                                      ],
+                                                            "deny_flags":  [
+                                                                               "RESERVATION_BLOCKED"
+                                                                           ]
+                                                        },
+                        "support:reservations-detail":  {
+                                                            "name":  "support:reservations-detail",
+                                                            "path":  "^(/support-service)?/api/v1/reservations/[^/]+$",
+                                                            "methods":  [
+                                                                            "GET"
+                                                                        ],
+                                                            "roles":  [
+                                                                          "CUSTOMER",
+                                                                          "ADMIN"
+                                                                      ]
+                                                        },
+                        "support:reviews-update-delete":  {
+                                                              "name":  "support:reviews-update-delete",
+                                                              "path":  "^(/support-service)?/api/v1/reviews/[^/]+$",
+                                                              "methods":  [
+                                                                              "PUT",
+                                                                              "DELETE"
+                                                                          ],
+                                                              "roles":  [
+                                                                            "CUSTOMER",
+                                                                            "ADMIN"
+                                                                        ],
+                                                              "deny_flags":  [
+                                                                                 "REVIEW_BLOCKED"
+                                                                             ]
+                                                          }
+                    },
+    "index":  {
+                  "method":  {
+                                 "GET":  [
+                                             "support:my-reviews",
+                                             "support:reservations-list",
+                                             "support:reservations-detail"
+                                         ],
+                                 "POST":  [
+                                              "support:product-reviews-create",
+                                              "support:reservations-create"
+                                          ],
+                                 "PUT":  [
+                                             "support:reviews-update-delete"
+                                         ],
+                                 "DELETE":  [
+                                                "support:reviews-update-delete"
+                                            ]
+                             }
+              }
+}

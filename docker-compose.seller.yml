@@ -20,7 +20,7 @@ services:
       - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
       - JAVA_OPTS=-Xms64m -Xmx128m
     volumes:
-      - /mnt/s3:/mnt/s3:rw
+      - ${S3_MOUNT_PATH:-/mnt/s3}:/mnt/s3:rw
     restart: unless-stopped
     networks:
       - baro-network

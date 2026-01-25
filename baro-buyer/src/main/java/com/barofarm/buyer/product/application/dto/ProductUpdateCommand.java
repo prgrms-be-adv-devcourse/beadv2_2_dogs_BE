@@ -12,6 +12,5 @@ public record ProductUpdateCommand(
     String description,
     UUID categoryId,
     Long price,
-    Integer stockQuantity,
-    ProductStatus productStatus,
-    List<String> imageUrls) {}
+    List<ProductInventoryOptionCommand> inventoryOptions,
+    ProductStatus productStatus) {}

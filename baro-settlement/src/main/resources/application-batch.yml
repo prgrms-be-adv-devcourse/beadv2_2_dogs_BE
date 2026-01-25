@@ -1,0 +1,22 @@
+# 배치 전용 프로파일 (Kubernetes CronJob에서 사용)
+# BatchRunner가 Job 실행 후 프로세스 종료
+spring:
+  main:
+    web-application-type: none
+  batch:
+    job:
+      enabled: false
+  task:
+    scheduling:
+      enabled: false
+
+# CronJob 모드에서는 스케줄러 비활성화
+settlement:
+  scheduler:
+    enabled: false
+
+# Eureka: 배치 Pod는 등록하지 않고 서비스 디스커버리만 사용 (order-service Feign 호출용)
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: true

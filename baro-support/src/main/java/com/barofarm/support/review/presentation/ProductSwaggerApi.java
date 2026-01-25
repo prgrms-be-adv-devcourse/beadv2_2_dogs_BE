@@ -5,24 +5,46 @@ import com.barofarm.dto.ResponseDto;
 import com.barofarm.support.review.application.dto.response.ReviewDetailInfo;
 import com.barofarm.support.review.presentation.dto.ReviewCreateRequest;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Product Reviews", description = "제품 리뷰 관련 API")
 public interface ProductSwaggerApi {
 
+    @Schema(name = "ReviewCreateMultipartRequest")
+    class ReviewCreateMultipartRequest {
+
+        @Schema(
+            description = "리뷰 생성 정보(JSON). form-data part name: data",
+            requiredMode = Schema.RequiredMode.REQUIRED
+        )
+        public ReviewCreateRequest data;
+
+        @ArraySchema(
+            arraySchema = @Schema(description = "리뷰 이미지 파일 목록(선택). form-data part name: images"),
+            schema = @Schema(type = "string", format = "binary")
+        )
+        public List<MultipartFile> images;
+    }
+
     @Operation(
-        summary = "제품 리뷰 등록", description = "제품 리뷰를 등록한다."
+        summary = "제품 리뷰 등록", description = "제품 리뷰를 등록한다. (multipart/form-data: data(JSON) + images(File, 선택))"
     )
     @ApiResponses({
         @ApiResponse(
@@ -57,11 +79,19 @@ public interface ProductSwaggerApi {
             content = @Content(mediaType = "application/json")
         )
     })
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequestBody(
+        required = true,
+        content = @Content(
+            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+            schema = @Schema(implementation = ReviewCreateMultipartRequest.class)
+        )
+    )
     ResponseDto<ReviewDetailInfo> createReview(
         @PathVariable UUID productId,
         @RequestHeader("X-User-Id") UUID userId,
-        @Valid @RequestBody ReviewCreateRequest request
+        @Valid @RequestPart("data") ReviewCreateRequest request,
+        @RequestPart(value = "images", required = false) List<MultipartFile> images
     );
 
 

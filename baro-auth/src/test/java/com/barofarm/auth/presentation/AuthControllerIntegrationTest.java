@@ -3,6 +3,7 @@ package com.barofarm.auth.presentation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -19,6 +20,7 @@ import com.barofarm.auth.presentation.dto.login.LoginRequest;
 import com.barofarm.auth.presentation.dto.signup.SignupRequest;
 import com.barofarm.auth.presentation.dto.verification.VerifyCodeRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -92,8 +94,11 @@ class AuthControllerIntegrationTest {
             // when & then
             mockMvc.perform(post("/auth/signup").contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(payload))).andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.email").value(email)).andExpect(jsonPath("$.accessToken").isNotEmpty())
-                    .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+                    .andExpect(jsonPath("$.email").value(email))
+                    .andExpect(header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(
+                        org.hamcrest.Matchers.containsString("access_token="))))
+                    .andExpect(header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(
+                        org.hamcrest.Matchers.containsString("refresh_token="))));
 
             // then: DB 상태 검증
             assertThat(userRepository.count()).isEqualTo(1);
@@ -139,8 +144,11 @@ class AuthControllerIntegrationTest {
             mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(payload))).andExpect(status().isOk())
                     .andExpect(jsonPath("$.userId").value(user.getId().toString()))
-                    .andExpect(jsonPath("$.email").value(email)).andExpect(jsonPath("$.accessToken").isNotEmpty())
-                    .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+                    .andExpect(jsonPath("$.email").value(email))
+                    .andExpect(header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(
+                        org.hamcrest.Matchers.containsString("access_token="))))
+                    .andExpect(header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(
+                        org.hamcrest.Matchers.containsString("refresh_token="))));
 
             assertThat(refreshTokenRepository.count()).isEqualTo(1);
         }
@@ -197,20 +205,18 @@ class AuthControllerIntegrationTest {
             MvcResult loginResult = mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(loginPayload))).andExpect(status().isOk()).andReturn();
 
-            String oldRefreshToken = objectMapper.readTree(loginResult.getResponse().getContentAsString())
-                    .get("refreshToken").asText();
-
-            String refreshRequest = """
-                    {"refreshToken": "%s"}
-                    """.formatted(oldRefreshToken);
+            String oldRefreshToken = extractCookie(loginResult, "refresh_token");
 
             MvcResult refreshResult = mockMvc
-                    .perform(post("/auth/refresh").contentType(MediaType.APPLICATION_JSON).content(refreshRequest))
-                    .andExpect(status().isOk()).andExpect(jsonPath("$.accessToken").isNotEmpty())
-                    .andExpect(jsonPath("$.refreshToken").isNotEmpty()).andReturn();
+                    .perform(post("/auth/refresh").cookie(new Cookie("refresh_token", oldRefreshToken)))
+                    .andExpect(status().isOk())
+                    .andExpect(header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(
+                        org.hamcrest.Matchers.containsString("access_token="))))
+                    .andExpect(header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(
+                        org.hamcrest.Matchers.containsString("refresh_token="))))
+                    .andReturn();
 
-            String newRefreshToken = objectMapper.readTree(refreshResult.getResponse().getContentAsString())
-                    .get("refreshToken").asText();
+            String newRefreshToken = extractCookie(refreshResult, "refresh_token");
 
             assertThat(refreshTokenRepository.count()).isEqualTo(1);
             assertThat(refreshTokenRepository.findByToken(oldRefreshToken)).isEmpty();
@@ -229,11 +235,7 @@ class AuthControllerIntegrationTest {
             expired.revoke();
             refreshTokenRepository.save(expired);
 
-            String refreshRequest = """
-                    {"refreshToken": "%s"}
-                    """.formatted(expiredToken);
-
-            mockMvc.perform(post("/auth/refresh").contentType(MediaType.APPLICATION_JSON).content(refreshRequest))
+            mockMvc.perform(post("/auth/refresh").cookie(new Cookie("refresh_token", expiredToken)))
                     .andExpect(status().isUnauthorized());
         }
 
@@ -246,11 +248,7 @@ class AuthControllerIntegrationTest {
             refreshTokenRepository
                     .save(RefreshToken.issue(user.getId(), refreshToken, jwtTokenProvider.getRefreshTokenValidity()));
 
-            String logoutRequest = """
-                    {"refreshToken": "%s"}
-                    """.formatted(refreshToken);
-
-            mockMvc.perform(post("/auth/logout").contentType(MediaType.APPLICATION_JSON).content(logoutRequest))
+            mockMvc.perform(post("/auth/logout").cookie(new Cookie("refresh_token", refreshToken)))
                     .andExpect(status().isOk());
 
             RefreshToken saved = refreshTokenRepository.findByToken(refreshToken).orElseThrow();
@@ -303,6 +301,15 @@ class AuthControllerIntegrationTest {
 
     private String bearer(String token) {
         return "Bearer " + token;
+    }
+
+    private String extractCookie(MvcResult result, String name) {
+        return result.getResponse().getHeaders("Set-Cookie").stream()
+            .filter(value -> value.startsWith(name + "="))
+            .map(value -> value.substring((name + "=").length()))
+            .map(value -> value.split(";", 2)[0])
+            .findFirst()
+            .orElseThrow();
     }
 
     private String generateSalt() {

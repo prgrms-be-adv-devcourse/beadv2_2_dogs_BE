@@ -3,8 +3,6 @@ package com.barofarm.buyer.inventory.infrastructure.kafka.producer;
 import com.barofarm.buyer.inventory.domain.InventoryOutboxEvent;
 import com.barofarm.buyer.inventory.domain.InventoryOutboxStatus;
 import com.barofarm.buyer.inventory.infrastructure.InventoryOutboxEventJpaRepository;
-import com.barofarm.buyer.inventory.infrastructure.kafka.producer.dto.InventoryConfirmedEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,10 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class InventoryOutboxPublisher {
 
     private final InventoryOutboxEventJpaRepository outboxRepository;
-    private final KafkaTemplate<String, InventoryConfirmedEvent> kafkaTemplate;
-    private final ObjectMapper objectMapper;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
-    @Scheduled(fixedDelay = 20000L)
+    @Scheduled(fixedDelay = 2000L)
     @Transactional
     public void publishInventoryEvents() {
         List<InventoryOutboxEvent> events =
@@ -30,13 +27,10 @@ public class InventoryOutboxPublisher {
 
         for (InventoryOutboxEvent event : events) {
             try {
-                InventoryConfirmedEvent payload =
-                    objectMapper.readValue(event.getPayload(), InventoryConfirmedEvent.class);
-
                 kafkaTemplate.send(
                     event.getTopic(),
                     event.getCorrelationId(),
-                    payload
+                    event.getPayload()
                 );
                 event.markSent();
             } catch (Exception e) {

@@ -1,24 +1,5 @@
 package com.barofarm.auth.common.config;
 
-import io.swagger.v3.oas.models.Components;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Info;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-@Configuration
+// Swagger/OpenAPI 비활성화를 위해 설정 클래스를 비워둠.
 public class SwaggerConfig {
-
-    @Bean
-    public OpenAPI openAPI() {
-        return new OpenAPI()
-            .components(new Components())
-            .info(apiInfo());
-    }
-
-    private Info apiInfo() {
-        return new Info()
-            .title("baro-farm")
-            .description("This is baro-farm api");
-    }
 }

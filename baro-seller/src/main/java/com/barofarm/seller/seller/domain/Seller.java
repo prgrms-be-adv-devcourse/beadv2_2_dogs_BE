@@ -1,6 +1,6 @@
 package com.barofarm.seller.seller.domain;
 
-import com.barofarm.common.entity.BaseEntity;
+import com.barofarm.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -45,6 +45,12 @@ public class Seller extends BaseEntity {
         return this.status == Status.APPROVED;
     }
 
+    public void changeStatus(Status status) {
+        if (status != null) {
+            this.status = status;
+        }
+    }
+
     private Seller(UUID id,
                    String storeName,
                    String businessRegNo,
@@ -78,6 +84,25 @@ public class Seller extends BaseEntity {
             settlementBank,
             settlementAccount,
             Status.APPROVED
+        );
+    }
+
+    public static Seller createPending(
+        UUID userId,
+        String storeName,
+        String businessRegNo,
+        String businessOwnerName,
+        String settlementBank,
+        String settlementAccount
+    ) {
+        return new Seller(
+            userId,
+            storeName,
+            businessRegNo,
+            businessOwnerName,
+            settlementBank,
+            settlementAccount,
+            Status.PENDING
         );
     }
 

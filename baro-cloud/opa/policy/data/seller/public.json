@@ -1,0 +1,32 @@
+{
+    "rules_by_id":  {
+                        "seller:farms-list":  {
+                                                  "name":  "seller:farms-list",
+                                                  "path":  "^/api/v1/farms$",
+                                                  "methods":  [
+                                                                  "GET"
+                                                              ],
+                                                  "roles":  [
+                                                                "*"
+                                                            ]
+                                              },
+                        "seller:farms-detail":  {
+                                                    "name":  "seller:farms-detail",
+                                                    "path":  "^/api/v1/farms/[^/]+$",
+                                                    "methods":  [
+                                                                    "GET"
+                                                                ],
+                                                    "roles":  [
+                                                                  "*"
+                                                              ]
+                                                }
+                    },
+    "index":  {
+                  "method":  {
+                                 "GET":  [
+                                             "seller:farms-list",
+                                             "seller:farms-detail"
+                                         ]
+                             }
+              }
+}

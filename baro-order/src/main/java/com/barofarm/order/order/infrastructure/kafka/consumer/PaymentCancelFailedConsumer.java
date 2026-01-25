@@ -10,6 +10,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,10 @@ public class PaymentCancelFailedConsumer {
             "spring.json.value.default.type="
                 + "com.barofarm.order.order.infrastructure.kafka.consumer.dto.PaymentCancelFailedEvent"
         }
+    )
+    @RetryableTopic(
+        attempts = "3",
+        backoff = @Backoff(delay = 1000, multiplier = 2)
     )
     @Transactional
     public void handle(PaymentCancelFailedEvent event) {

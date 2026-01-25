@@ -6,6 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.barofarm.auth.infrastructure.config.AuthCookieProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import java.io.IOException;
@@ -32,6 +33,9 @@ class JwtAuthenticationFilterTest {
     private CustomUserDetailsService customUserDetailsService;
 
     @Mock
+    private AuthCookieProperties cookieProperties;
+
+    @Mock
     private FilterChain filterChain;
 
     @InjectMocks
@@ -48,6 +52,8 @@ class JwtAuthenticationFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/auth/login");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
+        when(cookieProperties.getAccessName()).thenReturn("access_token");
+
         filter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
@@ -59,6 +65,8 @@ class JwtAuthenticationFilterTest {
     void noAuthorizationHeader() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/auth/me");
         MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(cookieProperties.getAccessName()).thenReturn("access_token");
 
         filter.doFilterInternal(request, response, filterChain);
 
@@ -75,6 +83,7 @@ class JwtAuthenticationFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         when(tokenProvider.validateToken("invalid")).thenReturn(false);
+        when(cookieProperties.getAccessName()).thenReturn("access_token");
 
         filter.doFilterInternal(request, response, filterChain);
 
@@ -93,6 +102,7 @@ class JwtAuthenticationFilterTest {
         when(tokenProvider.getEmail("goodtoken")).thenReturn("user@example.com");
         when(customUserDetailsService.loadUserByUsername("user@example.com"))
                 .thenReturn(new User("user@example.com", "", List.of()));
+        when(cookieProperties.getAccessName()).thenReturn("access_token");
 
         filter.doFilterInternal(request, response, filterChain);
 

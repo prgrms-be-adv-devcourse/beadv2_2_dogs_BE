@@ -1,0 +1,32 @@
+{
+    "rules_by_id":  {
+                        "common:swagger-ui":  {
+                                                  "name":  "common:swagger-ui",
+                                                  "path":  "^/swagger-ui(?:/.*)?$",
+                                                  "methods":  [
+                                                                  "*"
+                                                              ],
+                                                  "roles":  [
+                                                                "*"
+                                                            ]
+                                              },
+                        "common:api-docs":  {
+                                                "name":  "common:api-docs",
+                                                "path":  "^/v3/api-docs(?:/.*)?$",
+                                                "methods":  [
+                                                                "*"
+                                                            ],
+                                                "roles":  [
+                                                              "*"
+                                                          ]
+                                            }
+                    },
+    "index":  {
+                  "method":  {
+                                 "*":  [
+                                           "common:swagger-ui",
+                                           "common:api-docs"
+                                       ]
+                             }
+              }
+}

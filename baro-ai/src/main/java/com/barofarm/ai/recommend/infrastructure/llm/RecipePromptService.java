@@ -4,6 +4,7 @@ import com.barofarm.ai.recommend.domain.CandidateRecipePlan;
 import com.barofarm.ai.recommend.domain.OwnedIngredient;
 import com.barofarm.ai.recommend.domain.RecipeCandidates;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -42,11 +43,17 @@ public class RecipePromptService {
 
         }
 
-        // 1. 각 상품명을 미리 정규화하여 더 명확한 입력 제공
+        // 1. 각 상품명을 미리 정규화하여 더 명확한 입력 제공 (배치 처리)
+        List<String> productNames = cartItems.stream()
+            .map(RecipePromptService.CartItemInput::productName)
+            .toList();
+
+        Map<String, String> normalizedMap = productNameNormalizer.normalizeBatchForRecipeIngredient(
+            productNames);
+
         List<NormalizedCartItem> normalizedItems = cartItems.stream()
             .map(item -> {
-                String normalizedName = productNameNormalizer.normalizeForRecipeIngredient(
-                    item.productName());
+                String normalizedName = normalizedMap.getOrDefault(item.productName(), "");
                 return new NormalizedCartItem(
                     item.productName(),  // 원본 유지
                     normalizedName,      // 정규화된 이름
@@ -226,7 +233,7 @@ public class RecipePromptService {
 
         log.info("레시피 후보 생성 완료. 후보 개수: {}", enhancedResult.candidates().size());
         enhancedResult.candidates().forEach(candidate ->
-            log.info("  - 후보: {} (\"/\"/{}/{}), core: {}, extra: {}, used: {}, missing: {}",
+            log.info("  - 후보: {} ({}/{}/{}), core: {}, extra: {}, used: {}, missing: {}",
                 candidate.getRecipeName(),
                 candidate.getCookingMethod(),
                 candidate.getDifficulty(),

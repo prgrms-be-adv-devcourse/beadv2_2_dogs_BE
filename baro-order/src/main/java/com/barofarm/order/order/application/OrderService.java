@@ -9,8 +9,6 @@ import static com.barofarm.order.order.exception.OrderErrorCode.OUTBOX_SERIALIZA
 import com.barofarm.dto.CustomPage;
 import com.barofarm.dto.ResponseDto;
 import com.barofarm.exception.CustomException;
-import com.barofarm.log.history.annotation.TrackHistory;
-import com.barofarm.log.history.model.HistoryEventType;
 import com.barofarm.order.order.application.dto.request.OrderCreateCommand;
 import com.barofarm.order.order.application.dto.response.OrderCancelInfo;
 import com.barofarm.order.order.application.dto.response.OrderCreateInfo;
@@ -57,6 +55,7 @@ public class OrderService {
             order.addOrderItem(
                 item.productId(),
                 item.productName(),
+                item.categoryCode(),
                 item.sellerId(),
                 item.quantity(),
                 item.unitPrice(),
@@ -117,7 +116,6 @@ public class OrderService {
     }
 
     @Transactional
-    @TrackHistory(HistoryEventType.ORDER_CANCELLED)
     public ResponseDto<OrderCancelInfo> cancelOrder(UUID userId, UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException(ORDER_NOT_FOUND));

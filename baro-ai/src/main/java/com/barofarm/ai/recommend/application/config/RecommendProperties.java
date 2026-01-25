@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 @Setter
 public class RecommendProperties {
 
-    // 레시피 추천 시 제외할 상품 카테고리 목록
-    // TODO: 카테고리 목록 정확히 명시 필요
-    private List<String> excludeRecipeCategories = new ArrayList<>();
+    // 레시피 추천 시 제외할 상품 카테고리 코드 목록
+    private List<String> excludeRecipeCategoryCodes = new ArrayList<>();
 }

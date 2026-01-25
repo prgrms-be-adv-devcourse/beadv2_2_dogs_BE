@@ -1,0 +1,84 @@
+# 월별 정산 Spring Batch CronJob
+# schedule: 매월 1일 00:00 KST (timeZone: Asia/Seoul, K8s 1.25+)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: settlement-monthly-batch
+  namespace: baro-prod
+  labels:
+    app: baro-settlement-batch
+    component: app
+spec:
+  schedule: "0 0 1 * *"  # 매월 1일 00:00 (분 시 일 월 요일)
+  timeZone: Asia/Seoul
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app: baro-settlement-batch
+            component: app
+        spec:
+          hostNetwork: true
+          restartPolicy: OnFailure
+          tolerations:
+            - key: dedicated
+              operator: Equal
+              value: worker
+              effect: NoSchedule
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node-role.kubernetes.io/control-plane
+                        operator: DoesNotExist
+          securityContext:
+            fsGroup: 1001
+          containers:
+            - name: settlement-batch
+              image: ghcr.io/do-develop-space/baro-settlement:latest
+              imagePullPolicy: Always
+              command: ["sh", "-c"]
+              args:
+                - "java -Dapp.name=baro-settlement-cronjob -Duser.timezone=Asia/Seoul -Xms128m -Xmx256m -jar app.jar"
+              env:
+                - name: SPRING_PROFILES_ACTIVE
+                  value: "prod,batch"
+                - name: SPRING_CONFIG_IMPORT
+                  value: "optional:configserver:http://CHANGE_ME_TO_EC2_IP:8888"
+                - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+                  value: "http://CHANGE_ME_TO_EC2_IP:8761/eureka/"
+                - name: MYSQL_DATABASE
+                  value: "barosettlement"
+                - name: MYSQL_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: baro-secrets
+                      key: MYSQL_USER
+                - name: MYSQL_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: baro-secrets
+                      key: MYSQL_PASSWORD
+                - name: SPRING_DATASOURCE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: baro-secrets
+                      key: SPRING_DATASOURCE_SETTLEMENT_URL
+                - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+                  value: "CHANGE_ME_TO_EC2_IP:29092"
+                - name: SPRING_DATA_REDIS_HOST
+                  value: "CHANGE_ME_TO_EC2_IP"
+                - name: SPRING_DATA_REDIS_PORT
+                  value: "6379"
+                - name: SPRING_DATA_REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: baro-secrets
+                      key: REDIS_PASSWORD

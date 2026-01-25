@@ -30,49 +30,68 @@ public class CartEventConsumer {
     public void onMessage(CartLogEvent event) {
         CartLogEvent.CartEventData data = event.payload();
 
-        log.info("🛒 [CART_CONSUMER] Received cart event - Type: {}, User ID: {}, Product: {}, Quantity: {}",
+        log.info("[CART_CONSUMER] Received cart event - Type: {}, User ID: {}, Product: {}, Quantity: {}",
             event.event(), event.userId(), data.productName(), data.quantity());
 
         try {
             switch (event.event()) {
                 case CART_ITEM_ADDED -> {
-                    log.info("➕ [CART_CONSUMER] Processing CART_ITEM_ADDED - User: {}, Product: {}, Qty: {}",
+                    log.info("[CART_CONSUMER] Processing CART_ITEM_ADDED - User: {}, Product: {}, Qty: {}",
                         event.userId(), data.productName(), data.quantity());
-                    logWriteService.saveCartEventLog(event.userId(), data.productId(),
-                        data.productName(), "ADD", data.quantity(), convertToInstant(event.ts()));
-                    log.info("✅ [CART_CONSUMER] Successfully saved cart add event - User: {}, Product: {}",
+                    logWriteService.saveCartEventLog(
+                        event.userId(),
+                        data.productId(),
+                        data.productName(),
+                        data.categoryCode(),
+                        "ADD",
+                        data.quantity(),
+                        convertToInstant(event.ts())
+                    );
+                    log.info("[CART_CONSUMER] Successfully saved cart add event - User: {}, Product: {}",
                         event.userId(), data.productName());
                     // 프로필 벡터 비동기 업데이트
                     updateUserProfileAsync(event.userId());
                 }
                 case CART_ITEM_REMOVED -> {
-                    log.info("➖ [CART_CONSUMER] Processing CART_ITEM_REMOVED - User: {}, Product: {}, Qty: {}",
+                    log.info("[CART_CONSUMER] Processing CART_ITEM_REMOVED - User: {}, Product: {}, Qty: {}",
                         event.userId(), data.productName(), data.quantity());
-                    logWriteService.saveCartEventLog(event.userId(), data.productId(),
-                        data.productName(), "REMOVE", data.quantity(), convertToInstant(event.ts()));
-                    log.info("✅ [CART_CONSUMER] Successfully saved cart remove event - User: {}, Product: {}",
+                    logWriteService.saveCartEventLog(
+                        event.userId(),
+                        data.productId(),
+                        data.productName(),
+                        data.categoryCode(),
+                        "REMOVE",
+                        data.quantity(),
+                        convertToInstant(event.ts())
+                    );
+                    log.info("[CART_CONSUMER] Successfully saved cart remove event - User: {}, Product: {}",
                         event.userId(), data.productName());
                     // 프로필 벡터 비동기 업데이트
                     updateUserProfileAsync(event.userId());
                 }
                 case CART_QUANTITY_UPDATED -> {
-                    log.info("🔄 [CART_CONSUMER] Processing CART_QUANTITY_UPDATED - User: {}, Product: {}, Qty: {}",
+                    log.info("[CART_CONSUMER] Processing CART_QUANTITY_UPDATED - User: {}, Product: {}, Qty: {}",
                         event.userId(), data.productName(), data.quantity());
-                    logWriteService.saveCartEventLog(event.userId(), data.productId(),
-                        data.productName(), "UPDATE", data.quantity(), convertToInstant(event.ts()));
-                    log.info("✅ [CART_CONSUMER] Successfully saved cart update event - User: {}, Product: {}",
+                    logWriteService.saveCartEventLog(
+                        event.userId(),
+                        data.productId(),
+                        data.productName(),
+                        data.categoryCode(),
+                        "UPDATE",
+                        data.quantity(),
+                        convertToInstant(event.ts())
+                    );
+                    log.info("[CART_CONSUMER] Successfully saved cart update event - User: {}, Product: {}",
                         event.userId(), data.productName());
                     // 프로필 벡터 비동기 업데이트
                     updateUserProfileAsync(event.userId());
                 }
-                default -> {
-                    log.warn("⚠️ [CART_CONSUMER] Unknown cart event type received - Type: {}, User: {}, Product: {}",
+                default ->
+                    log.warn("[CART_CONSUMER] Unknown cart event type received - Type: {}, User: {}, Product: {}",
                         event.event(), event.userId(), data.productName());
-                }
             }
         } catch (Exception e) {
-            log.error("❌ [CART_CONSUMER] Failed to process cart event - " +
-                    "Type: {}, User: {}, Product: {}, Error: {}",
+            log.error("[CART_CONSUMER] Failed to process cart event - Type: {}, User: {}, Product: {}, Error: {}",
                 event.event(), event.userId(), data.productName(), e.getMessage(), e);
             throw e; // 예외를 다시 던져서 Kafka가 재시도하도록 함
         }
@@ -89,11 +108,11 @@ public class CartEventConsumer {
     @Async("profileUpdateExecutor")
     public void updateUserProfileAsync(java.util.UUID userId) {
         try {
-            log.debug("🔄 [CART_CONSUMER] Updating user profile embedding for user: {}", userId);
+            log.debug("[CART_CONSUMER] Updating user profile embedding for user: {}", userId);
             userProfileEmbeddingService.updateUserProfileEmbedding(userId);
-            log.debug("✅ [CART_CONSUMER] Successfully updated user profile embedding for user: {}", userId);
+            log.debug("[CART_CONSUMER] Successfully updated user profile embedding for user: {}", userId);
         } catch (Exception e) {
-            log.warn("⚠️ [CART_CONSUMER] Failed to update user profile embedding for user: {}, error: {}",
+            log.warn("[CART_CONSUMER] Failed to update user profile embedding for user: {}, error: {}",
                 userId, e.getMessage());
             // 프로필 업데이트 실패는 이벤트 처리에 영향을 주지 않음
         }

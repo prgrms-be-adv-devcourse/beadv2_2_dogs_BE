@@ -169,6 +169,7 @@ public class CartService {
             .toList();
 
         Map<UUID, String> productNameMap = new HashMap<>();
+        Map<UUID, String> productCategoryCodeMap = new HashMap<>();
         Map<UUID, String> productCategoryNameMap = new HashMap<>();
         Map<UUID, Integer> inventoryUnitMap = new HashMap<>();
 
@@ -177,9 +178,11 @@ public class CartService {
             try {
                 ProductDetailInfo product = productService.getProductDetail(id);
                 productNameMap.put(id, product.productName());
+                productCategoryCodeMap.put(id, product.categoryCode());
                 productCategoryNameMap.put(id, product.categoryName());
             } catch (Exception e) {
                 productNameMap.put(id, null); // 실패 시 null 저장
+                productCategoryCodeMap.put(id, null); // 실패 시 null 저장
                 productCategoryNameMap.put(id, null); // 실패 시 null 저장
             }
         }
@@ -195,7 +198,12 @@ public class CartService {
             }
         }
 
-        return CartInfo.from(cart, productNameMap, productCategoryNameMap, inventoryUnitMap);
+        return CartInfo.from(
+            cart,
+            productNameMap,
+            productCategoryCodeMap,
+            productCategoryNameMap,
+            inventoryUnitMap);
     }
 
     // 기존 장바구니 조회 (없으면 예외)

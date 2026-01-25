@@ -16,10 +16,10 @@ public record OrderCreateCommand(
     public record OrderItemCreateCommand(
         UUID productId,
         String productName,
+        String categoryCode,
         UUID inventoryId,
         UUID sellerId,
         Long quantity,
         long unitPrice
-    )
-    {}
+    ) {}
 }

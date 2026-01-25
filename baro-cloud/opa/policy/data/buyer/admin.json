@@ -1,0 +1,21 @@
+{
+    "rules_by_id":  {
+                        "buyer:inventories":  {
+                                                  "name":  "buyer:inventories",
+                                                  "path":  "^/api/v1/inventories(?:/.*)?$",
+                                                  "methods":  [
+                                                                  "*"
+                                                              ],
+                                                  "roles":  [
+                                                                "ADMIN"
+                                                            ]
+                                              }
+                    },
+    "index":  {
+                  "method":  {
+                                 "*":  [
+                                           "buyer:inventories"
+                                       ]
+                             }
+              }
+}

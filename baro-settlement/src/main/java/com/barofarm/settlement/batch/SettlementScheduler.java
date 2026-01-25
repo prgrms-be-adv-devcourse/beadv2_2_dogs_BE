@@ -7,10 +7,16 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+/**
+ * 월별 정산 배치 스케줄러.
+ * CronJob 사용 시 settlement.scheduler.enabled=false로 비활성화.
+ */
 @Component
+@ConditionalOnProperty(name = "settlement.scheduler.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
 public class SettlementScheduler {

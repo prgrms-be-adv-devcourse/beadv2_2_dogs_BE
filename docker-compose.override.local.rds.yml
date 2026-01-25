@@ -1,0 +1,28 @@
+services:
+  baro-auth:
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_AUTH}
+
+  baro-buyer:
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_BUYER}
+
+  baro-seller:
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_SELLER}
+
+  baro-order:
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_ORDER}
+
+  baro-payment:
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_PAYMENT}
+
+  baro-support:
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_SUPPORT}
+
+  baro-settlement:
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_SETTLEMENT}

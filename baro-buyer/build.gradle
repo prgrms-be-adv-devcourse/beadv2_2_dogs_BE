@@ -49,6 +49,8 @@ dependencies {
     implementation 'org.springframework.kafka:spring-kafka'                 // Kafka producer/consumer
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.cloud:spring-cloud-starter-config' // Config Server 클라이언트
+    implementation 'software.amazon.awssdk:s3:2.25.60'                     // S3 클라이언트
+    implementation 'com.sksamuel.scrimage:scrimage-webp:4.1.1'              // WebP writer 지원
 
     // Database
     runtimeOnly 'com.mysql:mysql-connector-j'

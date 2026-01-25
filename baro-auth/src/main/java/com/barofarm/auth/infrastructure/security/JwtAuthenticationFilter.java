@@ -1,9 +1,14 @@
 package com.barofarm.auth.infrastructure.security;
 
-// 헤더 확인하고 검증 필터
+// JWT 인증 필터. 쿠키(HttpOnly) 또는 Authorization 헤더에서 토큰을 읽는다.
+// [1] 기본은 쿠키에서 읽는다. (XSS로 localStorage 탈취 위험을 줄이기 위함)
+// [2] 기존 클라이언트/서버 간 호출을 위해 Bearer 헤더도 허용한다.
+// [3] 이 필터는 인증만 처리하며, 인가는 SecurityConfig에서 제어한다.
 
+import com.barofarm.auth.infrastructure.config.AuthCookieProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -17,58 +22,51 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenProvider tokenProvider; // 헬퍼
-    private final CustomUserDetailsService customUserDetailsService; // 이메일로 사용자 정보 불러오는 서비스
+    private final JwtTokenProvider tokenProvider;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final AuthCookieProperties cookieProperties;
 
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
-            CustomUserDetailsService customUserDetailsService) {
+            CustomUserDetailsService customUserDetailsService,
+            AuthCookieProperties cookieProperties) {
         this.tokenProvider = jwtTokenProvider;
         this.customUserDetailsService = customUserDetailsService;
+        this.cookieProperties = cookieProperties;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String requestURI = request.getRequestURI();
-
-        // 0) Authorization 헤더가 없으면 그냥 통과 (익명 사용자)
-        String header = request.getHeader("Authorization");
-        if (header == null || !header.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
+        String token = resolveToken(request);
+        if (token != null && tokenProvider.validateToken(token)) {
+            String email = tokenProvider.getEmail(token);
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
-        // 1. 헤더 값 가져오기
-        String bearer = request.getHeader("Authorization"); // 헤더 가져오기
-
-        // 2. Auth 헤더 존재하는지, 값이 "Bearer "로 시작하는지 확인
-        if (bearer != null && bearer.startsWith("Bearer ")) {
-            // "Bearer " 이후 문자열 잘라서 가져오기
-            String token = bearer.substring(7);
-
-            // 3. 토큰 유효한지
-            if (tokenProvider.validateToken(token)) {
-                // 4. 식별자인 이메일 가져오기
-                String email = tokenProvider.getEmail(token);
-
-                // 5. userDetail서비스로 실제 사용자 정보 가져오기
-                UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
-
-                // 6. 스프링.시큐에서 쓸 auth객체 만들기
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-
-                // 7. 현재 요청(request)에 대한 추가 상세 정보를 Authentication에 넣기
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // 8. 스프링 시큐리티 컨텍스트에 "인증됨"알려주기
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-            // 여기 빠져나오고 토큰 없으면 시큐.컨텍 비어있고 -> 그럼 인증 x
-
-        }
-        // 9. 필터 체인에서 다음 단계 처리
         filterChain.doFilter(request, response);
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        // [4] Authorization 헤더를 우선한다. (테스트/서버 간 호출 호환)
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        // [5] 브라우저 클라이언트는 HttpOnly 쿠키를 사용한다.
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if (cookieProperties.getAccessName().equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

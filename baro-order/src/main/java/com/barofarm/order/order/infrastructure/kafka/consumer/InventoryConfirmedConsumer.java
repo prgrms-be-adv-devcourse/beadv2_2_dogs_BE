@@ -3,6 +3,8 @@ package com.barofarm.order.order.infrastructure.kafka.consumer;
 import static com.barofarm.order.order.exception.OrderErrorCode.ORDER_NOT_FOUND;
 
 import com.barofarm.exception.CustomException;
+import com.barofarm.log.history.annotation.TrackHistory;
+import com.barofarm.log.history.model.HistoryEventType;
 import com.barofarm.order.order.domain.Order;
 import com.barofarm.order.order.domain.OrderOutboxEvent;
 import com.barofarm.order.order.domain.OrderOutboxEventRepository;
@@ -37,12 +39,11 @@ public class InventoryConfirmedConsumer {
         }
     )
     @RetryableTopic(
-        // 총 시도 횟수 (최초 시도 1회 + 재시도 4회)
-        attempts = "5",
-        // 재시도 간격 (1000ms -> 2000ms -> 4000ms -> 8000ms 순으로 재시도 시간이 증가한다.)
+        attempts = "3",
         backoff = @Backoff(delay = 1000, multiplier = 2)
     )
     @Transactional
+    @TrackHistory(HistoryEventType.ORDER_CONFIRMED)
     public void handle(InventoryConfirmedEvent event) throws JsonProcessingException {
         UUID orderId = event.orderId();
         Order order = orderRepository.findById(orderId)

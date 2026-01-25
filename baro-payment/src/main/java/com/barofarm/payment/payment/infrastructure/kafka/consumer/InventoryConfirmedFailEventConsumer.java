@@ -8,6 +8,7 @@ import com.barofarm.payment.payment.domain.Payment;
 import com.barofarm.payment.payment.domain.PaymentRepository;
 import com.barofarm.payment.payment.domain.PaymentStatus;
 import com.barofarm.payment.payment.infrastructure.kafka.consumer.dto.InventoryConfirmedFailEvent;
+import com.barofarm.payment.payment.infrastructure.rest.DepositClient;
 import com.barofarm.payment.payment.infrastructure.rest.TossPaymentClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -22,6 +23,7 @@ public class InventoryConfirmedFailEventConsumer {
 
     private final PaymentRepository paymentRepository;
     private final TossPaymentClient tossPaymentClient;
+    private final DepositClient depositClient;
 
     @KafkaListener(
         topics = "inventory-confirmed-fail",
@@ -32,9 +34,7 @@ public class InventoryConfirmedFailEventConsumer {
         }
     )
     @RetryableTopic(
-        // 총 시도 횟수 (최초 시도 1회 + 재시도 4회)
-        attempts = "5",
-        // 재시도 간격 (1000ms -> 2000ms -> 4000ms -> 8000ms 순으로 재시도 시간이 증가한다.)
+        attempts = "3",
         backoff = @Backoff(delay = 1000, multiplier = 2)
     )
     @Transactional
@@ -43,19 +43,28 @@ public class InventoryConfirmedFailEventConsumer {
         Payment payment = paymentRepository.findByOrderId(event.orderId())
             .orElseThrow(() -> new CustomException(PAYMENT_NOT_FOUND));
 
-        // 이미 환불된 결제는 무시 (idempotent)
+        // 이미 환불된 결제면 재처리하지 않음 (idempotent)
         if (payment.getStatus() == PaymentStatus.REFUNDED) {
             return;
         }
 
-        // PG 환불 요청
-        TossPaymentRefundCommand command = new TossPaymentRefundCommand(
-            payment.getPaymentKey(),
-            "Inventory confirmation failed for order " + payment.getOrderId()
-        );
-        tossPaymentClient.refund(command);
+        if ("DEPOSIT".equals(payment.getMethod())) {
+            // 예치금 결제 보상: 예치금 환불
+            depositClient.refundDeposit(
+                payment.getUserId(),
+                payment.getOrderId(),
+                payment.getAmount()
+            );
+        } else {
+            // PG 결제 보상: Toss 환불
+            TossPaymentRefundCommand command = new TossPaymentRefundCommand(
+                payment.getPaymentKey(),
+                "Inventory confirmation failed for order " + payment.getOrderId()
+            );
+            tossPaymentClient.refund(command);
+        }
 
-        // 로컬 결제 상태 갱신
+        // 환불 성공 후 결제 상태를 REFUNDED로 변경
         payment.refund();
     }
 }

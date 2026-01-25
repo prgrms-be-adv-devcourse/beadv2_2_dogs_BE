@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opa-bundle
+  namespace: baro-prod
+  labels:
+    app: opa-bundle
+    component: cloud
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: opa-bundle
+  template:
+    metadata:
+      labels:
+        app: opa-bundle
+        component: cloud
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/hostname: ip-10-0-5-208  # 마스터 노드에 고정 배치
+      tolerations:
+        # Master node taint 허용
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      # Eureka가 준비될 때까지 대기
+      initContainers:
+        - name: wait-for-eureka
+          image: busybox:1.36
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "Waiting for Eureka to be ready..."
+              TIMEOUT=300
+              ELAPSED=0
+              while [ $ELAPSED -lt $TIMEOUT ]; do
+                if wget -qO- --timeout=3 http://localhost:8761/actuator/health 2>/dev/null | grep -qE '"status":"UP"|"status":"UP"|UP'; then
+                  echo "Eureka is ready!"
+                  exit 0
+                fi
+                echo "Eureka is not ready yet. Waiting... (${ELAPSED}s/${TIMEOUT}s)"
+                sleep 5
+                ELAPSED=$((ELAPSED + 5))
+              done
+              echo "Timeout waiting for Eureka after ${TIMEOUT} seconds"
+              exit 1
+      containers:
+        - name: opa-bundle
+          image: ghcr.io/do-develop-space/opa-bundle:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8095
+              name: http
+              protocol: TCP
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: SERVER_PORT
+              value: "8095"
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: "http://localhost:8761/eureka/"  # hostNetwork: true 사용 시 localhost
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: SPRING_KAFKA_BOOTSTRAP_SERVERS
+                  optional: true
+            - name: OPA_POLICY_DIR
+              value: "/app/policy"
+            - name: JAVA_OPTS
+              value: "-Xms128m -Xmx192m -XX:MaxMetaspaceSize=64m -XX:MaxDirectMemorySize=32m"
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=70.0"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8095
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8095
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8095
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12

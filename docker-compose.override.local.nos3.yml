@@ -1,0 +1,27 @@
+services:
+  redis:
+    volumes: []
+  kafka:
+    volumes: []
+  elasticsearch:
+    volumes: []
+  eureka:
+    volumes: []
+  gateway:
+    volumes: []
+  opa:
+    volumes: []
+  opa-bundle:
+    volumes: []
+  baro-ai:
+    volumes: []
+  baro-buyer:
+    volumes: []
+  baro-seller:
+    volumes: []
+  baro-order:
+    volumes: []
+  baro-payment:
+    volumes: []
+  baro-support:
+    volumes: []

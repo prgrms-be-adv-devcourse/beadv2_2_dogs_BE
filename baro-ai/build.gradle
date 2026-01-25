@@ -28,6 +28,11 @@ dependencyManagement {
     imports {
         mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
     }
+    // Elasticsearch Java client 8.13.3과 호환되는 Spring Data 버전으로 고정
+    dependencies {
+        dependency 'org.springframework.data:spring-data-elasticsearch:5.3.6'
+        dependency 'org.springframework.data:spring-data-commons:3.3.6'
+    }
 }
 
 configurations.all {
@@ -41,12 +46,9 @@ configurations.all {
         force 'io.swagger.core.v3:swagger-core:2.2.22'
         force 'io.swagger.core.v3:swagger-models:2.2.22'
         force 'io.swagger.core.v3:swagger-annotations:2.2.22'
-        
-        // ⚠️ [변경됨] Elasticsearch 버전 호환성 문제 해결
-        // Spring Boot 3.5.8이 5.5.6을 가져와서 NoSuchMethodError 발생
-        // → Spring AI 1.0.0-M5 호환을 위해 5.3.3 + 8.13.4 강제 사용
-        force 'co.elastic.clients:elasticsearch-java:8.13.4'
-        force 'org.springframework.data:spring-data-elasticsearch:5.3.3'
+        // Spring AI 1.0.0-M5 호환을 위한 Elasticsearch Java client 버전 고정
+        // 공식 문서에서 8.13.3 권장 (8.14 이상에서는 k(Long) -> k(Integer)로 변경되어 호환성 문제 발생)
+        force 'co.elastic.clients:elasticsearch-java:8.13.3'
     }
 }
 
@@ -72,15 +74,13 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-config' // Config Server 클라이언트
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign' // Feign Client
 
-    // ⚠️ [변경됨] Elasticsearch: Spring Boot가 5.5.6을 가져오는 것을 방지
+    // Elasticsearch
+    // Spring AI 1.0.0-M5 호환을 위해 elasticsearch-java 8.13.3 사용 (공식 권장 버전)
     implementation('org.springframework.boot:spring-boot-starter-data-elasticsearch') {
         exclude group: 'co.elastic.clients', module: 'elasticsearch-java'
-        exclude group: 'org.springframework.data', module: 'spring-data-elasticsearch'
     }
-    // Spring AI 1.0.0-M5 호환 버전 명시적 추가
-    implementation 'org.springframework.data:spring-data-elasticsearch:5.3.3'
-    implementation 'co.elastic.clients:elasticsearch-java:8.13.4'
-    
+    // Spring AI 1.0.0-M5 호환 버전 명시적 추가 (8.13.3이 공식 권장)
+    implementation 'co.elastic.clients:elasticsearch-java:8.13.3'
     // Spring AI - Elasticsearch VectorStore (ElasticsearchVectorStore)
     implementation 'org.springframework.ai:spring-ai-elasticsearch-store'
 

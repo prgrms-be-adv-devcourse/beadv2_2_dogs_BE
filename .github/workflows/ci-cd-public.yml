@@ -19,6 +19,8 @@ on:
       - main-eureka
       - main-gateway
       - main-config
+      - main-opa
+      - main-opa-bundle
   pull_request:
     branches:
       - main-data
@@ -26,6 +28,8 @@ on:
       - main-eureka
       - main-gateway
       - main-config
+      - main-opa
+      - main-opa-bundle
     types: [opened, synchronize, reopened]
 
 # GITHUB_TOKEN에 패키지 쓰기 권한 부여
@@ -50,12 +54,16 @@ jobs:
        (startsWith(github.ref, 'refs/heads/main-cloud') ||
         startsWith(github.ref, 'refs/heads/main-eureka') ||
         startsWith(github.ref, 'refs/heads/main-gateway') ||
-        startsWith(github.ref, 'refs/heads/main-config'))) ||
+        startsWith(github.ref, 'refs/heads/main-config') ||
+        startsWith(github.ref, 'refs/heads/main-opa') ||
+        startsWith(github.ref, 'refs/heads/main-opa-bundle'))) ||
       (github.event_name == 'pull_request' && 
        (startsWith(github.base_ref, 'main-cloud') ||
         startsWith(github.base_ref, 'main-eureka') ||
         startsWith(github.base_ref, 'main-gateway') ||
-        startsWith(github.base_ref, 'main-config')))
+        startsWith(github.base_ref, 'main-config') ||
+        startsWith(github.base_ref, 'main-opa') ||
+        startsWith(github.base_ref, 'main-opa-bundle')))
     
     steps:
       - name: Checkout code
@@ -70,12 +78,14 @@ jobs:
             MODULE=""
           fi
           
-          # 빌드할 모듈 결정 (Public EC2용: cloud, eureka, gateway, config)
+          # 빌드할 모듈 결정 (Public EC2용: cloud, eureka, gateway, config, opa, opa-bundle)
           case "$MODULE" in
-            cloud) BUILD_MODULE=":baro-cloud:eureka,:baro-cloud:gateway,:baro-cloud:config" ;;
+            cloud) BUILD_MODULE=":baro-cloud:eureka,:baro-cloud:gateway,:baro-cloud:config,:baro-cloud:opa,:baro-cloud:opa-bundle" ;;
             eureka) BUILD_MODULE=":baro-cloud:eureka" ;;
             gateway) BUILD_MODULE=":baro-cloud:gateway" ;;
             config) BUILD_MODULE=":baro-cloud:config" ;;
+            opa) BUILD_MODULE=":baro-cloud:opa" ;;
+            opa-bundle) BUILD_MODULE=":baro-cloud:opa-bundle" ;;
             *) BUILD_MODULE="" ;;
           esac
           
@@ -207,13 +217,17 @@ jobs:
         startsWith(github.ref, 'refs/heads/main-cloud') ||
         startsWith(github.ref, 'refs/heads/main-eureka') ||
         startsWith(github.ref, 'refs/heads/main-gateway') ||
-        startsWith(github.ref, 'refs/heads/main-config'))) ||
+        startsWith(github.ref, 'refs/heads/main-config') ||
+        startsWith(github.ref, 'refs/heads/main-opa') ||
+        startsWith(github.ref, 'refs/heads/main-opa-bundle'))) ||
       (github.event_name == 'pull_request' && 
        (startsWith(github.base_ref, 'main-data') ||
         startsWith(github.base_ref, 'main-cloud') ||
         startsWith(github.base_ref, 'main-eureka') ||
         startsWith(github.base_ref, 'main-gateway') ||
-        startsWith(github.base_ref, 'main-config')))
+        startsWith(github.base_ref, 'main-config') ||
+        startsWith(github.base_ref, 'main-opa') ||
+        startsWith(github.base_ref, 'main-opa-bundle')))
     outputs:
       service: ${{ steps.module.outputs.service }}
       module: ${{ steps.module.outputs.module }}
@@ -228,13 +242,15 @@ jobs:
             MODULE=""
           fi
           
-          # 모듈명을 서비스명으로 변환 (Public EC2용: data, cloud, eureka, gateway, config)
+          # 모듈명을 서비스명으로 변환 (Public EC2용: data, cloud, eureka, gateway, config, opa, opa-bundle)
           case "$MODULE" in
             data) SERVICE="data" ;;  # data는 빌드 없이 배포만
-            cloud) SERVICE="cloud" ;;  # cloud는 빌드 필요 (eureka, gateway, config)
+            cloud) SERVICE="cloud" ;;  # cloud는 빌드 필요 (eureka, gateway, config, opa, opa-bundle)
             eureka) SERVICE="eureka" ;;
             gateway) SERVICE="gateway" ;;
             config) SERVICE="config" ;;
+            opa) SERVICE="opa" ;;
+            opa-bundle) SERVICE="opa-bundle" ;;  # opa-bundle은 별도 서비스
             *) SERVICE="" ;;
           esac
           
@@ -264,10 +280,12 @@ jobs:
       needs.determine-service.outputs.service != '' &&
       needs.determine-service.outputs.service != 'data'
     
-    # cloud 모듈일 때는 eureka, gateway, config를 각각 빌드
+    # cloud 모듈일 때는 eureka, gateway, config, opa, opa-bundle을 각각 빌드
+    # opa 모듈일 때는 opa만 빌드
+    # opa-bundle 모듈일 때는 opa-bundle만 빌드
     strategy:
       matrix:
-        service: ${{ needs.determine-service.outputs.service == 'cloud' && fromJSON('["eureka", "gateway", "config"]') || fromJSON(format('["{0}"]', needs.determine-service.outputs.service)) }}
+        service: ${{ needs.determine-service.outputs.service == 'cloud' && fromJSON('["eureka", "gateway", "config", "opa", "opa-bundle"]') || needs.determine-service.outputs.service == 'opa' && fromJSON('["opa"]') || needs.determine-service.outputs.service == 'opa-bundle' && fromJSON('["opa-bundle"]') || fromJSON(format('["{0}"]', needs.determine-service.outputs.service)) }}
       fail-fast: false
     
     steps:
@@ -308,6 +326,8 @@ jobs:
             eureka) MODULE_PATH="baro-cloud/eureka" ;;
             gateway) MODULE_PATH="baro-cloud/gateway" ;;
             config) MODULE_PATH="baro-cloud/config" ;;
+            opa) MODULE_PATH="baro-cloud/opa" ;;
+            opa-bundle) MODULE_PATH="baro-cloud/opa-bundle" ;;
             *) MODULE_PATH="" ;;
           esac
           
@@ -510,17 +530,19 @@ jobs:
             fi
             # 복사 후 파일 날짜 확인
             echo "📅 복사된 파일 날짜 확인:"
-            ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "ls -lh /home/ubuntu/apps/k8s/cloud/*/*.yaml 2>/dev/null | head -5 || echo '파일을 찾을 수 없습니다'"
+            # cloud 디렉토리 파일 확인
+            ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "ls -lh /home/ubuntu/apps/k8s/cloud/*/*.yaml 2>/dev/null | head -5 || echo '⚠️  cloud 파일을 찾을 수 없습니다'"
+            # apps 디렉토리도 확인 (settlement 등)
+            echo "📦 apps 디렉토리 파일 목록:"
+            ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "find /home/ubuntu/apps/k8s/apps -name '*.yaml' -type f 2>/dev/null | head -20 || echo '파일을 찾을 수 없습니다'"
             echo "✅ k8s 디렉토리 복사 완료 (최신 파일로 업데이트됨)"
             # 백업한 scripts 디렉토리 복원 (복사된 k8s에 scripts가 없거나 덮어씌워진 경우)
             ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "BACKUP_SCRIPTS=\$(ls -td /home/ubuntu/apps/k8s.backup.scripts.* 2>/dev/null | head -1) && if [ -n \"\$BACKUP_SCRIPTS\" ] && [ -d \"\$BACKUP_SCRIPTS/scripts\" ] && [ ! -d /home/ubuntu/apps/k8s/scripts ] || [ -z \"\$(ls -A /home/ubuntu/apps/k8s/scripts 2>/dev/null)\" ]; then mkdir -p /home/ubuntu/apps/k8s/scripts && cp -r \"\$BACKUP_SCRIPTS/scripts\"/* /home/ubuntu/apps/k8s/scripts/ 2>/dev/null || true && echo '✅ scripts 디렉토리 복원 완료'; fi"
           fi
           
           # deploy-k8s.sh 스크립트 복사 (기존 파일 백업)
+          # settlement도 이제 deploy-k8s.sh 사용 (Deployment + CronJob)
           DEPLOY_SCRIPT="scripts/deploy-k8s.sh"
-          if [ "${MODULE_NAME}" = "settlement" ] && [ -f "scripts/deploy-daemonset.sh" ]; then
-            DEPLOY_SCRIPT="scripts/deploy-daemonset.sh"
-          fi
           
           if [ -f "$DEPLOY_SCRIPT" ]; then
             ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "mkdir -p /home/ubuntu/apps/BE/scripts && if [ -f /home/ubuntu/apps/BE/$DEPLOY_SCRIPT ]; then cp /home/ubuntu/apps/BE/$DEPLOY_SCRIPT /home/ubuntu/apps/BE/$DEPLOY_SCRIPT.bak.\$(date +%Y%m%d_%H%M%S) 2>/dev/null || true; fi"

@@ -17,7 +17,7 @@ services:
       # 로컬 개발 시 EUREKA_INSTANCE_HOSTNAME=localhost로 오버라이드 가능
       - EUREKA_INSTANCE_HOSTNAME=${EUREKA_INSTANCE_HOSTNAME:-eureka}
     volumes:
-      - /mnt/s3:/mnt/s3:rw
+      - ${S3_MOUNT_PATH:-/mnt/s3}:/mnt/s3:rw
     restart: unless-stopped
     networks:
       - baro-network
@@ -42,7 +42,7 @@ services:
       - JAVA_OPTS=-Xms256m -Xmx384m
     volumes:
       # S3 마운트 경로 (로그 저장용: /mnt/s3/logs/config/)
-      - /mnt/s3:/mnt/s3:rw
+      - ${S3_MOUNT_PATH:-/mnt/s3}:/mnt/s3:rw
     depends_on:
       eureka:
         condition: service_healthy
@@ -72,7 +72,7 @@ services:
       - JAVA_OPTS=-Xms256m -Xmx384m
     volumes:
       # S3 마운트 경로 (로그 저장용: /mnt/s3/logs/gateway/)
-      - /mnt/s3:/mnt/s3:rw
+      - ${S3_MOUNT_PATH:-/mnt/s3}:/mnt/s3:rw
     depends_on:
       eureka:
         condition: service_healthy
@@ -85,6 +85,49 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # ===================================
+  # OPA Bundle Service
+  # ===================================
+  opa-bundle:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/opa-bundle:${IMAGE_TAG:-latest}
+    container_name: baro-opa-bundle
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - JAVA_TOOL_OPTIONS=-Xms32m -Xmx96m -XX:MaxMetaspaceSize=96m -XX:MaxDirectMemorySize=64m -XX:ReservedCodeCacheSize=64m -XX:+UseSerialGC
+      - OPA_POLICY_DIR=/app/policy
+    mem_limit: 200m
+    volumes:
+      - ${S3_MOUNT_PATH:-/mnt/s3}:/mnt/s3:rw
+    depends_on:
+      eureka:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - baro-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8095/actuator/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ===================================
+  # OPA Server
+  # ===================================
+  opa:
+    image: ${DOCKER_REGISTRY:-ghcr.io/do-develop-space}/opa:${IMAGE_TAG:-latest}
+    container_name: baro-opa
+    ports:
+      - "8181:8181"
+    mem_limit: 64m
+    depends_on:
+      opa-bundle:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - baro-network
 
 networks:
   baro-network:

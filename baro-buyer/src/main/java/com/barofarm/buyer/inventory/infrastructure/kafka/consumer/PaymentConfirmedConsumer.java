@@ -35,7 +35,7 @@ public class PaymentConfirmedConsumer {
         }
     )
     @RetryableTopic(
-        attempts = "5",
+        attempts = "3",
         backoff = @Backoff(delay = 1000, multiplier = 2)
     )
     @Transactional

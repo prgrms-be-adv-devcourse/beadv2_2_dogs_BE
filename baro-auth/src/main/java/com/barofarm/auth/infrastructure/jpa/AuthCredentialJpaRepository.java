@@ -12,4 +12,6 @@ public interface AuthCredentialJpaRepository extends JpaRepository<AuthCredentia
     Optional<AuthCredential> findByLoginEmail(String loginEmail);
 
     Optional<AuthCredential> findByUserId(UUID userId);
+
+    void deleteByUserId(UUID userId);
 }

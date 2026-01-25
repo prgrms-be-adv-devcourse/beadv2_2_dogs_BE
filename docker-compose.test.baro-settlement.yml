@@ -1,0 +1,31 @@
+# Settlement test (local)
+# Local build + no host S3 mount to avoid OS-specific path issues.
+
+services:
+  baro-settlement:
+    build:
+      context: .
+      dockerfile: docker/baro-settlement/Dockerfile
+    container_name: baro-settlement
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_CONFIG_IMPORT=
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=baro-kafka:29092
+      - SPRING_DATASOURCE_URL=jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE_SETTLEMENT:-barosettlement}
+      - MYSQL_DATABASE=${MYSQL_DATABASE_SETTLEMENT:-barosettlement}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - SETTLEMENT_SCHEDULER_ENABLED=false
+      - JAVA_OPTS=-Xms64m -Xmx128m
+    volumes: []
+    restart: unless-stopped
+    networks:
+      - baro-network
+
+networks:
+  baro-network:
+    name: be_baro-network
+    external: true

@@ -62,6 +62,16 @@ spec:
               value: "-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
             - name: JAVA_TOOL_OPTIONS
               value: "-Xms64m -Xmx128m -XX:MaxMetaspaceSize=128m -XX:CompressedClassSpaceSize=64m -XX:MaxDirectMemorySize=64m -XX:NativeMemoryTracking=summary"
+            # Redis 설정
+            - name: SPRING_DATA_REDIS_HOST
+              value: "CHANGE_ME_TO_EC2_IP"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: REDIS_PASSWORD
           # resources:
           #   requests:
           #     memory: "256Mi"

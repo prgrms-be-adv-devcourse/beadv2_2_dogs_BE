@@ -7,16 +7,19 @@ import com.barofarm.support.review.application.dto.request.ReviewCreateCommand;
 import com.barofarm.support.review.application.dto.response.ReviewDetailInfo;
 import com.barofarm.support.review.presentation.dto.ReviewCreateRequest;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,16 +28,17 @@ public class ProductReviewController implements ProductSwaggerApi{
 
     private final ReviewService reviewService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseDto<ReviewDetailInfo> createReview(
         @PathVariable UUID productId,
         @RequestHeader("X-User-Id") UUID userId,
-        @Valid @RequestBody ReviewCreateRequest request
+        @Valid @RequestPart("data") ReviewCreateRequest request,
+        @RequestPart(value = "images", required = false) List<MultipartFile> images
     ) {
         ReviewCreateCommand command =
             request.toCommand(productId, userId);
 
-        return ResponseDto.ok(reviewService.createReview(command));
+        return ResponseDto.ok(reviewService.createReview(command, images));
     }
 
     @GetMapping

@@ -30,6 +30,9 @@ public class CartLogDocument {
     @Field(type = FieldType.Text, analyzer = "nori")
     private String productName;
 
+    @Field(type = FieldType.Keyword)
+    private String categoryCode;
+
     // 이벤트 타입: ADD, REMOVE, UPDATE
     @Field(type = FieldType.Keyword)
     private String eventType;
@@ -43,11 +46,17 @@ public class CartLogDocument {
     private Instant occurredAt;
 
     @Builder
-    public CartLogDocument(UUID userId, UUID productId, String productName,
-                           String eventType, Integer quantity, Instant occurredAt) {
+    public CartLogDocument(UUID userId,
+                           UUID productId,
+                           String productName,
+                           String categoryCode,
+                           String eventType,
+                           Integer quantity,
+                           Instant occurredAt) {
         this.userId = userId;
         this.productId = productId;
         this.productName = productName;
+        this.categoryCode = categoryCode;
         this.eventType = eventType;
         this.quantity = quantity;
         this.occurredAt = occurredAt;

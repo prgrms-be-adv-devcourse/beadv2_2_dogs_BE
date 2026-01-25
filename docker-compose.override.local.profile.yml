@@ -1,0 +1,13 @@
+services:
+  gateway:
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+  opa-bundle:
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+  baro-auth:
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+  baro-buyer:
+    environment:
+      - SPRING_PROFILES_ACTIVE=local

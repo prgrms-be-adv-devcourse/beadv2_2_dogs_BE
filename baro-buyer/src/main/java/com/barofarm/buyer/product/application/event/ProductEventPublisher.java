@@ -47,7 +47,7 @@ public class ProductEventPublisher {
                 .productName(product.getProductName())
                 .productCategoryId(product.getCategory().getId())
                 .productCategoryName(product.getCategory().getName())
-                .productCategory(product.getCategory().getCode())
+                .productCategoryCode(product.getCategory().getCode())
                 .price(product.getPrice())
                 .status(product.getProductStatus().name()) // enum
                 .updatedAt(Instant.now())

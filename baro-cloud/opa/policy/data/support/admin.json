@@ -1,0 +1,45 @@
+{
+    "rules_by_id":  {
+                        "support:admin-search-create":  {
+                                                            "name":  "support:admin-search-create",
+                                                            "path":  "^(/support-service)?/api/v1/admin/search/(products|farms|experiences)$",
+                                                            "methods":  [
+                                                                            "POST"
+                                                                        ],
+                                                            "roles":  [
+                                                                          "ADMIN"
+                                                                      ]
+                                                        },
+                        "support:admin-search-delete":  {
+                                                            "name":  "support:admin-search-delete",
+                                                            "path":  "^(/support-service)?/api/v1/admin/search/(products|farms|experiences)/[^/]+$",
+                                                            "methods":  [
+                                                                            "DELETE"
+                                                                        ],
+                                                            "roles":  [
+                                                                          "ADMIN"
+                                                                      ]
+                                                        },
+                        "support:settlements-batch":  {
+                                                          "name":  "support:settlements-batch",
+                                                          "path":  "^/api/v1/batch/settlement$",
+                                                          "methods":  [
+                                                                          "POST"
+                                                                      ],
+                                                          "roles":  [
+                                                                        "ADMIN"
+                                                                    ]
+                                                      }
+                    },
+    "index":  {
+                  "method":  {
+                                 "POST":  [
+                                              "support:admin-search-create",
+                                              "support:settlements-batch"
+                                          ],
+                                 "DELETE":  [
+                                                "support:admin-search-delete"
+                                            ]
+                             }
+              }
+}

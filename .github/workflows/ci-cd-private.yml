@@ -599,17 +599,23 @@ jobs:
             fi
             # 복사 후 파일 날짜 확인
             echo "📅 복사된 파일 날짜 확인:"
-            ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "ls -lh /home/ubuntu/apps/k8s/apps/baro-ai/*.yaml 2>/dev/null || echo '파일을 찾을 수 없습니다'"
+            # 배포 중인 모듈의 파일 확인
+            if [ -n "${MODULE_NAME}" ]; then
+              K8S_APP_NAME="baro-${MODULE_NAME}"
+              echo "📦 배포 중인 모듈 파일 확인: ${K8S_APP_NAME}"
+              ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "ls -lh /home/ubuntu/apps/k8s/apps/${K8S_APP_NAME}/*.yaml 2>/dev/null || echo '⚠️  ${K8S_APP_NAME} 파일을 찾을 수 없습니다'"
+            fi
+            # 모든 apps 디렉토리 파일 목록 확인
+            echo "📦 모든 apps 모듈 파일 목록:"
+            ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "find /home/ubuntu/apps/k8s/apps -name '*.yaml' -type f 2>/dev/null | head -20 || echo '파일을 찾을 수 없습니다'"
             echo "✅ k8s 디렉토리 복사 완료 (최신 파일로 업데이트됨)"
             # 백업한 scripts 디렉토리 복원
             ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "BACKUP_SCRIPTS=\$(ls -td /home/ubuntu/apps/k8s.backup.scripts.* 2>/dev/null | head -1) && if [ -n \"\$BACKUP_SCRIPTS\" ] && [ -d \"\$BACKUP_SCRIPTS/scripts\" ] && [ ! -d /home/ubuntu/apps/k8s/scripts ] || [ -z \"\$(ls -A /home/ubuntu/apps/k8s/scripts 2>/dev/null)\" ]; then mkdir -p /home/ubuntu/apps/k8s/scripts && cp -r \"\$BACKUP_SCRIPTS/scripts\"/* /home/ubuntu/apps/k8s/scripts/ 2>/dev/null || true && echo '✅ scripts 디렉토리 복원 완료'; fi"
           fi
           
           # deploy-k8s.sh 스크립트 복사 (기존 파일 백업)
+          # settlement도 이제 deploy-k8s.sh 사용 (Deployment + CronJob)
           DEPLOY_SCRIPT="scripts/deploy-k8s.sh"
-          if [ "${MODULE_NAME}" = "settlement" ] && [ -f "scripts/deploy-daemonset.sh" ]; then
-            DEPLOY_SCRIPT="scripts/deploy-daemonset.sh"
-          fi
           
           if [ -f "$DEPLOY_SCRIPT" ]; then
             ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "mkdir -p /home/ubuntu/apps/BE/scripts && if [ -f /home/ubuntu/apps/BE/$DEPLOY_SCRIPT ]; then cp /home/ubuntu/apps/BE/$DEPLOY_SCRIPT /home/ubuntu/apps/BE/$DEPLOY_SCRIPT.bak.\$(date +%Y%m%d_%H%M%S) 2>/dev/null || true; fi"

@@ -63,8 +63,12 @@ public class CartRemoveHistoryPayloadMapper implements HistoryPayloadMapper {
         builder.productId(productId);
         builder.quantity(item.get().getQuantity());
         productRepository.findById(productId)
-            .map(p -> p.getProductName())
-            .ifPresent(builder::productName);
+            .ifPresent(product -> {
+                builder.productName(product.getProductName());
+                if (product.getCategory() != null) {
+                    builder.categoryCode(product.getCategory().getCode());
+                }
+            });
 
         return builder.build();
     }

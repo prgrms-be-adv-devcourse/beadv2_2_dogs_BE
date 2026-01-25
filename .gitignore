@@ -26,6 +26,12 @@ replay_pid*
 # Gradle
 .gradle
 build/
+docker-compose.override.local.yml
+docker-compose.override.local.cloud.yml
+docker-compose.override.local.kafka.yml
+docker-compose.override.local.buyer.yml
+docker-compose.override.local.profile.yml
+.env.docker
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
@@ -85,3 +91,5 @@ logs/
 baro-auth/.env
 .env
 .secrets.env
+
+.gradle-user-home/

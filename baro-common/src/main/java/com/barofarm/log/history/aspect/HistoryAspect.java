@@ -81,7 +81,10 @@ public class HistoryAspect {
             payload = mapper.payload(args, result);
         }
 
-        UUID userId = resolveUserIdFromHeader();
+        UUID userId = mapper.resolveUserId(args, result);
+        if (userId == null) {
+            userId = resolveUserIdFromHeader();
+        }
         OffsetDateTime now = OffsetDateTime.now();
 
         HistoryEnvelope<Object> envelope = new HistoryEnvelope<>(

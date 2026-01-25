@@ -11,5 +11,4 @@ public record ProductCreateCommand(
     String description,
     UUID categoryId,
     Long price,
-    Integer stockQuantity,
-    List<String> imageUrls) {}
+    List<ProductInventoryOptionCommand> inventoryOptions) {}

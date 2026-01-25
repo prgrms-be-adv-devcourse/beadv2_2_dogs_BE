@@ -7,6 +7,10 @@ api:
 spring:
   application:
     name: support-service
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
   config:
     import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://config:8888}
   main:
@@ -25,7 +29,7 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
         use_sql_comments: true
-        
+
   mail:
     host: smtp.naver.com
     port: 465
@@ -35,7 +39,7 @@ spring:
       mail.smtp.auth: true
       mail.smtp.ssl.enable: true
       mail.smtp.ssl.trust: smtp.naver.com
-      
+
   elasticsearch:
     uris: ${SPRING_ELASTICSEARCH_URIS:http://elasticsearch:9200}
   # data:
@@ -57,7 +61,7 @@ spring:
 payment:
   toss:
     secret-key: ${TOSS_SECRET_KEY:}
-    
+
 eureka:
   client:
     # Eureka 서버에 등록 (Config Server의 eureka-server 설정과 충돌 방지)
@@ -89,6 +93,17 @@ logging:
     org.hibernate.orm.jdbc.bind: TRACE
     org.springframework.web: DEBUG
     org.springframework.web.servlet.DispatcherServlet: DEBUG
+
+# history logging (support 모듈은 사용하지 않음)
+history:
+  log:
+    enabled: false
+
+notification:
+  delivery:
+    fcm:
+      enabled: false
+      # credential-path: /mnt/s3/firebase/serviceAccount.json
 
 # Actuator 설정
 management:

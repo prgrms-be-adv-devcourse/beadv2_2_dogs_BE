@@ -1,0 +1,46 @@
+{
+    "rules_by_id":  {
+                        "buyer:products-create":  {
+                                                      "name":  "buyer:products-create",
+                                                      "path":  "^(/buyer-service)?/api/v1/products$",
+                                                      "methods":  [
+                                                                      "POST"
+                                                                  ],
+                                                      "roles":  [
+                                                                    "SELLER",
+                                                                    "ADMIN"
+                                                                ],
+                                                      "deny_flags":  [
+                                                                         "PRODUCT_PUBLISH_BLOCKED"
+                                                                     ]
+                                                  },
+                        "buyer:products-update-delete":  {
+                                                             "name":  "buyer:products-update-delete",
+                                                             "path":  "^(/buyer-service)?/api/v1/products/[^/]+$",
+                                                             "methods":  [
+                                                                             "PATCH",
+                                                                             "DELETE"
+                                                                         ],
+                                                             "roles":  [
+                                                                           "SELLER",
+                                                                           "ADMIN"
+                                                                       ],
+                                                             "deny_flags":  [
+                                                                                "PRODUCT_PUBLISH_BLOCKED"
+                                                                            ]
+                                                         }
+                    },
+    "index":  {
+                  "method":  {
+                                 "POST":  [
+                                              "buyer:products-create"
+                                          ],
+                                 "PATCH":  [
+                                               "buyer:products-update-delete"
+                                           ],
+                                 "DELETE":  [
+                                                "buyer:products-update-delete"
+                                            ]
+                             }
+              }
+}

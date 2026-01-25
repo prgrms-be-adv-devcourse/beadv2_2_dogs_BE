@@ -1,7 +1,5 @@
 package com.barofarm.payment.payment.infrastructure.kafka.consumer;
 
-import static com.barofarm.payment.payment.exception.PaymentErrorCode.PAYMENT_NOT_FOUND;
-
 import com.barofarm.exception.CustomException;
 import com.barofarm.payment.payment.application.dto.request.TossPaymentRefundCommand;
 import com.barofarm.payment.payment.domain.Payment;
@@ -45,14 +43,15 @@ OrderCancelRequestedConsumer {
         }
     )
     @RetryableTopic(
-        attempts = "5",
+        attempts = "3",
         backoff = @Backoff(delay = 1000, multiplier = 2)
     )
     @Transactional
     public void handle(OrderCancelRequestedEvent event) {
         Optional<Payment> optionalPayment = paymentRepository.findByOrderId(event.orderId());
         if (optionalPayment.isEmpty()) {
-            throw new CustomException(PAYMENT_NOT_FOUND);
+            // No payment exists for this order; treat as idempotent no-op.
+            return;
         }
 
         Payment payment = optionalPayment.get();

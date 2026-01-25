@@ -60,8 +60,6 @@ spec:
               value: "optional:configserver:http://localhost:8888"  # 배포 스크립트가 자동으로 Data EC2 IP로 치환 (Cloud 모듈이 Data EC2에서 실행됨)
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://localhost:8761/eureka/"  # 배포 스크립트가 자동으로 Data EC2 IP로 치환 (Cloud 모듈이 Data EC2에서 실행됨)
-            - name: JAVA_OPTS
-              value: "-Xms64m -Xmx96m"
             - name: JAVA_TOOL_OPTIONS
               value: >
                 -Duser.timezone=Asia/Seoul
@@ -72,11 +70,13 @@ spec:
                 -XX:MaxDirectMemorySize=32m
                 -XX:ReservedCodeCacheSize=24m
                 -XX:NativeMemoryTracking=summary
+                -XX:+UseG1GC
+                -XX:MaxGCPauseMillis=200
             # 실제 배포 시 deploy-k8s.sh 스크립트가 자동으로 Data EC2 IP로 치환
             - name: EC2_IP
               value: "CHANGE_ME_TO_EC2_IP"  # 배포 스크립트가 자동으로 Data EC2 IP로 치환
-            - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://CHANGE_ME_TO_EC2_IP:3306/baroai?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
+            # - name: SPRING_DATASOURCE_URL
+              # value: "jdbc:mysql://CHANGE_ME_TO_EC2_IP:3306/baroai?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useUnicode=true"
             # Kafka 설정 (Data EC2 - Public EC2)
             # DEPLOY_KAFKA == false 일 때 localhost:29092 사용
             # DEPLOY_KAFKA == true 일 때 Public EC2에 배포되므로 CHANGE_ME_TO_EC2_IP:29092 사용
@@ -88,6 +88,16 @@ spec:
             - name: SPRING_ELASTICSEARCH_URIS
               value: "CHANGE_ME_TO_EC2_IP:9200"  # 배포 스크립트가 자동으로 Public EC2 IP로 치환
               # value: "http://localhost:9200"  # Elasticsearch는 같은 Private EC2에 docker-compose로 실행됨
+            # Redis 설정
+            - name: SPRING_DATA_REDIS_HOST
+              value: "CHANGE_ME_TO_EC2_IP"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: baro-secrets
+                  key: REDIS_PASSWORD
             # AWS 설정
             - name: AWS_ACCESS_KEY
               valueFrom:
@@ -127,13 +137,13 @@ spec:
           volumeMounts:
             - name: log-volume
               mountPath: /mnt/s3/logs/ai
-          # resources:
-          #   requests:
-          #     cpu: "100m"
-          #     memory: "256Mi"
-          #   limits:
-          #     cpu: "500m"
-          #     memory: "384Mi"  # 실제 RSS: 320MB
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
           livenessProbe:
             httpGet:
               path: /actuator/health

@@ -19,7 +19,7 @@ public class DepositOutboxPublisher {
     private final DepositOutboxEventJpaRepository outboxRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    @Scheduled(fixedDelay = 20000L)
+    @Scheduled(fixedDelay = 2000L)
     @Transactional
     public void publishDepositEvents() {
         List<DepositOutboxEvent> events =

@@ -29,7 +29,12 @@ public class KafkaProducerConfig {
 
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+
+        // MSA 환경: 타입 헤더를 추가하지 않도록 설정 (다른 모듈의 클래스 정보 제거)
+        JsonSerializer<ProductEvent> serializer = new JsonSerializer<>();
+        serializer.setAddTypeInfo(false);  // 타입 헤더(__TypeId__) 추가 안 함
+
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, serializer);
         // TODO: 3번 재시도 너무 많음, DLQ(Dead Letter Queue) 사용 고려
         config.put(ProducerConfig.RETRIES_CONFIG, 3); // 최대 3번 재시도
         config.put(ProducerConfig.ACKS_CONFIG, "all");

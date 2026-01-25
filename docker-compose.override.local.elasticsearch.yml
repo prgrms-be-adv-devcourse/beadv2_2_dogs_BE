@@ -1,0 +1,6 @@
+services:
+  elasticsearch:
+    environment:
+      - "ES_JAVA_OPTS=-Xms128m -Xmx256m"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data

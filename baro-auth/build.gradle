@@ -34,22 +34,23 @@ dependencies {
     implementation project(':baro-common')
 
     // Swagger(OpenAPI)
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+    // Swagger/OpenAPI 비활성화를 위해 임시 주석 처리.
+    // implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
 
     // ========= 테스트 =========
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testRuntimeOnly 'com.h2database:h2'
 
     // ========= Auth 서비스 의존성 =========
     implementation 'org.springframework.boot:spring-boot-starter-web'       // servlet(Filter), MVC
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // @Transactional, JPA 기반 트랜잭션
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator' // 251211: actuator 노출로 health 확인 허용
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.cloud:spring-cloud-starter-config' // Config Server 클라이언트
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+    implementation 'org.springframework.kafka:spring-kafka'
 
     // 이메일 관련 인증 관련
     implementation 'org.springframework.boot:spring-boot-starter-mail'
@@ -63,7 +64,7 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     // Security Test
-    testImplementation 'org.springframework.security:spring-security-test'
+//    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 tasks.named('test') {

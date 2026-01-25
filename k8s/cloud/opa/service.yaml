@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: opa
+  namespace: baro-prod
+  labels:
+    app: opa
+    component: cloud
+spec:
+  type: ClusterIP  # hostNetwork: true를 사용하므로 직접 노드 IP:8181로 접근
+  ports:
+    - port: 8181
+      targetPort: 8181
+      protocol: TCP
+      name: http
+  selector:
+    app: opa

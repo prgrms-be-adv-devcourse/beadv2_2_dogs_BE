@@ -16,6 +16,13 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${MYSQL_USER:}
     password: ${MYSQL_PASSWORD:}
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
   jpa:
     hibernate:
       ddl-auto: update  # 일시적으로 update로 변경 (스키마 수정 후 validate로 변경)
@@ -70,16 +77,16 @@ logging:
     com.barofarm.auth.infrastructure.security: DEBUG
 
 # Swagger/OpenAPI 설정
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    tags-sorter: alpha
-    operations-sorter: alpha
-  default-consumes-media-type: application/json
-  default-produces-media-type: application/json
-
+# springdoc:
+#   api-docs:
+#     path: /v3/api-docs
+#   swagger-ui:
+#     path: /swagger-ui.html
+#     tags-sorter: alpha
+#     operations-sorter: alpha
+#   default-consumes-media-type: application/json
+#   default-produces-media-type: application/json
+# 
 management:
   endpoints:
     web:
@@ -94,3 +101,38 @@ jwt:
   secret: "너무_짧지_않은_랜덤_시크릿_문자열_최소32바이트_나중에_env로_옮길예정"
   access-token-validity-ms: 604800000   # 7일
   refresh-token-validity-ms: 1209600000 # 14일
+
+auth:
+  cookie:
+    access-name: access_token
+    refresh-name: refresh_token
+    secure: ${AUTH_COOKIE_SECURE:true}
+    same-site: Strict
+    path: /
+    domain: ${AUTH_COOKIE_DOMAIN:}
+  kafka:
+    topic:
+      user-events: ${AUTH_USER_EVENTS_TOPIC:user-events}
+  outbox:
+    publish-interval-ms: ${AUTH_OUTBOX_PUBLISH_INTERVAL_MS:1000}
+    max-attempts: ${AUTH_OUTBOX_MAX_ATTEMPTS:5}
+
+
+oauth:
+  naver:
+    client-id: ${NAVER_CLIENT_ID:}
+    client-secret: ${NAVER_CLIENT_SECRET:}
+    redirect-uri: ${NAVER_REDIRECT_URI:http://localhost:8081/api/v1/auth/oauth/callback?provider=naver}
+    token-uri: ${NAVER_TOKEN_URI:https://nid.naver.com/oauth2.0/token}
+    user-info-uri: ${NAVER_USERINFO_URI:https://openapi.naver.com/v1/nid/me}
+  kakao:
+    # 카카오 디벨로퍼스 앱 키/콜백 설정을 주입한다.
+    client-id: ${KAKAO_CLIENT_ID:}
+    client-secret: ${KAKAO_CLIENT_SECRET:}
+    redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:8081/api/v1/auth/oauth/callback?provider=kakao}
+    token-uri: ${KAKAO_TOKEN_URI:https://kauth.kakao.com/oauth/token}
+    user-info-uri: ${KAKAO_USERINFO_URI:https://kapi.kakao.com/v2/user/me}
+
+opa:
+  kafka:
+    topic: ${OPA_HOTLIST_TOPIC:opa-hotlist-events}

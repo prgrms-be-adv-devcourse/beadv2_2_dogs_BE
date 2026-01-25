@@ -9,7 +9,8 @@ public record ReviewUpdateCommand(
     UUID userId,
     Integer rating,
     ReviewVisibility visibility,
-    String content) {
+    String content,
+    ReviewImageUpdateMode imageUpdateMode) {
 
     public ReviewStatus toReviewStatus() {
         return ReviewStatus.fromVisibility(visibility);

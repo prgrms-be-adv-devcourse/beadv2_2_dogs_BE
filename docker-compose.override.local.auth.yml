@@ -1,0 +1,15 @@
+services:
+  baro-auth:
+    build:
+      context: .
+      dockerfile: docker/baro-auth/Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_CONFIG_IMPORT=
+      - AUTH_COOKIE_SECURE=false
+      - SPRING_DATASOURCE_URL=jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE_AUTH}
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=baro-kafka:29092
+      - MANAGEMENT_HEALTH_MAIL_ENABLED=false
+      - KAKAO_REDIRECT_URI=http://localhost:3001/oauth/kakao/callback

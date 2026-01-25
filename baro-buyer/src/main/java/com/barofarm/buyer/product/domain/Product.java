@@ -1,7 +1,7 @@
 package com.barofarm.buyer.product.domain;
 
 import com.barofarm.buyer.product.exception.ProductErrorCode;
-import com.barofarm.common.entity.BaseEntity;
+import com.barofarm.entity.BaseEntity;
 import com.barofarm.exception.CustomException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -126,7 +126,11 @@ public class Product extends BaseEntity {
   }
 
     public void addImage(String imageUrl, int order) {
-        this.images.add(ProductImage.create(this, imageUrl, order));
+        this.images.add(ProductImage.create(this, imageUrl, null, order));
+    }
+
+    public void addImage(String imageUrl, String s3Key, int order) {
+        this.images.add(ProductImage.create(this, imageUrl, s3Key, order));
     }
 
     public void clearImages() {

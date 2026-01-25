@@ -39,6 +39,11 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.cloud:spring-cloud-starter-config' // 부트스트랩 단계에 Config Server에서 공통 설정을 수신
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.github.resilience4j:resilience4j-bulkhead'
+    implementation 'io.github.resilience4j:resilience4j-reactor'
 
     // JWT for Gateway Filter — 인증 정보를 검증하여 하위 서비스로 전파
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'

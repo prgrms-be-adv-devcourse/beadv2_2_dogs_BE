@@ -7,6 +7,7 @@ public record ProductIndexRequest(
     UUID productId,
     String productName,
     UUID productCategoryId,
+    String productCategoryCode,
     String productCategoryName,
     Long price,
     String status) {}

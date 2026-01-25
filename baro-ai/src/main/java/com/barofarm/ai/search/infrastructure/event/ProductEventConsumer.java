@@ -69,6 +69,7 @@ public class ProductEventConsumer {
             data.getProductId(),
             data.getProductName(),
             data.getProductCategoryId(),
+            data.getProductCategoryCode(),
             data.getProductCategoryName(),
             data.getPrice(),
             data.getStatus());

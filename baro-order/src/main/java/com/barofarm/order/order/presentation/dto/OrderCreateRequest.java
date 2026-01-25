@@ -15,11 +15,11 @@ public record OrderCreateRequest(
     @NotBlank(message = "받는 분 이름은 필수입니다.")
     String receiverName,
 
-    @NotBlank(message = "휴대폰 번호는 필수입니다.")
+    @NotBlank(message = "전화번호는 필수입니다.")
     String phone,
 
     @NotBlank(message = "이메일은 필수입니다.")
-    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    @Email(message = "이메일 형식이 올바르지 않습니다.")
     String email,
 
     @NotBlank(message = "우편번호는 필수입니다.")
@@ -40,25 +40,26 @@ public record OrderCreateRequest(
 ) {
     public OrderCreateCommand toCommand() {
         List<OrderCreateCommand.OrderItemCreateCommand> itemCommands = items.stream()
-                .map(i -> new OrderCreateCommand.OrderItemCreateCommand(
-                        i.productId(),
-                        i.productName,
-                        i.inventoryId,
-                        i.sellerId(),
-                        i.quantity(),
-                        i.unitPrice()
-                ))
-                .toList();
+            .map(i -> new OrderCreateCommand.OrderItemCreateCommand(
+                i.productId(),
+                i.productName(),
+                i.categoryCode(),
+                i.inventoryId(),
+                i.sellerId(),
+                i.quantity(),
+                i.unitPrice()
+            ))
+            .toList();
 
         return new OrderCreateCommand(
-                receiverName,
-                phone,
-                email,
-                zipCode,
-                address,
-                addressDetail,
-                deliveryMemo,
-                itemCommands
+            receiverName,
+            phone,
+            email,
+            zipCode,
+            address,
+            addressDetail,
+            deliveryMemo,
+            itemCommands
         );
     }
 
@@ -68,6 +69,8 @@ public record OrderCreateRequest(
 
         @NotBlank(message = "상품 이름은 필수입니다.")
         String productName,
+
+        String categoryCode,
 
         @Positive(message = "수량은 1개 이상이어야 합니다.")
         Long quantity,

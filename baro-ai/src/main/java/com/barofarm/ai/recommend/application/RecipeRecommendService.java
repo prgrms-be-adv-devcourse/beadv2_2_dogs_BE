@@ -57,21 +57,26 @@ public class RecipeRecommendService {
             return new RecipeRecommendResponse("", List.of(), List.of(), List.of(), "");
         }
 
-        final List<String> categoriesToExclude = recommendProperties.getExcludeRecipeCategories();
+        final List<String> categoriesToExcludeByCode =
+            recommendProperties.getExcludeRecipeCategoryCodes();
 
         List<RecipePromptService.CartItemInput> cartItems = cart.items().stream()
             .filter(Objects::nonNull)
             .filter(item -> {
-                String category = safeTrim(item.productCategoryName());
-                if (category.isEmpty() || categoriesToExclude == null
-                    || categoriesToExclude.isEmpty()) {
-                    return true;
+                String categoryCode = safeTrim(item.productCategoryCode());
+
+                boolean hasCodeRules = categoriesToExcludeByCode != null
+                    && !categoriesToExcludeByCode.isEmpty();
+                if (hasCodeRules && !categoryCode.isEmpty()) {
+                    boolean excludedByCode = categoriesToExcludeByCode.contains(categoryCode);
+                    if (excludedByCode) {
+                        log.info("레시피 추천에서 '{}' 상품 제외 (카테고리 코드: {})",
+                            item.productName(), categoryCode);
+                        return false;
+                    }
                 }
-                boolean isExcluded = categoriesToExclude.stream().anyMatch(category::contains);
-                if (isExcluded) {
-                    log.info("레시피 추천에서 '{}' 상품 제외 (카테고리: {})", item.productName(), category);
-                }
-                return !isExcluded;
+
+                return true;
             })
             .map(i -> new RecipePromptService.CartItemInput(
                 safeTrim(i.productName()),

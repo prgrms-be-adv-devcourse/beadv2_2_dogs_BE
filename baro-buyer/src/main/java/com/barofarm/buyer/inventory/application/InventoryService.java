@@ -1,6 +1,7 @@
 package com.barofarm.buyer.inventory.application;
 
 import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.ALREADY_CANCELED;
+import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INVALID_REQUEST;
 import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INVENTORY_HAS_ACTIVE_RESERVATIONS;
 import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INVENTORY_NOT_FOUND;
 import static com.barofarm.buyer.inventory.exception.InventoryErrorCode.INVENTORY_RESERVATION_NOT_FOUND;
@@ -14,6 +15,7 @@ import com.barofarm.buyer.inventory.domain.InventoryRepository;
 import com.barofarm.buyer.inventory.domain.InventoryReservation;
 import com.barofarm.buyer.inventory.domain.InventoryReservationRepository;
 import com.barofarm.buyer.inventory.domain.InventoryReservationStatus;
+import com.barofarm.buyer.inventory.presentation.dto.InventoryInfo;
 import com.barofarm.exception.CustomException;
 import java.util.List;
 import java.util.UUID;
@@ -141,9 +143,53 @@ public class InventoryService {
         inventoryRepository.delete(inventory);
     }
 
+    @Transactional
+    public void replaceInventories(UUID productId, List<InventoryCreateCommand> commands) {
+        List<Inventory> existing = inventoryRepository.findAllByProductId(productId);
+        boolean hasReserved = existing.stream().anyMatch(inv -> inv.getReservedQuantity() > 0);
+        if (hasReserved) {
+            throw new CustomException(INVENTORY_HAS_ACTIVE_RESERVATIONS);
+        }
+
+        inventoryRepository.deleteAllByProductId(productId);
+
+        if (commands == null || commands.isEmpty()) {
+            return;
+        }
+
+        for (InventoryCreateCommand command : commands) {
+            if (command == null || !productId.equals(command.productId())) {
+                throw new CustomException(INVALID_REQUEST);
+            }
+            createInventory(command);
+        }
+    }
+
+    @Transactional
+    public void deleteInventoriesByProductId(UUID productId) {
+        List<Inventory> existing = inventoryRepository.findAllByProductId(productId);
+        boolean hasReserved = existing.stream().anyMatch(inv -> inv.getReservedQuantity() > 0);
+        if (hasReserved) {
+            throw new CustomException(INVENTORY_HAS_ACTIVE_RESERVATIONS);
+        }
+        inventoryRepository.deleteAllByProductId(productId);
+    }
+
     @Transactional(readOnly = true)
     public Inventory getInventory(UUID inventoryId) {
         return inventoryRepository.findById(inventoryId)
             .orElseThrow(() -> new CustomException(INVENTORY_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Inventory> getInventoriesByProductId(UUID productId) {
+        return inventoryRepository.findAllByProductId(productId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<InventoryInfo> getInventoryInfosByProductId(UUID productId) {
+        return inventoryRepository.findAllByProductId(productId).stream()
+            .map(InventoryInfo::from)
+            .toList();
     }
 }

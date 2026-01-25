@@ -1,0 +1,21 @@
+services:
+  baro-support:
+    build:
+      context: .
+      dockerfile: docker/baro-support/Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_CONFIG_IMPORT=
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=baro-kafka:9092
+      - SPRING_DATASOURCE_URL=jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE_SUPPORT:-barosupport}
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - NOTIFICATION_DELIVERY_FCM_ENABLED=false
+      - SPRING_MAIL_USERNAME=
+      - SPRING_MAIL_PASSWORD=
+      - MANAGEMENT_HEALTH_MAIL_ENABLED=false
+      - AWS_ACCESS_KEY=
+      - AWS_SECRET_KEY=
+      - AWS_S3_BUCKET_NAME=
+    volumes: []

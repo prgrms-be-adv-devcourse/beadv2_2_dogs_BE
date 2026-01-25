@@ -28,54 +28,69 @@ public class LogWriteService {
     /**
      * 장바구니 이벤트 로그 저장
      */
-    public void saveCartEventLog(UUID userId, UUID productId, String productName,
-                                String eventType, Integer quantity, Instant occurredAt) {
+    public void saveCartEventLog(UUID userId,
+                                 UUID productId,
+                                 String productName,
+                                 String categoryCode,
+                                 String eventType,
+                                 Integer quantity,
+                                 Instant occurredAt) {
         CartLogDocument document = CartLogDocument.builder()
-                .userId(userId)
-                .productId(productId)
-                .productName(productName)
-                .eventType(eventType)
-                .quantity(quantity)
-                .occurredAt(occurredAt)
-                .build();
+            .userId(userId)
+            .productId(productId)
+            .productName(productName)
+            .categoryCode(categoryCode)
+            .eventType(eventType)
+            .quantity(quantity)
+            .occurredAt(occurredAt)
+            .build();
 
         CartLogDocument saved = cartLogRepository.save(document);
-        log.info("✅ [LOG_WRITE] Saved cart event log - ID: {}, User: {}, Product: {}",
-                saved.getId(), userId, productName);
+        log.info("[LOG_WRITE] Saved cart event log - ID: {}, User: {}, Product: {}, CategoryCode: {}",
+            saved.getId(), userId, productName, categoryCode);
     }
 
     /**
      * 주문 이벤트 로그 저장
      */
-    public void saveOrderEventLog(UUID userId, UUID productId, String productName,
-                                 String eventType, Integer quantity, Instant occurredAt) {
+    public void saveOrderEventLog(UUID userId,
+                                  UUID productId,
+                                  String productName,
+                                  String categoryCode,
+                                  String eventType,
+                                  Integer quantity,
+                                  Instant occurredAt) {
         OrderLogDocument document = OrderLogDocument.builder()
-                .userId(userId)
-                .productId(productId)
-                .productName(productName)
-                .eventType(eventType)
-                .quantity(quantity)
-                .occurredAt(occurredAt)
-                .build();
+            .userId(userId)
+            .productId(productId)
+            .productName(productName)
+            .categoryCode(categoryCode)
+            .eventType(eventType)
+            .quantity(quantity)
+            .occurredAt(occurredAt)
+            .build();
 
         OrderLogDocument saved = orderLogRepository.save(document);
-        log.info("✅ [LOG_WRITE] Saved order event log - ID: {}, User: {}, Product: {}",
-                saved.getId(), userId, productName);
+        log.info("[LOG_WRITE] Saved order event log - ID: {}, User: {}, Product: {}, CategoryCode: {}",
+            saved.getId(), userId, productName, categoryCode);
     }
 
     /**
      * 검색 로그 저장
      */
-    public void saveSearchLog(UUID userId, String searchQuery, String category, Instant searchedAt) {
+    public void saveSearchLog(UUID userId,
+                              String searchQuery,
+                              String category,
+                              Instant searchedAt) {
         SearchLogDocument document = SearchLogDocument.builder()
-                .userId(userId)
-                .searchQuery(searchQuery)
-                .category(category)
-                .searchedAt(searchedAt)
-                .build();
+            .userId(userId)
+            .searchQuery(searchQuery)
+            .category(category)
+            .searchedAt(searchedAt)
+            .build();
 
         SearchLogDocument saved = searchLogRepository.save(document);
-        log.info("✅ [LOG_WRITE] Saved search log - ID: {}, User: {}, Query: '{}'",
-                saved.getId(), userId, searchQuery);
+        log.info("[LOG_WRITE] Saved search log - ID: {}, User: {}, Query: '{}'",
+            saved.getId(), userId, searchQuery);
     }
 }

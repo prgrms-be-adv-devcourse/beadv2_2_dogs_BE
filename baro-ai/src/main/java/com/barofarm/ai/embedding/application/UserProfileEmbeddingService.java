@@ -13,7 +13,9 @@ import com.barofarm.exception.CustomException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -118,6 +120,9 @@ public class UserProfileEmbeddingService {
             return;
         }
 
+        // 3.5. 선호 카테고리 코드 계산 (cart/order 로그에서 가중치 적용하여 최빈값 도출)
+        String preferredCategoryCode = calculatePreferredCategoryCode(cartLogs, orderLogs);
+
         // 4. 생성된 벡터로 UserProfileEmbeddingDocument를 만들어 저장
         UserProfileEmbeddingDocument embeddingDocument = UserProfileEmbeddingDocument.builder()
             .userId(userId)
@@ -129,6 +134,8 @@ public class UserProfileEmbeddingService {
             .sourceOrderLogIds(sourceOrderLogIds)
             // 빠른 상품 제외를 위한 productId 목록
             .sourceProductIds(sourceProductIds)
+            // 사용자 선호 카테고리 코드
+            .preferredCategoryCode(preferredCategoryCode)
             .build();
 
         userProfileEmbeddingRepository.save(embeddingDocument);
@@ -228,6 +235,52 @@ public class UserProfileEmbeddingService {
         double timeWeight = Math.max(0.3, 3.0 * decayFactor);
 
         return Math.min(timeWeight, 3.0); // 최대 3배 제한
+    }
+
+    // cart/order 로그에서 선호 카테고리 코드 계산 (이벤트 가중치 적용)
+    // 사용자의 장바구니 및 주문 로그를 분석하여 가장 선호하는 카테고리 1개를 도출합니다.
+    private String calculatePreferredCategoryCode(
+        List<CartLogDocument> cartLogs,
+        List<OrderLogDocument> orderLogs
+    ) {
+        // 카테고리별 가중치 합계를 계산
+        Map<String, Double> categoryWeights = new java.util.HashMap<>();
+
+        // Cart 로그 처리
+        for (CartLogDocument cartLog : cartLogs) {
+            String categoryCode = cartLog.getCategoryCode();
+            if (categoryCode == null) {
+                continue;
+            }
+
+            int eventWeight = calculateCartEventWeight(cartLog.getEventType());
+            int quantityWeight = Math.max(1, cartLog.getQuantity());
+            double timeWeight = calculateTimeWeight(cartLog.getOccurredAt());
+
+            double totalWeight = eventWeight * quantityWeight * timeWeight;
+            categoryWeights.merge(categoryCode, totalWeight, Double::sum);
+        }
+
+        // Order 로그 처리
+        for (OrderLogDocument orderLog : orderLogs) {
+            String categoryCode = orderLog.getCategoryCode();
+            if (categoryCode == null) {
+                continue;
+            }
+
+            int eventWeight = calculateOrderEventWeight(orderLog.getEventType());
+            int quantityWeight = Math.max(1, orderLog.getQuantity());
+            double timeWeight = calculateTimeWeight(orderLog.getOccurredAt());
+
+            double totalWeight = eventWeight * quantityWeight * timeWeight;
+            categoryWeights.merge(categoryCode, totalWeight, Double::sum);
+        }
+
+        // 가중치가 가장 큰 카테고리 코드 선택
+        return categoryWeights.entrySet().stream()
+            .max(Comparator.comparingDouble(Map.Entry::getValue))
+            .map(Map.Entry::getKey)
+            .orElse(null);
     }
 
     // 텍스트를 임베딩하여 벡터로 변환

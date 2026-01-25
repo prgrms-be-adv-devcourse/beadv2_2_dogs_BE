@@ -17,30 +17,57 @@ public record ProductDetailInfo(
     String categoryCode,
     String categoryName,
     Long price,
-    Integer stockQuantity,
     ProductStatus productStatus,
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
-    List<String> imageUrls) {
+    List<String> imageUrls,
+    List<ProductInventoryOptionInfo> inventoryOptions,
+    List<String> positiveReviewSummary,
+    List<String> negativeReviewSummary) {
 
-  public static ProductDetailInfo from(Product product, int stock) {
+  public static ProductDetailInfo from(
+      Product product,
+      List<ProductInventoryOptionInfo> inventoryOptions
+  ) {
+      return from(product, inventoryOptions, List.of(), List.of());
+  }
+
+  public static ProductDetailInfo from(
+      Product product,
+      List<ProductInventoryOptionInfo> inventoryOptions,
+                                       List<String> positiveReviewSummary,
+                                       List<String> negativeReviewSummary) {
       Category category = product.getCategory();
+      UUID categoryId = null;
+      String categoryCode = null;
+      String categoryName = null;
+      if (category != null) {
+          try {
+              categoryId = category.getId();
+              categoryCode = category.getCode();
+              categoryName = category.getName();
+          } catch (jakarta.persistence.EntityNotFoundException ignored) {
+              // 카테고리 누락 시 null 처리
+          }
+      }
       return new ProductDetailInfo(
           product.getId(),
           product.getSellerId(),
           product.getProductName(),
           product.getDescription(),
-          category.getId(),
-          category.getCode(),
-          category.getName(),
+          categoryId,
+          categoryCode,
+          categoryName,
           product.getPrice(),
-          stock,
           product.getProductStatus(),
           product.getCreatedAt(),
           product.getUpdatedAt(),
           product.getImages().stream()
               .map(ProductImage::getImageUrl)
-              .toList()
+              .toList(),
+          inventoryOptions == null ? List.of() : inventoryOptions,
+          positiveReviewSummary,
+          negativeReviewSummary
       );
   }
 }

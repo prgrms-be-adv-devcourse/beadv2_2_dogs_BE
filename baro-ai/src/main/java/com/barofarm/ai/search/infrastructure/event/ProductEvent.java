@@ -32,8 +32,8 @@ public class ProductEvent {
         private UUID productId;
         private String productName;
         private UUID productCategoryId;
+        private String productCategoryCode;
         private String productCategoryName;
-        private String productCategory;  // Category (FRUIT, VEGETABLE 등)
         private Long price;
         private String status;
         private Instant updatedAt;

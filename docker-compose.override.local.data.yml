@@ -1,0 +1,4 @@
+services:
+  redis:
+    volumes:
+      - redis-data:/data

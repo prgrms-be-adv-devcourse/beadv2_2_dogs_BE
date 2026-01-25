@@ -1,0 +1,51 @@
+server:
+  port: ${SERVER_PORT:8095}
+
+spring:
+  application:
+    name: opa-bundle-service
+  config:
+    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://config:8888}
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      group-id: opa-bundle
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: latest
+      properties:
+        spring.json.trusted.packages: "com.barofarm.opabundle.application.dto"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.barofarm.opabundle.application.dto.HotlistEvent
+    listener:
+      missing-topics-fatal: false
+
+opa:
+  kafka:
+    topic: ${OPA_HOTLIST_TOPIC:opa-hotlist-events}
+  bundle:
+    policy-dir: ${OPA_POLICY_DIR:../opa/policy}
+    output-dir: ${OPA_BUNDLE_DIR:./build/opa-bundle}
+    bundle-file-name: ${OPA_BUNDLE_FILE:bundle.tar.gz}
+    data-file-name: ${OPA_DATA_FILE:data.json}
+  access:
+    enabled: ${OPA_ACCESS_ENABLED:true}
+    allow-private: ${OPA_ACCESS_ALLOW_PRIVATE:true}
+    allowed-cidrs: ${OPA_ACCESS_ALLOWED_CIDRS:}
+    require-token: ${OPA_ACCESS_REQUIRE_TOKEN:false}
+    token: ${OPA_ACCESS_TOKEN:}
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info

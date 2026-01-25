@@ -4,11 +4,12 @@ kind: Kustomization
 namespace: baro-prod
 
 resources:
-  - daemonset.yaml
+  - deployment.yaml
+  - cronjob.yaml
   - service.yaml
 
 labels:
-  - includeSelectors: false  # selector는 immutable이므로 false로 설정
+  - includeSelectors: false
     includeTemplates: true
     pairs:
       app: baro-settlement

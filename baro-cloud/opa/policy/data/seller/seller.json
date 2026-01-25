@@ -1,0 +1,66 @@
+{
+    "rules_by_id":  {
+                        "seller:farms-create":  {
+                                                    "name":  "seller:farms-create",
+                                                    "path":  "^/api/v1/farms$",
+                                                    "methods":  [
+                                                                    "POST"
+                                                                ],
+                                                    "roles":  [
+                                                                  "SELLER",
+                                                                  "ADMIN"
+                                                              ]
+                                                },
+                        "seller:farms-update-delete":  {
+                                                           "name":  "seller:farms-update-delete",
+                                                           "path":  "^/api/v1/farms/[^/]+$",
+                                                           "methods":  [
+                                                                           "PUT",
+                                                                           "DELETE"
+                                                                       ],
+                                                           "roles":  [
+                                                                         "SELLER",
+                                                                         "ADMIN"
+                                                                     ]
+                                                       },
+                        "seller:farms-me":  {
+                                                "name":  "seller:farms-me",
+                                                "path":  "^/api/v1/farms/me$",
+                                                "methods":  [
+                                                                "GET"
+                                                            ],
+                                                "roles":  [
+                                                              "SELLER",
+                                                              "ADMIN"
+                                                          ]
+                                            },
+                        "seller:seller-info":  {
+                                                   "name":  "seller:seller-info",
+                                                   "path":  "^/api/v1/sellers/sellerInfo/[^/]+$",
+                                                   "methods":  [
+                                                                   "GET"
+                                                               ],
+                                                   "roles":  [
+                                                                 "SELLER",
+                                                                 "ADMIN"
+                                                             ]
+                                               }
+                    },
+    "index":  {
+                  "method":  {
+                                 "POST":  [
+                                              "seller:farms-create"
+                                          ],
+                                 "PUT":  [
+                                             "seller:farms-update-delete"
+                                         ],
+                                 "DELETE":  [
+                                                "seller:farms-update-delete"
+                                            ],
+                                 "GET":  [
+                                             "seller:farms-me",
+                                             "seller:seller-info"
+                                         ]
+                             }
+              }
+}

@@ -6,16 +6,69 @@ spring:
     name: gateway-service
   config:
     import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://config:8888}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      # Redis 연결 실패 시에도 Gateway가 계속 동작하도록 설정
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+        shutdown-timeout: 100ms
+  http:
+    codecs:
+      max-in-memory-size: 2MB
   cloud:
     gateway:
       server:
         webflux:
+          metrics:
+            enabled: true
+          httpclient:
+            connect-timeout: 5000
+            response-timeout: 5s
+            pool:
+              type: elastic
+              maxConnections: 200
+              acquireTimeout: 2000
+              maxIdleTime: 30s
+              maxLifeTime: 300s
+              pendingAcquireMaxCount: 500
+              metrics: true
+          httpserver:
+            max-header-size: 16KB
+            max-initial-line-length: 8KB
+            max-chunk-size: 8KB
+          default-filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@gatewayKeyResolver}"
+            - name: Retry
+              args:
+                retries: 2
+                methods: GET
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,GATEWAY_TIMEOUT
+                backoff:
+                  firstBackoff: 50ms
+                  maxBackoff: 500ms
+                  factor: 2
+                  basedOnPreviousValue: true
+            - name: CircuitBreaker
+              args:
+                name: gatewayCircuitBreaker
+                fallbackUri: forward:/fallback
           globalcors:
-            cors-configurations:
+            corsConfigurations:
               '[/**]': # 모든 경로에 대해 CORS 허용
                 allowedOrigins:
-                  - "http://localhost:3000"
-                  - "http://3.34.14.73:3000"
+                  - ${GATEWAY_ALLOWED_ORIGIN_0:http://localhost:3000}
+                  - ${GATEWAY_ALLOWED_ORIGIN_1:http://3.34.14.73:3000}
                 allowedMethods: "*"   # 허용 HTTP 메서드 (GET/POST/PUT/DELETE 등)
                 allowedHeaders: "*"   # 허용 요청 헤더 (Authorization 등)
                 allowCredentials: true # 쿠키/인증 헤더 전달 허용 시 true
@@ -26,7 +79,7 @@ spring:
               lower-case-service-id: true  # 소문자 서비스 ID 사용
           routes:
             # ============================================
-            # OpenAPI 문서 프록시 
+            # OpenAPI 문서 프록시
             # ============================================
             - id: auth-service-openapi
               uri: lb://auth-service
@@ -34,6 +87,8 @@ spring:
                 - Path=/openapi/auth/v3/api-docs, /openapi/auth/v3/api-docs/**
               filters:
                 - RewritePath=/openapi/auth/(?<segment>.*), /${segment}
+                - Authentication
+                - OpaAuthorization
 
             - id: buyer-service-openapi
               uri: lb://buyer-service
@@ -92,51 +147,71 @@ spring:
             - id: auth-service
               uri: lb://auth-service
               predicates:
-                - Path=/auth-service/**,/api/auth/**
+                - Path=/auth-service/**
               filters:
                 - RewritePath=/auth-service/(?<segment>.*), /${segment}
+                - Authentication
+                - OpaAuthorization
 
             # Buyer Service
             - id: buyer-service
               uri: lb://buyer-service
               predicates:
-                - Path=/buyer-service/**,/api/buyers/**,/api/carts/**,/api/products/**
+                - Path=/buyer-service/**
               filters:
                 - RewritePath=/buyer-service/(?<segment>.*), /${segment}
+                - Authentication
+                - OpaAuthorization
 
             # Seller Service
             - id: seller-service
               uri: lb://seller-service
               predicates:
-                - Path=/seller-service/**,/api/sellers/**,/api/farms/**
+                - Path=/seller-service/**
               filters:
                 - RewritePath=/seller-service/(?<segment>.*), /${segment}
+                - Authentication
+                - OpaAuthorization
 
             # Order Service (주문만)
             - id: order-service
               uri: lb://order-service
               predicates:
-                - Path=/order-service/**,/api/orders/**
+                - Path=/order-service/**
               filters:
                 - RewritePath=/order-service/(?<segment>.*), /${segment}
+                - Authentication
+                - OpaAuthorization
 
             # Payment Service (결제, 예치금 분리)
             - id: payment-service
               uri: lb://payment-service
               predicates:
-                - Path=/payment-service/**,/api/payments/**
+                - Path=/payment-service/**
               filters:
                 - RewritePath=/payment-service/(?<segment>.*), /${segment}
+                - Authentication
+                - OpaAuthorization
 
             # Support Service
             - id: support-service
               uri: lb://support-service
               predicates:
-                - Path=/support-service/**,/api/deliveries/**,/api/notifications/**,/api/experiences/**,/api/reviews/**,/api/deposits/**
+                - Path=/support-service/**
               filters:
                 - RewritePath=/support-service/(?<segment>.*), /${segment}
+                - Authentication
+                - OpaAuthorization
 
             # Settlement Service
+            - id: settlement-service
+              uri: lb://settlement-service
+              predicates:
+                - Path=/settlement-service/**
+              filters:
+                - RewritePath=/settlement-service/(?<segment>.*), /${segment}
+                - Authentication
+                - OpaAuthorization
             # DaemonSet 배포 서비스는 Gateway에서 제공하지 않음
             # - id: settlement-service
             #   uri: lb://settlement-service
@@ -149,9 +224,11 @@ spring:
             - id: ai-service
               uri: lb://ai-service
               predicates:
-                - Path=/ai-service/**,/api/v1/search/**,/api/v1/recommendations/**,/api/v1/chatbot/**,/api/v1/seasonality/**
+                - Path=/ai-service/**
               filters:
                 - RewritePath=/ai-service/(?<segment>.*), /${segment}
+                - Authentication
+                - OpaAuthorization
 
 eureka:
   client:
@@ -169,10 +246,46 @@ jwt:
   secret: "너무_짧지_않은_랜덤_시크릿_문자열_최소32바이트_나중에_env로_옮길예정"
 
 management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
   endpoints:
     web:
       exposure:
-        include: health, info, gateway
+        include: health, info, gateway, metrics, prometheus
+  health:
+    redis:
+      enabled: false  # Redis health check 비활성화 (ElastiCache DNS 해석 실패 시 경고 방지)
+    # 개별 health indicator가 실패해도 전체 health는 UP 유지
+    show-details: when-authorized
+    show-components: when-authorized
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      gatewayCircuitBreaker:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 20
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 10
+      opaAuthz:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 30
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 1s
+        waitDurationInOpenState: 5s
+        permittedNumberOfCallsInHalfOpenState: 5
+  bulkhead:
+    instances:
+      opaAuthz:
+        maxConcurrentCalls: 50
+        maxWaitDuration: 0
 
 
 # Swagger/OpenAPI 통합 설정 - 모든 서비스의 Swagger를 Gateway에서 통합 제공

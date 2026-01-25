@@ -51,6 +51,7 @@ public class ProductIndexService {
                 request.productId(),
                 request.productName(),
                 request.productCategoryId(),
+                request.productCategoryCode(),
                 request.productCategoryName(),
                 request.price(),
                 request.status(),

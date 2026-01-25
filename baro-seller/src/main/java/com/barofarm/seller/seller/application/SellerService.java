@@ -83,7 +83,8 @@ public class SellerService {
         businessValidator.validate(userId, requestDto.businessRegNo(), requestDto.businessOwnerName());
 
         // 2. 셀러 프로필 생성 및 APPROVED 상태 설정(간이 승인 절차 기준)
-        Seller profile = Seller.createApproved(
+        // Create seller profile in PENDING state; admin will approve later.
+        Seller profile = Seller.createPending(
             userId,
             requestDto.storeName(),
             requestDto.businessRegNo(),
@@ -97,7 +98,7 @@ public class SellerService {
         // 커밋이 실패했는데, feign으로 users테이블만 변경되는걸 막음
         // 3. auth-service에 SELLER 권한 부여 요청(Feign) - 커밋 이후에만 실행
         //    - 커밋 이후 롤백이 불가하므로 Feign 실패 시 3회 재시도 + 로그 후 CustomException 변환
-        runAfterCommit(() -> callGrantSellerWithRetry(userId));
+        // 승인 요청은 판매자 등록 후 관리자 승인 프로세스에서 처리한다.
     }
 
     // 트랜잭션 커밋 이후에만 실행되도록 등록하고, 트랜잭션이 없으면 즉시 실행한다

@@ -25,7 +25,8 @@ public class ProductEventConsumer {
      */
     @KafkaListener(
         topics = "product-events",
-        groupId = "ai-service-seasonality"
+        groupId = "ai-service-seasonality",
+        containerFactory = "productEventListenerContainerFactory"
     )
     public void handleProductEvent(ProductEvent event) {
         log.debug("상품 이벤트 수신: type={}, productId={}",
@@ -35,7 +36,7 @@ public class ProductEventConsumer {
         if (event.getType() == ProductEvent.ProductEventType.PRODUCT_CREATED) {
             UUID productId = event.getData().getProductId();
             String productName = event.getData().getProductName();
-            String productCategory = event.getData().getProductCategory();
+            String productCategoryCode = event.getData().getProductCategoryCode();
 
             log.info("신규 상품 제철 판단 시작: productId={}, productName={}",
                 productId, productName);
@@ -44,7 +45,7 @@ public class ProductEventConsumer {
             seasonalityService.detectSeasonalityAsync(
                 productId,
                 productName,
-                productCategory
+                productCategoryCode
             );
         }
     }

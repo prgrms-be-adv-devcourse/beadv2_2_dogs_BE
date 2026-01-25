@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: opa
+  namespace: baro-prod
+  labels:
+    app: opa
+    component: cloud
+spec:
+  selector:
+    matchLabels:
+      app: opa
+  template:
+    metadata:
+      labels:
+        app: opa
+        component: cloud
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/hostname: ip-10-0-5-208  # 마스터 노드에 고정 배치
+      tolerations:
+        # Master node taint 허용
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      # Eureka가 준비될 때까지 대기
+      initContainers:
+        - name: wait-for-eureka
+          image: busybox:1.36
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "Waiting for Eureka to be ready..."
+              TIMEOUT=300
+              ELAPSED=0
+              while [ $ELAPSED -lt $TIMEOUT ]; do
+                if wget -qO- --timeout=3 http://localhost:8761/actuator/health 2>/dev/null | grep -qE '"status":"UP"|"status":"UP"|UP'; then
+                  echo "Eureka is ready!"
+                  exit 0
+                fi
+                echo "Eureka is not ready yet. Waiting... (${ELAPSED}s/${TIMEOUT}s)"
+                sleep 5
+                ELAPSED=$((ELAPSED + 5))
+              done
+              echo "Timeout waiting for Eureka after ${TIMEOUT} seconds"
+              exit 1
+      containers:
+        - name: opa
+          image: ghcr.io/do-develop-space/opa:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8181
+              name: http
+              protocol: TCP
+          env:
+            - name: OPA_POLICY_DIR
+              value: "/app/policy"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12

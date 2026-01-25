@@ -1,0 +1,34 @@
+{
+    "rules_by_id":  {
+                        "auth:auth-seller-status":  {
+                                                         "name":  "auth:auth-seller-status",
+                                                         "path":  "^(/auth-service)?/api/v1/auth/sellers/[^/]+/status$",
+                                                         "methods":  [
+                                                                         "POST"
+                                                                     ],
+                                                         "roles":  [
+                                                                       "ADMIN"
+                                                                   ]
+                                                     },
+                        "auth:admin-users-list":  {
+                                                      "name":  "auth:admin-users-list",
+                                                      "path":  "^(/auth-service)?/api/v1/auth/admin/users$",
+                                                      "methods":  [
+                                                                      "GET"
+                                                                  ],
+                                                      "roles":  [
+                                                                    "ADMIN"
+                                                                ]
+                                                  }
+                    },
+    "index":  {
+                  "method":  {
+                                 "POST":  [
+                                              "auth:auth-seller-status"
+                                          ],
+                                 "GET":  [
+                                             "auth:admin-users-list"
+                                         ]
+                             }
+              }
+}

@@ -2,7 +2,7 @@ package com.barofarm.ai.recommend.presentation;
 
 import com.barofarm.ai.recommend.application.PersonalizedRecommendService;
 import com.barofarm.ai.recommend.application.RecipeRecommendService;
-import com.barofarm.ai.recommend.application.SimilarProductService;
+import com.barofarm.ai.recommend.application.SimilarProductRecommendService;
 import com.barofarm.ai.recommend.application.dto.ProductRecommendResponse;
 import com.barofarm.ai.recommend.application.dto.RecipeRecommendResponse;
 import com.barofarm.ai.recommend.infrastructure.client.dto.CartInfo;
@@ -28,7 +28,7 @@ public class RecommendationController {
 
     private final PersonalizedRecommendService personalizedRecommendService;
     private final RecipeRecommendService recipeRecommendService;
-    private final SimilarProductService similarProductService;
+    private final SimilarProductRecommendService similarProductRecommendService;
 
     @Operation(
         summary = "개인화 추천 상품 조회",
@@ -79,6 +79,6 @@ public class RecommendationController {
         @Parameter(description = "추천할 상품 개수", example = "3")
         @RequestParam(required = false, defaultValue = "3") int topK
     ) {
-        return similarProductService.recommendSimilarProducts(productId, topK);
+        return similarProductRecommendService.recommendSimilarProducts(productId, topK);
     }
 }

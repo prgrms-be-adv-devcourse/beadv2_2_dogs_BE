@@ -34,7 +34,7 @@ services:
       - "9200:9200"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
-      - /mnt/s3:/mnt/s3:rw
+      - ${S3_MOUNT_PATH:-/mnt/s3}:/mnt/s3:rw
     restart: unless-stopped
     networks:
       - baro-network

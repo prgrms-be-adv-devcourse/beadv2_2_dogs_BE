@@ -27,17 +27,21 @@ public class ProductImage {
     @Column(name = "image_url", nullable = false, length = 500)
     private String imageUrl;
 
+    @Column(name = "s3_key", length = 500)
+    private String s3Key;
+
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder;
 
-    private ProductImage(Product product, String imageUrl, Integer sortOrder) {
+    private ProductImage(Product product, String imageUrl, String s3Key, Integer sortOrder) {
         this.id = UUID.randomUUID();
         this.product = product;
         this.imageUrl = imageUrl;
+        this.s3Key = s3Key;
         this.sortOrder = sortOrder;
     }
 
-    public static ProductImage create(Product product, String imageUrl, Integer sortOrder){
-        return new ProductImage(product, imageUrl, sortOrder);
+    public static ProductImage create(Product product, String imageUrl, String s3Key, Integer sortOrder){
+        return new ProductImage(product, imageUrl, s3Key, sortOrder);
     }
 }

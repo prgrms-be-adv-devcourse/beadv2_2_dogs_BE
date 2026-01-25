@@ -68,10 +68,24 @@ logging:
     root: INFO
     com.barofarm.buyer: DEBUG
     org.hibernate.SQL: DEBUG
+    org.springframework.transaction: TRACE
+    org.springframework.orm.jpa: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.hibernate.orm.jdbc.bind: TRACE
     org.springframework.web: DEBUG
     org.springframework.web.servlet.DispatcherServlet: DEBUG
+    # 추가사항
+    org.springframework.transaction.interceptor: TRACE
+    org.springframework.transaction.support: TRACE
+    org.springframework.aop.framework: DEBUG
+
+    # JPA flush/commit 타이밍에 뭐가 터지는지
+    org.hibernate.engine.transaction.internal: DEBUG
+    org.hibernate.resource.transaction: DEBUG
+
+    # (Kafka가 얽혔다면) send 실패/timeout 힌트
+    org.springframework.kafka: DEBUG
+    org.apache.kafka.clients.producer: INFO
 
 # Actuator 설정
 management:

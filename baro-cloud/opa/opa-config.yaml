@@ -1,0 +1,14 @@
+services:
+  opa-bundle:
+    url: http://opa-bundle:8095  # opa-bundle이 opa 이미지에 포함되어 localhost로 접근
+
+bundles:
+  baro:
+    service: opa-bundle
+    resource: /opa/bundle
+    polling:
+      min_delay_seconds: 10
+      max_delay_seconds: 60
+
+decision_logs:
+  console: true

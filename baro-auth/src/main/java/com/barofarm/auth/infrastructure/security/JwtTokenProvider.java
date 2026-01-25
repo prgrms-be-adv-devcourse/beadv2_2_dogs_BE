@@ -8,6 +8,7 @@ import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -28,11 +29,27 @@ public class JwtTokenProvider {
     }
 
     public String generateAccessToken(UUID userId, String email, String userType) {
+        return generateAccessToken(userId, email, userType, Map.of());
+    }
+
+    public String generateAccessToken(UUID userId, String email, String userType, Map<String, Object> entitlements) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenValidityMs);
 
-        return Jwts.builder().setSubject(email).claim("uid", userId.toString()).claim("ut", userType)
-                .setIssuedAt(now).setExpiration(expiry).signWith(key, SignatureAlgorithm.HS256).compact();
+        var builder = Jwts.builder()
+                .setSubject(email)
+                .claim("uid", userId.toString())
+                .claim("ut", userType); // Base role claim used by gateway/OPA.
+
+        if (entitlements != null && !entitlements.isEmpty()) {
+            // Extra entitlements (status/flags) for coarse-grained authorization at the gateway.
+            entitlements.forEach(builder::claim);
+        }
+
+        return builder.setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
     }
 
     public String generateRefreshToken(UUID userId, String email, String userType) {
@@ -64,6 +81,10 @@ public class JwtTokenProvider {
 
     public Duration getRefreshTokenValidity() {
         return Duration.ofMillis(refreshTokenValidityMs);
+    }
+
+    public Duration getAccessTokenValidity() {
+        return Duration.ofMillis(accessTokenValidityMs);
     }
 
     private Claims parseClaims(String token) {

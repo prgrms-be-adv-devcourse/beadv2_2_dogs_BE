@@ -8,6 +8,7 @@ public record CartItemInfo(
     UUID productId,
     String productName,
     String productCategoryName,
+    String productCategoryCode,
     Integer quantity,
     Long unitPrice,
     Long lineTotalPrice,

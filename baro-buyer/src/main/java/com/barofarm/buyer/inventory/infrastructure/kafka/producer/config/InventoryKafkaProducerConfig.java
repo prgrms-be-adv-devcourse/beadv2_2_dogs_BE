@@ -1,6 +1,5 @@
 package com.barofarm.buyer.inventory.infrastructure.kafka.producer.config;
 
-import com.barofarm.buyer.inventory.infrastructure.kafka.producer.dto.InventoryConfirmedEvent;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -23,7 +22,7 @@ public class InventoryKafkaProducerConfig {
     private String bootstrapServers;
 
     @Bean
-    public ProducerFactory<String, InventoryConfirmedEvent> inventoryConfirmedEventProducerFactory() {
+    public ProducerFactory<String, String> inventoryConfirmedEventProducerFactory() {
         Map<String, Object> config = new HashMap<>();
 
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -37,7 +36,7 @@ public class InventoryKafkaProducerConfig {
     }
 
     @Bean(name = {"inventoryConfirmedEventKafkaTemplate", "defaultRetryTopicKafkaTemplate"})
-    public KafkaTemplate<String, InventoryConfirmedEvent> inventoryConfirmedEventKafkaTemplate() {
+    public KafkaTemplate<String, String> inventoryConfirmedEventKafkaTemplate() {
         return new KafkaTemplate<>(inventoryConfirmedEventProducerFactory());
     }
 }

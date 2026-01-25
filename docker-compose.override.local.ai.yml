@@ -1,0 +1,24 @@
+services:
+  baro-ai:
+    build:
+      context: .
+      dockerfile: docker/baro-ai/Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      # Use application.yml defaults; empty value breaks list-based imports.
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=baro-kafka:9092
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+      - SPRING_AI_OPENAI_API_KEY=${SPRING_AI_OPENAI_API_KEY}
+      - SPRING_AI_OPENAI_MODEL=${SPRING_AI_OPENAI_MODEL}
+      - SPRING_AI_OPENAI_EMBEDDING_MODEL=${SPRING_AI_OPENAI_EMBEDDING_MODEL}
+      - SPRING_CLOUD_CONFIG_ENABLED=false
+      - SEASONALITY_RAG_ENABLED=${SEASONALITY_RAG_ENABLED:-false}
+      - SEASONALITY_CSV_PATH=${SEASONALITY_CSV_PATH:-/mnt/s3/dataset/season/seasonality-data.csv}
+      - SPRING_MAIL_USERNAME=
+      - SPRING_MAIL_PASSWORD=
+      - MANAGEMENT_HEALTH_MAIL_ENABLED=false
+      - AWS_ACCESS_KEY=
+      - AWS_SECRET_KEY=
+      - AWS_S3_BUCKET_NAME=
+    volumes: []

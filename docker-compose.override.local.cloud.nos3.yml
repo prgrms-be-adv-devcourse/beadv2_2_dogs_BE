@@ -1,0 +1,16 @@
+services:
+  eureka:
+    volumes:
+      - s3_dummy:/mnt/s3
+  gateway:
+    volumes:
+      - s3_dummy:/mnt/s3
+  opa:
+    volumes:
+      - s3_dummy:/mnt/s3
+  opa-bundle:
+    volumes:
+      - s3_dummy:/mnt/s3
+
+volumes:
+  s3_dummy: {}

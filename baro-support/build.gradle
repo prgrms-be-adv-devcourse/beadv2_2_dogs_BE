@@ -51,6 +51,7 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-config' // Config Server 클라이언트
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'com.sksamuel.scrimage:scrimage-webp:4.1.1'             // WebP writer 지원
 
     // Redis 연결
     // implementation 'org.springframework.boot:spring-boot-starter-data-redis'

@@ -85,8 +85,8 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8888
-            initialDelaySeconds: 60  # Eureka 연결 대기 시간 확보
+            initialDelaySeconds: 30  # 초기 대기 시간
             periodSeconds: 10
             timeoutSeconds: 5
-            failureThreshold: 20  # 최대 60 + (20 * 10) = 260초 대기
+            failureThreshold: 12  # 최대 30 + (12 * 10) = 150초 대기 (약 2.5분)
 

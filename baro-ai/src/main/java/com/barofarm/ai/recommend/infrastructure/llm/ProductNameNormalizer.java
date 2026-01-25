@@ -1,5 +1,8 @@
 package com.barofarm.ai.recommend.infrastructure.llm;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -93,18 +96,119 @@ public class ProductNameNormalizer {
     }
 
     /**
-     * [프롬프트 생성] LLM용 정규화 프롬프트 생성
-     * 상품명을 입력받아 핵심 재료를 추출하도록 유도하는 상세한 프롬프트 작성
+     * [배치 처리 메서드] 여러 상품명을 한 번에 LLM에 전달하여 정규화
+     * 여러 상품명을 한 번에 처리하여 LLM 호출 횟수를 줄이고 성능을 향상시킵니다.
      *
-     * @param productName 정규화할 상품명
-     * @return LLM에게 전달할 완성된 프롬프트
+     * @param productNames 정규화할 상품명 목록
+     * @return 상품명을 키로, 정규화된 재료명을 값으로 하는 Map (실패한 경우 빈 문자열)
      */
-    private String buildNormalizationPrompt(String productName) {
-        return String.format("""
-            당신은 농산물 이커머스 상품명을 분석하여 실제 요리에 사용할 수 있는 '핵심 재료명'만 추출하는 전문가입니다.
+    public Map<String, String> normalizeBatchForRecipeIngredient(List<String> productNames) {
+        if (productNames == null || productNames.isEmpty()) {
+            return Map.of();
+        }
 
-            <상품명>
+        // 빈 문자열이나 null 필터링
+        List<String> validNames = productNames.stream()
+            .filter(name -> name != null && !name.trim().isEmpty())
+            .distinct()
+            .toList();
+
+        if (validNames.isEmpty()) {
+            return Map.of();
+        }
+
+        // 단일 상품명인 경우 기존 메서드 사용
+        if (validNames.size() == 1) {
+            String productName = validNames.get(0);
+            String normalized = normalizeForRecipeIngredient(productName);
+            return Map.of(productName, normalized);
+        }
+
+        String batchPrompt = buildBatchNormalizationPrompt(validNames);
+
+        try {
+            BatchNormalizationResponse response = chatClient.prompt()
+                .user(batchPrompt)
+                .call()
+                .entity(new ParameterizedTypeReference<BatchNormalizationResponse>() {});
+
+            Map<String, String> result = new HashMap<>();
+            if (response != null && response.normalizations() != null) {
+                for (NormalizationItem item : response.normalizations()) {
+                    if (item != null && item.productName() != null && item.normalizedIngredient() != null) {
+                        String normalized = item.normalizedIngredient().trim();
+                        result.put(item.productName(), normalized.isEmpty() ? "" : normalized);
+                    }
+                }
+            }
+
+            // LLM 응답에 없는 상품명은 기본 정규화 적용
+            for (String productName : validNames) {
+                result.putIfAbsent(productName, applyBasicNormalization(productName));
+            }
+
+            log.debug("배치 상품명 정규화 완료: {}개 상품 처리", validNames.size());
+            return result;
+
+        } catch (Exception e) {
+            log.warn("배치 상품명 정규화 실패, 개별 처리로 폴백: {}", e.getMessage(), e);
+            // 폴백: 개별 처리
+            Map<String, String> fallbackResult = new HashMap<>();
+            for (String productName : validNames) {
+                try {
+                    fallbackResult.put(productName, normalizeForRecipeIngredient(productName));
+                } catch (Exception ex) {
+                    log.warn("개별 정규화도 실패: '{}', 기본 정규화 적용", productName, ex);
+                    fallbackResult.put(productName, applyBasicNormalization(productName));
+                }
+            }
+            return fallbackResult;
+        }
+    }
+
+    /**
+     * [프롬프트 생성] 배치 정규화용 프롬프트 생성
+     * 기존 buildNormalizationPrompt의 공통 부분을 재사용
+     */
+    private String buildBatchNormalizationPrompt(List<String> productNames) {
+        StringBuilder productList = new StringBuilder();
+        for (int i = 0; i < productNames.size(); i++) {
+            productList.append(String.format("%d. %s\n", i + 1, productNames.get(i)));
+        }
+
+        // 공통 프롬프트 부분 재사용
+        String commonPrompt = getCommonNormalizationPrompt();
+
+        return String.format("""
             %s
+
+            <상품명 목록>
+            %s
+
+            <주의사항>
+            - 반드시 상품명에 포함된 재료만 추출하세요.
+            - 상상해서 재료를 추가하지 마세요.
+            - 모호한 경우 빈 문자열("")을 반환하세요.
+            - 모든 상품명에 대해 응답해야 합니다.
+
+            <출력(JSON only)>
+            {{
+              "normalizations": [
+                {{
+                  "productName": "원본 상품명",
+                  "normalizedIngredient": "핵심재료명"
+                }}
+              ]
+            }}
+            """, commonPrompt, productList.toString());
+    }
+
+    /**
+     * 단일/배치 프롬프트에서 공통으로 사용하는 부분 추출
+     */
+    private String getCommonNormalizationPrompt() {
+        return """
+            당신은 농산물 이커머스 상품명을 분석하여 실제 요리에 사용할 수 있는 '핵심 재료명'만 추출하는 전문가입니다.
 
             <추출 규칙>
             - 상품명에서 브랜드, 수량, 단위, 포장 정보, 품질 표시 등을 모두 제거하세요.
@@ -117,6 +221,25 @@ public class ProductNameNormalizer {
               * 육류: "무항생제 닭가슴살 500g" → "닭가슴살", "한우 등심 300g" → "소고기"
               * 수산물: "생연어 필레 200g" → "연어", "국산 고등어 1마리" → "고등어"
               * 가공식품: "국산 된장 500g" → "된장", "CJ 고추장 1kg" → "고추장", "오뚜기 케찹 500g" → "케찹"
+            """;
+    }
+
+    /**
+     * [프롬프트 생성] LLM용 정규화 프롬프트 생성
+     * 상품명을 입력받아 핵심 재료를 추출하도록 유도하는 상세한 프롬프트 작성
+     *
+     * @param productName 정규화할 상품명
+     * @return LLM에게 전달할 완성된 프롬프트
+     */
+    private String buildNormalizationPrompt(String productName) {
+        // 공통 프롬프트 부분 재사용
+        String commonPrompt = getCommonNormalizationPrompt();
+
+        return String.format("""
+            %s
+
+            <상품명>
+            %s
 
             <주의사항>
             - 반드시 상품명에 포함된 재료만 추출하세요.
@@ -128,8 +251,12 @@ public class ProductNameNormalizer {
             {{
               "normalizedIngredient": "핵심재료명"
             }}
-            """, productName);
+            """, commonPrompt, productName);
     }
 
     private record NormalizationResponse(String normalizedIngredient) { }
+
+    private record BatchNormalizationResponse(List<NormalizationItem> normalizations) { }
+
+    private record NormalizationItem(String productName, String normalizedIngredient) { }
 }

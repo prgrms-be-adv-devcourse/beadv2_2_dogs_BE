@@ -1,12 +1,16 @@
 package com.barofarm.support.review.domain;
 
-import com.barofarm.common.entity.BaseEntity;
+import com.barofarm.entity.BaseEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -40,6 +44,9 @@ public class Review extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String content;
+
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<ReviewImage> images = new ArrayList<>();
 
     private Review(UUID orderItemId,
                   UUID buyerId,
@@ -118,6 +125,14 @@ public class Review extends BaseEntity {
             throw new IllegalArgumentException("이미 삭제된 리뷰입니다.");
         }
         this.status = ReviewStatus.DELETED;
+    }
+
+    public void addImage(String imageUrl, String s3Key, int sortOrder) {
+        images.add(ReviewImage.create(this, imageUrl, s3Key, sortOrder));
+    }
+
+    public void clearImages() {
+        images.clear();
     }
 
     public boolean isValidReviewOwner(UUID requesterId) {

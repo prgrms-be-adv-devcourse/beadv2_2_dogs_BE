@@ -6,7 +6,6 @@ import com.barofarm.settlement.batch.tasklet.SettlementStatementTasklet;
 import com.barofarm.settlement.client.OrderItemSettlementResponse;
 import com.barofarm.settlement.client.OrderSettlementClient;
 import com.barofarm.settlement.domain.SettlementItem;
-import jakarta.persistence.EntityManagerFactory;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Slf4j
 public class MonthSettlementBatchConfig{
     private final OrderSettlementClient orderSettlementClient;
-    private final EntityManagerFactory emf;
     private final SettlementStatementTasklet statementTasklet;
 
     @Bean
@@ -49,13 +47,14 @@ public class MonthSettlementBatchConfig{
     public Step settlementItemStep(
         JobRepository jobRepository,
         PlatformTransactionManager tx,
-        ItemReader<OrderItemSettlementResponse> orderItemReader
+        ItemReader<OrderItemSettlementResponse> orderItemReader,
+        JpaItemWriter<SettlementItem> settlementItemWriter
     ) {
         return new StepBuilder("settlementItemStep", jobRepository)
             .<OrderItemSettlementResponse, SettlementItem>chunk(200, tx)
             .reader(orderItemReader)
             .processor(new SettlementItemProcessor())
-            .writer(settlementItemWriter())
+            .writer(settlementItemWriter)
             .build();
     }
 
@@ -81,13 +80,5 @@ public class MonthSettlementBatchConfig{
             target.atDay(1),
             target.atEndOfMonth()
         );
-    }
-
-    @Bean
-    public JpaItemWriter<SettlementItem> settlementItemWriter() {
-        log.info("SettlementItemWriter initialized");
-        JpaItemWriter<SettlementItem> writer = new JpaItemWriter<>();
-        writer.setEntityManagerFactory(emf);
-        return writer;
     }
 }

@@ -1,0 +1,62 @@
+services:
+  eureka:
+    build:
+      context: .
+      dockerfile: docker/eureka/Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+    volumes: []
+  config:
+    build:
+      context: .
+      dockerfile: docker/config/Dockerfile
+    profiles:
+      - config
+    environment:
+      - SPRING_PROFILES_ACTIVE=native
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - MANAGEMENT_HEALTH_CONFIG_ENABLED=false
+      - MANAGEMENT_HEALTH_CONFIGSERVER_ENABLED=false
+      - SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS=file:/workspace/baro-auth/src/main/resources,file:/workspace/baro-buyer/src/main/resources,file:/workspace/baro-seller/src/main/resources,file:/workspace/baro-order/src/main/resources,file:/workspace/baro-payment/src/main/resources,file:/workspace/baro-support/src/main/resources,file:/workspace/baro-settlement/src/main/resources,file:/workspace/baro-ai/src/main/resources,file:/workspace/baro-cloud/gateway/src/main/resources,file:/workspace/baro-cloud/eureka/src/main/resources,file:/workspace/baro-cloud/config/src/main/resources
+    volumes:
+      - ./:/workspace:ro
+    depends_on:
+      - eureka
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/gateway/Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_CONFIG_IMPORT=
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - REDIS_HOST=baro-redis
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD:-redis123}
+      - GATEWAY_ALLOWED_ORIGIN_0=http://localhost:3001
+      - GATEWAY_ALLOWED_ORIGIN_1=http://localhost:3000
+      - SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_DISCOVERY_LOCATOR_ENABLED=false
+      - MANAGEMENT_ENDPOINT_GATEWAY_ENABLED=true
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,gateway,metrics,prometheus
+    volumes: []
+    depends_on:
+      - eureka
+  opa-bundle:
+    build:
+      context: .
+      dockerfile: docker/opa-bundle/Dockerfile
+    volumes:
+      - ./baro-cloud/opa/policy:/app/policy:ro
+    depends_on:
+      - eureka
+    mem_limit: 512m
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_CONFIG_IMPORT=
+      - BPL_JVM_THREAD_COUNT=50
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=baro-kafka:9092
+      - OPA_BUNDLE_DIR=/tmp/opa-bundle
+      - OPA_POLICY_DIR=/app/policy
+  opa:
+    build:
+      context: .
+      dockerfile: docker/opa/Dockerfile

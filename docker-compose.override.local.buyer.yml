@@ -1,0 +1,19 @@
+services:
+  baro-buyer:
+    build:
+      context: .
+      dockerfile: docker/baro-buyer/Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - SPRING_CONFIG_IMPORT=
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=baro-kafka:9092
+      - SPRING_DATASOURCE_URL=jdbc:mysql://baro-mysql:3306/${MYSQL_DATABASE_BUYER}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - SPRING_DATA_REDIS_HOST=baro-redis
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - AWS_ACCESS_KEY=
+      - AWS_SECRET_KEY=
+      - AWS_S3_BUCKET_NAME=
+    volumes: []

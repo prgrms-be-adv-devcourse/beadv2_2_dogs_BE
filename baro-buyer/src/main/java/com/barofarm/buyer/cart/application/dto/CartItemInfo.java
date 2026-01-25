@@ -9,6 +9,7 @@ public record CartItemInfo(
     UUID productId,
     String productName,
     String productCategoryName,
+    String productCategoryCode,
     Integer quantity,
     Long unitPrice,
     Long lineTotalPrice,
@@ -17,21 +18,22 @@ public record CartItemInfo(
 ) {
 
     // 실시간 상품명, 카테고리명과 재고 단위로 CartInfo 생성
-    public static CartItemInfo from(CartItem item, String productName, String categoryName, Integer unit) {
+    public static CartItemInfo from(CartItem item,
+                                    String productName,
+                                    String categoryName,
+                                    String categoryCode,
+                                    Integer unit) {
         return new CartItemInfo(
             item.getId(),
             item.getProductId(),
-            productName != null
-                ? productName
-                : "(상품명을 불러올 수 없습니다)",
-            categoryName != null
-                ? categoryName
-                : "(카테고리 정보를 불러올 수 없습니다)",
+            productName != null ? productName : "(상품명을 불러오지 못했습니다)",
+            categoryName != null ? categoryName : "(카테고리 정보를 불러오지 못했습니다)",
+            categoryCode != null ? categoryCode : "(카테고리 코드를 불러오지 못했습니다)",
             item.getQuantity(),
             item.getUnitPrice(),
-            item.calculatePrice(),      // CartItem 도메인 메서드 사용
+            item.calculatePrice(),
             item.getInventoryId(),
-            unit != null ? unit : -1  // unit이 null이면 오류 표시 값 -1로 설정
+            unit != null ? unit : -1
         );
     }
 }

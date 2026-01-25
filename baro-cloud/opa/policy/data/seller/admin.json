@@ -1,0 +1,21 @@
+{
+    "rules_by_id":  {
+                        "seller:seller-info-bulk":  {
+                                                        "name":  "seller:seller-info-bulk",
+                                                        "path":  "^/api/v1/sellers/sellerInfo/bulks$",
+                                                        "methods":  [
+                                                                        "POST"
+                                                                    ],
+                                                        "roles":  [
+                                                                      "ADMIN"
+                                                                  ]
+                                                    }
+                    },
+    "index":  {
+                  "method":  {
+                                 "POST":  [
+                                              "seller:seller-info-bulk"
+                                          ]
+                             }
+              }
+}
