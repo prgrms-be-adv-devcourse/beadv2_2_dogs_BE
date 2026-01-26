@@ -12,6 +12,9 @@ public interface ProductJpaRepository extends JpaRepository<Product, UUID> {
     /**
      * 제철 정보가 없는 상품 목록 조회 (seasonalityType이 null인 상품)
      */
-    @Query("SELECT p FROM Product p WHERE p.seasonalityType IS NULL")
+    @Query(
+        value = "SELECT p FROM Product p WHERE p.seasonalityType IS NULL",
+        countQuery = "SELECT COUNT(p) FROM Product p WHERE p.seasonalityType IS NULL"
+    )
     Page<Product> findAllWithoutSeasonality(Pageable pageable);
 }
