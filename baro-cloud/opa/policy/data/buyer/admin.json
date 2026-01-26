@@ -2,7 +2,7 @@
     "rules_by_id":  {
                         "buyer:inventories":  {
                                                   "name":  "buyer:inventories",
-                                                  "path":  "^/api/v1/inventories(?:/.*)?$",
+                                                  "path":  "^(/buyer-service)?/api/v1/inventories(?:/.*)?$",
                                                   "methods":  [
                                                                   "*"
                                                               ],

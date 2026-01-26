@@ -1,4 +1,4 @@
-server:
+﻿server:
   port: ${SERVER_PORT:8080}  # 환경 변수로 오버라이드 가능 (Config Server 설정 덮어쓰기 방지)
 
 spring:
@@ -144,6 +144,15 @@ spring:
             # 일반 API 서비스 라우트
             # ============================================
             # Auth Service
+            - id: auth-public
+              uri: lb://auth-service
+              predicates:
+                - Path=/auth-service/api/v1/auth/login,
+                  /auth-service/api/v1/auth/signup,
+                  /auth-service/api/v1/auth/oauth/**
+              filters:
+                - RewritePath=/auth-service/(?<segment>.*), /${segment}
+
             - id: auth-service
               uri: lb://auth-service
               predicates:
@@ -288,11 +297,11 @@ resilience4j:
         maxWaitDuration: 0
 
 
-# Swagger/OpenAPI 통합 설정 - 모든 서비스의 Swagger를 Gateway에서 통합 제공
+# 이 부분 수정
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
-    use-root-path: false
+    use-root-path: false  # 여기로 이동
     urls:
       - name: Auth Service
         url: /openapi/auth/v3/api-docs
@@ -313,3 +322,16 @@ springdoc:
   api-docs:
     enabled: true
   enable-native-support: true
+
+logging:
+  level:
+    # 디버깅용: 인증/OPA 필터 동작 및 라우팅 흐름 확인
+    com.barofarm.gateway.filter: DEBUG
+    # 디버깅용: 게이트웨이 라우팅/필터 체인 로그
+    org.springframework.cloud.gateway: DEBUG
+    # 디버깅용: Netty 레벨 요청/응답 트레이스
+    reactor.netty: INFO
+    reactor.netty.http.server: INFO
+    reactor.netty.http.client: INFO
+    reactor.netty.http.server.HttpServer: INFO
+    reactor.netty.http.server.HttpServerOperations: INFO

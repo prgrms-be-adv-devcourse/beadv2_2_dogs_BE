@@ -9,8 +9,8 @@ spring:
     name: support-service
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 20MB
+      max-file-size: 50MB
+      max-request-size: 100MB
   config:
     import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://config:8888}
   main:

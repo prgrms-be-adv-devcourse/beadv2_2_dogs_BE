@@ -121,9 +121,17 @@ spec:
                 secretKeyRef:
                   name: baro-secrets
                   key: SPRING_MAIL_PASSWORD
+            - name: MANAGEMENT_HEALTH_MAIL_ENABLED
+              value: "false"  # 메일 헬스체크 비활성화 (메일 서버 장애 시 전체 헬스체크 영향 방지)
+            # OAuth 설정
+            - name: KAKAO_REDIRECT_URI
+              value: "http://localhost:3001/oauth/kakao/callback"  # 실제 프로덕션 환경에서는 프론트엔드/게이트웨이 URL로 변경 필요
             # 로그 디렉토리 설정
             - name: LOG_DIR
               value: "/mnt/s3/logs/auth"
+            # Auth Cookie 설정
+            - name: AUTH_COOKIE_SECURE
+              value: "false"
           volumeMounts:
             - name: log-volume
               mountPath: /mnt/s3/logs/auth

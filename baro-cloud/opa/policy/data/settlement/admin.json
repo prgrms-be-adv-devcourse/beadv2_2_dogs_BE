@@ -1,0 +1,21 @@
+{
+    "rules_by_id":  {
+                        "settlement:batch-settlement":  {
+                                                            "name":  "settlement:batch-settlement",
+                                                            "path":  "^(/settlement-service)?/api/v1/batch/settlement$",
+                                                            "methods":  [
+                                                                            "POST"
+                                                                        ],
+                                                            "roles":  [
+                                                                          "ADMIN"
+                                                                      ]
+                                                        }
+                    },
+    "index":  {
+                  "method":  {
+                                 "POST":  [
+                                              "settlement:batch-settlement"
+                                          ]
+                             }
+              }
+}

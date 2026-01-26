@@ -23,6 +23,42 @@
                                                                  "SELLER",
                                                                  "ADMIN"
                                                              ]
+                                               },
+                        "auth:auth-password-change":  {
+                                                          "name":  "auth:auth-password-change",
+                                                          "path":  "^(/auth-service)?/api/v1/auth/password/change$",
+                                                          "methods":  [
+                                                                          "POST"
+                                                                      ],
+                                                          "roles":  [
+                                                                        "CUSTOMER",
+                                                                        "SELLER",
+                                                                        "ADMIN"
+                                                                    ]
+                                                      },
+                        "auth:oauth-link-start":  {
+                                                     "name":  "auth:oauth-link-start",
+                                                     "path":  "^(/auth-service)?/api/v1/auth/me/oauth/link/start$",
+                                                     "methods":  [
+                                                                     "POST"
+                                                                 ],
+                                                     "roles":  [
+                                                                   "CUSTOMER",
+                                                                   "SELLER",
+                                                                   "ADMIN"
+                                                               ]
+                                                 },
+                        "auth:oauth-link-callback":  {
+                                                        "name":  "auth:oauth-link-callback",
+                                                        "path":  "^(/auth-service)?/api/v1/auth/oauth/link/callback$",
+                                                        "methods":  [
+                                                                        "POST"
+                                                                    ],
+                                                        "roles":  [
+                                                                      "CUSTOMER",
+                                                                      "SELLER",
+                                                                      "ADMIN"
+                                                                  ]
                                                }
                     },
     "index":  {
@@ -31,8 +67,11 @@
                                              "auth:auth-me"
                                          ],
                                  "POST":  [
-                                              "auth:auth-withdraw"
+                                              "auth:auth-withdraw",
+                                              "auth:auth-password-change",
+                                              "auth:oauth-link-start",
+                                              "auth:oauth-link-callback"
                                           ]
-                             }
+                            }
               }
 }

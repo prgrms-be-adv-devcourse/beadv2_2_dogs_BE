@@ -251,7 +251,7 @@ java -jar baro-ai/build/libs/baro-ai-0.0.1-SNAPSHOT.jar
 | | baro-buyer | 8082 | buyer, cart, product |
 | | baro-seller | 8085 | seller, farm |
 | | baro-order | 8087 | order |
-| | baro-order | 8088 | payment |
+| | baro-payment | 8088 | payment |
 | | baro-support | 8089 | delivery, notification, experience, review, deposit |
 | | baro-settlement | 8090 | settlement (DaemonSet 배포) |
 | | baro-ai | 8092 | search, recommend, review, season |

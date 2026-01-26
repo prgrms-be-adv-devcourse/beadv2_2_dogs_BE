@@ -66,18 +66,22 @@ spec:
               value: "8095"
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://localhost:8761/eureka/"  # hostNetwork: true 사용 시 localhost
+            - name: SPRING_CONFIG_IMPORT
+              value: "optional:configserver:http://localhost:8888"  # hostNetwork: true 사용 시 localhost
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               valueFrom:
                 secretKeyRef:
                   name: baro-secrets
                   key: SPRING_KAFKA_BOOTSTRAP_SERVERS
                   optional: true
+            - name: BPL_JVM_THREAD_COUNT
+              value: "50"
+            - name: OPA_BUNDLE_DIR
+              value: "/tmp/opa-bundle"
             - name: OPA_POLICY_DIR
               value: "/app/policy"
-            - name: JAVA_OPTS
-              value: "-Xms128m -Xmx192m -XX:MaxMetaspaceSize=64m -XX:MaxDirectMemorySize=32m"
             - name: JAVA_TOOL_OPTIONS
-              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=70.0"
+              value: "-Xms128m -Xmx192m -XX:MaxMetaspaceSize=64m -XX:MaxDirectMemorySize=32m -XX:ReservedCodeCacheSize=32m -XX:+UseSerialGC"
           resources:
             requests:
               memory: "128Mi"

@@ -19,6 +19,9 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-baropassword}
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
       - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-ap-northeast-2}
       - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
       - JAVA_OPTS=-Xms64m -Xmx128m
     volumes:
@@ -31,4 +34,3 @@ networks:
   baro-network:
     name: be_baro-network  # 네트워크 이름 명시적으로 지정
     external: true
-

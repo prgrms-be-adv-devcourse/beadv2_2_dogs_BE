@@ -370,45 +370,41 @@ if [ "$MODULE_NAME" = "cloud" ]; then
         log_info "✅ Eureka Pod가 Ready 상태입니다."
     fi
     
-    log_step "2️⃣ Config 배포 중..."
-    # kustomization.yaml에서 이미지 태그 업데이트
-    KUSTOMIZATION_FILE="$K8S_BASE_DIR/cloud/config/kustomization.yaml"
-    if [ -f "$KUSTOMIZATION_FILE" ] && [ "$IMAGE_TAG" != "latest" ]; then
-        log_info "🏷️  Config 이미지 태그 업데이트: $IMAGE_TAG"
-        sed -i.bak "s|newTag: latest|newTag: ${IMAGE_TAG}|g" "$KUSTOMIZATION_FILE" 2>/dev/null || \
-        sed -i "s|newTag: latest|newTag: ${IMAGE_TAG}|g" "$KUSTOMIZATION_FILE" 2>/dev/null || true
-        rm -f "${KUSTOMIZATION_FILE}.bak" 2>/dev/null || true
-    fi
-    $KUBECTL_CMD apply -k "$K8S_BASE_DIR/cloud/config/"
-    
-    # IMAGE_TAG가 latest일 때는 Deployment spec이 변경되지 않으므로 rollout restart로 Pod 재시작
-    if [ "$IMAGE_TAG" = "latest" ]; then
-        log_info "🔄 latest 태그 사용 중이므로 Pod 재시작 (rollout restart)..."
-        $KUBECTL_CMD rollout restart deployment/config -n baro-prod || true
-    fi
-    
-    # Pod가 Ready 상태가 될 때까지 대기 (타임아웃: 300초)
-    if ! $KUBECTL_CMD wait --for=condition=ready pod -l app=config -n baro-prod --timeout=300s 2>&1; then
-        log_warn "⚠️ Config Pod가 Ready 상태가 되지 않았습니다. 상태 확인 중..."
-        echo ""
-        echo "📊 Config Pod 상태:"
-        $KUBECTL_CMD get pods -n baro-prod -l app=config 2>&1 || true
-        echo ""
-        echo "📋 Config Deployment 상태:"
-        $KUBECTL_CMD get deployment config -n baro-prod 2>&1 || true
-        echo ""
-        echo "📝 Config Pod 이벤트:"
-        CONFIG_POD=$($KUBECTL_CMD get pods -n baro-prod -l app=config -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
-        if [ -n "$CONFIG_POD" ]; then
-            $KUBECTL_CMD describe pod "$CONFIG_POD" -n baro-prod 2>&1 | grep -A 30 "Events:" || true
-            echo ""
-            echo "📄 Config Pod 로그 (마지막 50줄):"
-            $KUBECTL_CMD logs "$CONFIG_POD" -n baro-prod --tail=50 2>&1 || true
-        fi
-        log_warn "⚠️ Config 배포는 계속 진행하지만, Pod가 준비되지 않았을 수 있습니다."
-    else
-        log_info "✅ Config Pod가 Ready 상태입니다."
-    fi
+    # 2️⃣ Config 배포 (주석 처리)
+    # log_step "2️⃣ Config 배포 중..."
+    # KUSTOMIZATION_FILE="$K8S_BASE_DIR/cloud/config/kustomization.yaml"
+    # if [ -f "$KUSTOMIZATION_FILE" ] && [ "$IMAGE_TAG" != "latest" ]; then
+    #     log_info "🏷️  Config 이미지 태그 업데이트: $IMAGE_TAG"
+    #     sed -i.bak "s|newTag: latest|newTag: ${IMAGE_TAG}|g" "$KUSTOMIZATION_FILE" 2>/dev/null || \
+    #     sed -i "s|newTag: latest|newTag: ${IMAGE_TAG}|g" "$KUSTOMIZATION_FILE" 2>/dev/null || true
+    #     rm -f "${KUSTOMIZATION_FILE}.bak" 2>/dev/null || true
+    # fi
+    # $KUBECTL_CMD apply -k "$K8S_BASE_DIR/cloud/config/"
+    # if [ "$IMAGE_TAG" = "latest" ]; then
+    #     log_info "🔄 latest 태그 사용 중이므로 Pod 재시작 (rollout restart)..."
+    #     $KUBECTL_CMD rollout restart deployment/config -n baro-prod || true
+    # fi
+    # if ! $KUBECTL_CMD wait --for=condition=ready pod -l app=config -n baro-prod --timeout=300s 2>&1; then
+    #     log_warn "⚠️ Config Pod가 Ready 상태가 되지 않았습니다. 상태 확인 중..."
+    #     echo ""
+    #     echo "📊 Config Pod 상태:"
+    #     $KUBECTL_CMD get pods -n baro-prod -l app=config 2>&1 || true
+    #     echo ""
+    #     echo "📋 Config Deployment 상태:"
+    #     $KUBECTL_CMD get deployment config -n baro-prod 2>&1 || true
+    #     echo ""
+    #     echo "📝 Config Pod 이벤트:"
+    #     CONFIG_POD=$($KUBECTL_CMD get pods -n baro-prod -l app=config -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+    #     if [ -n "$CONFIG_POD" ]; then
+    #         $KUBECTL_CMD describe pod "$CONFIG_POD" -n baro-prod 2>&1 | grep -A 30 "Events:" || true
+    #         echo ""
+    #         echo "📄 Config Pod 로그 (마지막 50줄):"
+    #         $KUBECTL_CMD logs "$CONFIG_POD" -n baro-prod --tail=50 2>&1 || true
+    #     fi
+    #     log_warn "⚠️ Config 배포는 계속 진행하지만, Pod가 준비되지 않았을 수 있습니다."
+    # else
+    #     log_info "✅ Config Pod가 Ready 상태입니다."
+    # fi
     
     log_step "3️⃣ Gateway 배포 중..."
     # kustomization.yaml에서 이미지 태그 업데이트

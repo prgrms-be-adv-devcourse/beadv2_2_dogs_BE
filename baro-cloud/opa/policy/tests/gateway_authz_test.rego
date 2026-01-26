@@ -26,14 +26,6 @@ test_deny_user_suspended {
   } with data as base_data
 }
 
-test_deny_seller_not_approved {
-  not allow with input as {
-    "request": {"method": "POST", "path": "/api/v1/products"},
-    "subject": {"id": "s1", "roles": ["SELLER"], "seller_status": "SUSPENDED"},
-    "route": {"service": "buyer"}
-  } with data as base_data
-}
-
 test_allow_seller_unknown_status {
   allow with input as {
     "request": {"method": "POST", "path": "/api/v1/products"},

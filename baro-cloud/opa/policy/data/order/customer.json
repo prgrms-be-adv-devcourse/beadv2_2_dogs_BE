@@ -1,49 +1,26 @@
 {
     "rules_by_id":  {
-                        "order:deposits-list":  {
-                                                    "name":  "order:deposits-list",
-                                                    "path":  "^/api/v1/deposits$",
-                                                    "methods":  [
-                                                                    "GET"
-                                                                ],
-                                                    "roles":  [
-                                                                  "CUSTOMER",
-                                                                  "ADMIN"
-                                                              ]
-                                                },
-                        "order:deposits-actions":  {
-                                                       "name":  "order:deposits-actions",
-                                                       "path":  "^/api/v1/deposits/(charges|pay|refund|create)$",
-                                                       "methods":  [
-                                                                       "POST"
-                                                                   ],
-                                                       "roles":  [
-                                                                     "CUSTOMER",
-                                                                     "ADMIN"
-                                                                 ],
-                                                       "deny_flags":  [
-                                                                          "ORDER_BLOCKED"
-                                                                      ]
-                                                   },
                         "order:orders-list":  {
                                                   "name":  "order:orders-list",
-                                                  "path":  "^/api/v1/orders$",
+                                                  "path":  "^(/order-service)?/api/v1/orders$",
                                                   "methods":  [
                                                                   "GET"
                                                               ],
                                                   "roles":  [
                                                                 "CUSTOMER",
+                                                                "SELLER",
                                                                 "ADMIN"
                                                             ]
                                               },
                         "order:orders-create":  {
                                                     "name":  "order:orders-create",
-                                                    "path":  "^/api/v1/orders$",
+                                                    "path":  "^(/order-service)?/api/v1/orders$",
                                                     "methods":  [
                                                                     "POST"
                                                                 ],
                                                     "roles":  [
                                                                   "CUSTOMER",
+                                                                  "SELLER",
                                                                   "ADMIN"
                                                               ],
                                                     "deny_flags":  [
@@ -52,56 +29,39 @@
                                                 },
                         "order:order-detail":  {
                                                    "name":  "order:order-detail",
-                                                   "path":  "^/api/v1/orders/[^/]+$",
+                                                   "path":  "^(/order-service)?/api/v1/orders/[^/]+$",
                                                    "methods":  [
                                                                    "GET"
                                                                ],
                                                    "roles":  [
                                                                  "CUSTOMER",
+                                                                 "SELLER",
                                                                  "ADMIN"
                                                              ]
                                                },
                         "order:order-cancel":  {
                                                    "name":  "order:order-cancel",
-                                                   "path":  "^/api/v1/orders/[^/]+/cancel$",
+                                                   "path":  "^(/order-service)?/api/v1/orders/[^/]+/cancel$",
                                                    "methods":  [
-                                                                   "PUT"
+                                                                   "POST"
                                                                ],
                                                    "roles":  [
                                                                  "CUSTOMER",
+                                                                 "SELLER",
                                                                  "ADMIN"
                                                              ]
-                                               },
-                        "order:payments-toss":  {
-                                                    "name":  "order:payments-toss",
-                                                    "path":  "^/api/v1/payments/toss/.*$",
-                                                    "methods":  [
-                                                                    "POST"
-                                                                ],
-                                                    "roles":  [
-                                                                  "CUSTOMER",
-                                                                  "ADMIN"
-                                                              ],
-                                                    "deny_flags":  [
-                                                                       "ORDER_BLOCKED"
-                                                                   ]
-                                                }
+                                               }
                     },
     "index":  {
                   "method":  {
                                  "GET":  [
-                                             "order:deposits-list",
                                              "order:orders-list",
                                              "order:order-detail"
                                          ],
                                  "POST":  [
-                                              "order:deposits-actions",
                                               "order:orders-create",
-                                              "order:payments-toss"
-                                          ],
-                                 "PUT":  [
-                                             "order:order-cancel"
-                                         ]
+                                              "order:order-cancel"
+                                          ]
                              }
               }
 }

@@ -1,9 +1,10 @@
-services:
+﻿services:
   baro-order:
     build:
       context: .
       dockerfile: docker/baro-order/Dockerfile
     environment:
+      - BUYER_SERVICE_URL=http://baro-buyer:8082
       - SPRING_PROFILES_ACTIVE=local
       - SPRING_CONFIG_IMPORT=
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka/

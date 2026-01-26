@@ -271,6 +271,7 @@ jobs:
           if [[ "$GITHUB_REF" == refs/heads/main-* ]]; then
             IMAGE_TAG="latest"
           else
+            # 기타 브랜치는 latest 사용 (fallback)
             IMAGE_TAG="latest"
           fi
           

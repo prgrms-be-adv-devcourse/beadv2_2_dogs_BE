@@ -37,6 +37,12 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
+feign:
+  client:
+    config:
+      buyer-service:
+        url: ${BUYER_SERVICE_URL:http://baro-buyer:8082}
+
 eureka:
   client:
     # Eureka 서버에 등록 (Config Server의 eureka-server 설정과 충돌 방지)

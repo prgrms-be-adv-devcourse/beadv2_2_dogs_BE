@@ -1,0 +1,22 @@
+{
+    "rules_by_id":  {
+                        "settlement:settlements-me":  {
+                                                          "name":  "settlement:settlements-me",
+                                                          "path":  "^(/settlement-service)?/api/v1/settlements/me$",
+                                                          "methods":  [
+                                                                          "GET"
+                                                                      ],
+                                                          "roles":  [
+                                                                        "SELLER",
+                                                                        "ADMIN"
+                                                                    ]
+                                                      }
+                    },
+    "index":  {
+                  "method":  {
+                                 "GET":  [
+                                             "settlement:settlements-me"
+                                         ]
+                             }
+              }
+}

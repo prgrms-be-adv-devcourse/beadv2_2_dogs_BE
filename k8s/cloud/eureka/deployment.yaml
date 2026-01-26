@@ -47,10 +47,8 @@ spec:
             # hostNetwork: true 사용 시 localhost로 설정 (k8s Service DNS 미사용)
             - name: EUREKA_INSTANCE_HOSTNAME
               value: "localhost"
-            - name: JAVA_OPTS
-              value: "-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
             - name: JAVA_TOOL_OPTIONS
-              value: "-Xms64m -Xmx128m -XX:MaxMetaspaceSize=128m -XX:CompressedClassSpaceSize=64m -XX:MaxDirectMemorySize=32m -XX:NativeMemoryTracking=summary"
+              value: "-Djava.net.preferIPv4Stack=true -Xms64m -Xmx128m -XX:MaxMetaspaceSize=128m -XX:CompressedClassSpaceSize=64m -XX:MaxDirectMemorySize=32m -XX:NativeMemoryTracking=summary"
             - name: SERVER_ADDRESS
               value: "0.0.0.0"
           # resources:
@@ -80,8 +78,8 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
-            failureThreshold: 12
+            failureThreshold: 20
 

@@ -2,7 +2,7 @@
     "rules_by_id":  {
                         "seller:farms-create":  {
                                                     "name":  "seller:farms-create",
-                                                    "path":  "^/api/v1/farms$",
+                                                    "path":  "^(/seller-service)?/api/v1/farms$",
                                                     "methods":  [
                                                                     "POST"
                                                                 ],
@@ -13,7 +13,7 @@
                                                 },
                         "seller:farms-update-delete":  {
                                                            "name":  "seller:farms-update-delete",
-                                                           "path":  "^/api/v1/farms/[^/]+$",
+                                                           "path":  "^(/seller-service)?/api/v1/farms/[^/]+$",
                                                            "methods":  [
                                                                            "PUT",
                                                                            "DELETE"
@@ -25,7 +25,7 @@
                                                        },
                         "seller:farms-me":  {
                                                 "name":  "seller:farms-me",
-                                                "path":  "^/api/v1/farms/me$",
+                                                "path":  "^(/seller-service)?/api/v1/farms/me$",
                                                 "methods":  [
                                                                 "GET"
                                                             ],
@@ -33,18 +33,7 @@
                                                               "SELLER",
                                                               "ADMIN"
                                                           ]
-                                            },
-                        "seller:seller-info":  {
-                                                   "name":  "seller:seller-info",
-                                                   "path":  "^/api/v1/sellers/sellerInfo/[^/]+$",
-                                                   "methods":  [
-                                                                   "GET"
-                                                               ],
-                                                   "roles":  [
-                                                                 "SELLER",
-                                                                 "ADMIN"
-                                                             ]
-                                               }
+                                            }
                     },
     "index":  {
                   "method":  {
@@ -58,8 +47,7 @@
                                                 "seller:farms-update-delete"
                                             ],
                                  "GET":  [
-                                             "seller:farms-me",
-                                             "seller:seller-info"
+                                             "seller:farms-me"
                                          ]
                              }
               }

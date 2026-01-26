@@ -1,0 +1,2 @@
+{"eventId":"evt-1","type":"NOTIFICATION_CREATED","notificationId":"n-1","recipientUserId":"user-1","channels":
+  ["EMAIL","PUSH"],"title":"hello","body":"body","deepLink":"/orders/123","occurredAt":"2025-01-01T00:00:00Z"}

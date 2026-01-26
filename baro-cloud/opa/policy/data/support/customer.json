@@ -8,6 +8,7 @@
                                                                ],
                                                    "roles":  [
                                                                  "CUSTOMER",
+                                                                 "SELLER",
                                                                  "ADMIN"
                                                              ]
                                                },
@@ -19,6 +20,7 @@
                                                                            ],
                                                                "roles":  [
                                                                              "CUSTOMER",
+                                                                             "SELLER",
                                                                              "ADMIN"
                                                                          ],
                                                                "deny_flags":  [
@@ -33,6 +35,7 @@
                                                                       ],
                                                           "roles":  [
                                                                         "CUSTOMER",
+                                                                        "SELLER",
                                                                         "ADMIN"
                                                                     ]
                                                       },
@@ -44,6 +47,7 @@
                                                                         ],
                                                             "roles":  [
                                                                           "CUSTOMER",
+                                                                          "SELLER",
                                                                           "ADMIN"
                                                                       ],
                                                             "deny_flags":  [
@@ -58,6 +62,7 @@
                                                                         ],
                                                             "roles":  [
                                                                           "CUSTOMER",
+                                                                          "SELLER",
                                                                           "ADMIN"
                                                                       ]
                                                         },
@@ -70,11 +75,96 @@
                                                                           ],
                                                               "roles":  [
                                                                             "CUSTOMER",
+                                                                            "SELLER",
                                                                             "ADMIN"
                                                                         ],
                                                               "deny_flags":  [
                                                                                  "REVIEW_BLOCKED"
                                                                              ]
+                                                          },
+                        "support:deposits-actions":  {
+                                                         "name":  "support:deposits-actions",
+                                                         "path":  "^(/support-service)?/api/v1/deposits/(charges|pay)$",
+                                                         "methods":  [
+                                                                         "POST"
+                                                                     ],
+                                                         "roles":  [
+                                                                       "CUSTOMER",
+                                                                       "SELLER",
+                                                                       "ADMIN"
+                                                                   ]
+                                                     },
+                        "support:deposits-get":  {
+                                                     "name":  "support:deposits-get",
+                                                     "path":  "^(/support-service)?/api/v1/deposits$",
+                                                     "methods":  [
+                                                                     "GET"
+                                                                 ],
+                                                     "roles":  [
+                                                                   "CUSTOMER",
+                                                                   "SELLER",
+                                                                   "ADMIN"
+                                                               ]
+                                                 },
+                        "support:notifications-me":  {
+                                                         "name":  "support:notifications-me",
+                                                         "path":  "^(/support-service)?/api/v1/notifications/me$",
+                                                         "methods":  [
+                                                                         "GET"
+                                                                     ],
+                                                         "roles":  [
+                                                                       "CUSTOMER",
+                                                                       "SELLER",
+                                                                       "ADMIN"
+                                                                   ]
+                                                     },
+                        "support:notifications-unread":  {
+                                                             "name":  "support:notifications-unread",
+                                                             "path":  "^(/support-service)?/api/v1/notifications/unread/count$",
+                                                             "methods":  [
+                                                                             "GET"
+                                                                         ],
+                                                             "roles":  [
+                                                                           "CUSTOMER",
+                                                                           "SELLER",
+                                                                           "ADMIN"
+                                                                       ]
+                                                         },
+                        "support:notifications-read-all":  {
+                                                               "name":  "support:notifications-read-all",
+                                                               "path":  "^(/support-service)?/api/v1/notifications/read-all$",
+                                                               "methods":  [
+                                                                               "PUT"
+                                                                           ],
+                                                               "roles":  [
+                                                                             "CUSTOMER",
+                                                                             "SELLER",
+                                                                             "ADMIN"
+                                                                         ]
+                                                           },
+                        "support:notifications-subscribe":  {
+                                                               "name":  "support:notifications-subscribe",
+                                                               "path":  "^(/support-service)?/api/v1/notifications/subscribe$",
+                                                               "methods":  [
+                                                                               "GET"
+                                                                           ],
+                                                               "roles":  [
+                                                                             "CUSTOMER",
+                                                                             "SELLER",
+                                                                             "ADMIN"
+                                                                         ]
+                                                           },
+                        "support:notifications-test":  {
+                                                          "name":  "support:notifications-test",
+                                                          "path":  "^(/support-service)?/api/v1/notifications/test$",
+                                                          "methods":  [
+                                                                          "POST"
+                                                                      ],
+                                                          "roles":  [
+                                                                        "CUSTOMER",
+                                                                        "SELLER",
+                                                                        "ADMIN"
+                                                                    ]
                                                           }
                     },
     "index":  {
@@ -82,14 +172,21 @@
                                  "GET":  [
                                              "support:my-reviews",
                                              "support:reservations-list",
-                                             "support:reservations-detail"
+                                             "support:reservations-detail",
+                                             "support:deposits-get",
+                                             "support:notifications-me",
+                                             "support:notifications-unread",
+                                             "support:notifications-subscribe"
                                          ],
                                  "POST":  [
                                               "support:product-reviews-create",
-                                              "support:reservations-create"
+                                              "support:reservations-create",
+                                              "support:deposits-actions",
+                                              "support:notifications-test"
                                           ],
                                  "PUT":  [
-                                             "support:reviews-update-delete"
+                                             "support:reviews-update-delete",
+                                             "support:notifications-read-all"
                                          ],
                                  "DELETE":  [
                                                 "support:reviews-update-delete"

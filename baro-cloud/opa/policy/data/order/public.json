@@ -2,7 +2,7 @@
     "rules_by_id":  {
                         "order:payments-legacy":  {
                                                       "name":  "order:payments-legacy",
-                                                      "path":  "^/api/payments/.*$",
+                                                      "path":  "^(/order-service)?/api/payments/.*$",
                                                       "methods":  [
                                                                       "*"
                                                                   ],
@@ -12,7 +12,7 @@
                                                   },
                         "order:payments-result":  {
                                                       "name":  "order:payments-result",
-                                                      "path":  "^/api/v1/payments/(success|fail)$",
+                                                      "path":  "^(/order-service)?/api/v1/payments/(success|fail)$",
                                                       "methods":  [
                                                                       "GET"
                                                                   ],

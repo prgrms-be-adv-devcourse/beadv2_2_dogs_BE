@@ -1,0 +1,36 @@
+{
+    "rules_by_id":  {
+                        "payment:payments-toss-confirm":  {
+                                                              "name":  "payment:payments-toss-confirm",
+                                                              "path":  "^(/payment-service)?/api/v1/payments/toss/confirm$",
+                                                              "methods":  [
+                                                                              "POST"
+                                                                          ],
+                                                              "roles":  [
+                                                                            "CUSTOMER",
+                                                                            "SELLER",
+                                                                            "ADMIN"
+                                                                        ]
+                                                          },
+                        "payment:payments-toss-confirm-deposit":  {
+                                                                      "name":  "payment:payments-toss-confirm-deposit",
+                                                                      "path":  "^(/payment-service)?/api/v1/payments/toss/confirm/deposit$",
+                                                                      "methods":  [
+                                                                                      "POST"
+                                                                                  ],
+                                                                      "roles":  [
+                                                                                    "CUSTOMER",
+                                                                                    "SELLER",
+                                                                                    "ADMIN"
+                                                                                ]
+                                                                  }
+                    },
+    "index":  {
+                  "method":  {
+                                 "POST":  [
+                                              "payment:payments-toss-confirm",
+                                              "payment:payments-toss-confirm-deposit"
+                                          ]
+                             }
+              }
+}

@@ -131,6 +131,16 @@ spec:
                 secretKeyRef:
                   name: baro-secrets
                   key: SPRING_AI_OPENAI_API_KEY
+            # OpenAI 모델 설정
+            - name: SPRING_AI_OPENAI_MODEL
+              value: "gpt-4o-mini"
+            - name: SPRING_AI_OPENAI_EMBEDDING_MODEL
+              value: "text-embedding-3-small"
+            # 제철 판단 RAG 설정
+            - name: SEASONALITY_RAG_ENABLED
+              value: "true"
+            - name: SEASONALITY_CSV_PATH
+              value: "/mnt/s3/dataset/season/seasonality-data.csv"
             # 로그 디렉토리 설정
             - name: LOG_DIR
               value: "/mnt/s3/logs/ai"

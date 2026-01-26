@@ -2,7 +2,7 @@
     "rules_by_id":  {
                         "seller:farms-list":  {
                                                   "name":  "seller:farms-list",
-                                                  "path":  "^/api/v1/farms$",
+                                                  "path":  "^(/seller-service)?/api/v1/farms$",
                                                   "methods":  [
                                                                   "GET"
                                                               ],
@@ -12,20 +12,31 @@
                                               },
                         "seller:farms-detail":  {
                                                     "name":  "seller:farms-detail",
-                                                    "path":  "^/api/v1/farms/[^/]+$",
+                                                    "path":  "^(/seller-service)?/api/v1/farms/[^/]+$",
                                                     "methods":  [
                                                                     "GET"
                                                                 ],
                                                     "roles":  [
                                                                   "*"
                                                               ]
+                                                },
+                        "seller:seller-info-public":  {
+                                                          "name":  "seller:seller-info-public",
+                                                          "path":  "^(/seller-service)?/api/v1/sellers/sellerInfo/[^/]+$",
+                                                          "methods":  [
+                                                                          "GET"
+                                                                      ],
+                                                          "roles":  [
+                                                                        "*"
+                                                                    ]
                                                 }
                     },
     "index":  {
                   "method":  {
                                  "GET":  [
                                              "seller:farms-list",
-                                             "seller:farms-detail"
+                                             "seller:farms-detail",
+                                             "seller:seller-info-public"
                                          ]
                              }
               }

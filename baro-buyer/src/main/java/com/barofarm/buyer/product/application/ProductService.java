@@ -66,11 +66,13 @@ public class ProductService {
     public CustomPage<ProductDetailInfo> getProducts(Pageable pageable) {
         Page<Product> products = productRepository.findAll(pageable);
 
-        List<UUID> productIds = products.getContent().stream()
-            .map(Product::getId)
-            .toList();
+        Page<ProductDetailInfo> details = products.map(product -> {
+            List<Inventory> inventories = inventoryService.getInventoriesByProductId(product.getId());
+            List<ProductInventoryOptionInfo> inventoryOptions = toInventoryOptionInfos(inventories);
+            return ProductDetailInfo.from(product, inventoryOptions);
+        });
 
-        return null;
+        return CustomPage.from(details);
     }
 
     @Transactional

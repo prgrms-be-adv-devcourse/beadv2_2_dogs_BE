@@ -23,6 +23,7 @@ spec:
         component: cloud
     spec:
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       nodeSelector:
         kubernetes.io/hostname: ip-10-0-5-208  # 마스터 노드에 고정 배치
       tolerations:
@@ -58,13 +59,24 @@ spec:
               value: "true"
             - name: EUREKA_CLIENT_FETCH_REGISTRY
               value: "true"
-            - name: JAVA_OPTS
-              value: "-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
             - name: JAVA_TOOL_OPTIONS
-              value: "-Xms64m -Xmx128m -XX:MaxMetaspaceSize=128m -XX:CompressedClassSpaceSize=64m -XX:MaxDirectMemorySize=64m -XX:NativeMemoryTracking=summary"
+              value: "-Djava.net.preferIPv4Stack=true -Xms64m -Xmx128m -XX:MaxMetaspaceSize=128m -XX:CompressedClassSpaceSize=64m -XX:MaxDirectMemorySize=64m -XX:NativeMemoryTracking=summary"
+            # CORS 설정
+            - name: GATEWAY_ALLOWED_ORIGIN_0
+              value: "http://localhost:3000"
+            - name: GATEWAY_ALLOWED_ORIGIN_1
+              value: "http://3.34.14.73:3000"
+            # Management 설정
+            - name: MANAGEMENT_ENDPOINT_GATEWAY_ENABLED
+              value: "true"
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: "health,info,gateway,metrics,prometheus"
+            # Gateway Discovery Locator 설정
+            - name: SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_DISCOVERY_LOCATOR_ENABLED
+              value: "false"
             # Redis 설정
             - name: SPRING_DATA_REDIS_HOST
-              value: "CHANGE_ME_TO_EC2_IP"
+              value: "127.0.0.1"
             - name: SPRING_DATA_REDIS_PORT
               value: "6379"
             - name: SPRING_DATA_REDIS_PASSWORD

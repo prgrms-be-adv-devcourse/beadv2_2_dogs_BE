@@ -1,0 +1,199 @@
+{
+    "rules_by_id":  {
+                        "ai:search":  {
+                                          "name":  "ai:search",
+                                          "path":  "^(/ai-service)?/api/v1/search$",
+                                          "methods":  [
+                                                          "GET"
+                                                      ],
+                                          "roles":  [
+                                                        "*"
+                                                    ]
+                                      },
+                        "ai:search-autocomplete":  {
+                                                       "name":  "ai:search-autocomplete",
+                                                       "path":  "^(/ai-service)?/api/v1/search/autocomplete$",
+                                                       "methods":  [
+                                                                       "GET"
+                                                                   ],
+                                                       "roles":  [
+                                                                     "*"
+                                                                 ]
+                                                   },
+                        "ai:search-product":  {
+                                                  "name":  "ai:search-product",
+                                                  "path":  "^(/ai-service)?/api/v1/search/product$",
+                                                  "methods":  [
+                                                                  "GET"
+                                                              ],
+                                                  "roles":  [
+                                                                "*"
+                                                            ]
+                                              },
+                        "ai:search-product-autocomplete":  {
+                                                               "name":  "ai:search-product-autocomplete",
+                                                               "path":  "^(/ai-service)?/api/v1/search/product/autocomplete$",
+                                                               "methods":  [
+                                                                               "GET"
+                                                                           ],
+                                                               "roles":  [
+                                                                             "*"
+                                                                         ]
+                                                           },
+                        "ai:search-experience":  {
+                                                    "name":  "ai:search-experience",
+                                                    "path":  "^(/ai-service)?/api/v1/search/experience$",
+                                                    "methods":  [
+                                                                    "GET"
+                                                                ],
+                                                    "roles":  [
+                                                                  "*"
+                                                              ]
+                                                },
+                        "ai:search-experience-autocomplete":  {
+                                                                 "name":  "ai:search-experience-autocomplete",
+                                                                 "path":  "^(/ai-service)?/api/v1/search/experience/autocomplete$",
+                                                                 "methods":  [
+                                                                                 "GET"
+                                                                             ],
+                                                                 "roles":  [
+                                                                               "*"
+                                                                           ]
+                                                             },
+                        "ai:recommendations-personalized":  {
+                                                               "name":  "ai:recommendations-personalized",
+                                                               "path":  "^(/ai-service)?/api/v1/recommendations/personalized/[^/]+$",
+                                                               "methods":  [
+                                                                               "GET"
+                                                                           ],
+                                                               "roles":  [
+                                                                             "*"
+                                                                         ]
+                                                           },
+                        "ai:recommendations-recipes-test":  {
+                                                               "name":  "ai:recommendations-recipes-test",
+                                                               "path":  "^(/ai-service)?/api/v1/recommendations/recipes/test$",
+                                                               "methods":  [
+                                                                               "POST"
+                                                                           ],
+                                                               "roles":  [
+                                                                             "*"
+                                                                         ]
+                                                           },
+                        "ai:recommendations-recipes":  {
+                                                          "name":  "ai:recommendations-recipes",
+                                                          "path":  "^(/ai-service)?/api/v1/recommendations/recipes/[^/]+$",
+                                                          "methods":  [
+                                                                          "GET"
+                                                                      ],
+                                                          "roles":  [
+                                                                        "*"
+                                                                    ]
+                                                      },
+                        "ai:recommendations-similar":  {
+                                                          "name":  "ai:recommendations-similar",
+                                                          "path":  "^(/ai-service)?/api/v1/recommendations/similar/[^/]+$",
+                                                          "methods":  [
+                                                                          "GET"
+                                                                      ],
+                                                          "roles":  [
+                                                                        "*"
+                                                                    ]
+                                                      },
+                        "ai:seasonality-detect":  {
+                                                     "name":  "ai:seasonality-detect",
+                                                     "path":  "^(/ai-service)?/api/v1/seasonality/detect$",
+                                                     "methods":  [
+                                                                     "GET"
+                                                                 ],
+                                                     "roles":  [
+                                                                   "*"
+                                                               ]
+                                                 },
+                        "ai:seasonality-init":  {
+                                                   "name":  "ai:seasonality-init",
+                                                   "path":  "^(/ai-service)?/api/v1/seasonality/init$",
+                                                   "methods":  [
+                                                                   "POST"
+                                                               ],
+                                                   "roles":  [
+                                                                 "*"
+                                                             ]
+                                               },
+                        "ai:datagen-amplify":  {
+                                                  "name":  "ai:datagen-amplify",
+                                                  "path":  "^(/ai-service)?/api/v1/datagen/auto-amplify-products$",
+                                                  "methods":  [
+                                                                  "POST"
+                                                              ],
+                                                  "roles":  [
+                                                                "*"
+                                                            ]
+                                              },
+                        "ai:datagen-dummy-logs":  {
+                                                     "name":  "ai:datagen-dummy-logs",
+                                                     "path":  "^(/ai-service)?/api/v1/datagen/dummy-logs$",
+                                                     "methods":  [
+                                                                     "POST"
+                                                                 ],
+                                                     "roles":  [
+                                                                   "*"
+                                                               ]
+                                                 },
+                        "ai:datagen-user-profile-embedding":  {
+                                                                 "name":  "ai:datagen-user-profile-embedding",
+                                                                 "path":  "^(/ai-service)?/api/v1/datagen/user-profile-embedding$",
+                                                                 "methods":  [
+                                                                                 "POST"
+                                                                             ],
+                                                                 "roles":  [
+                                                                               "*"
+                                                                           ]
+                                                             },
+                        "ai:reviews-batch-refresh":  {
+                                                        "name":  "ai:reviews-batch-refresh",
+                                                        "path":  "^(/ai-service)?/api/v1/reviews/batch/refresh$",
+                                                        "methods":  [
+                                                                        "POST"
+                                                                    ],
+                                                        "roles":  [
+                                                                      "*"
+                                                                  ]
+                                                    },
+                        "ai:reviews-batch-refresh-all":  {
+                                                            "name":  "ai:reviews-batch-refresh-all",
+                                                            "path":  "^(/ai-service)?/api/v1/reviews/batch/refresh-all$",
+                                                            "methods":  [
+                                                                            "POST"
+                                                                        ],
+                                                            "roles":  [
+                                                                          "*"
+                                                                      ]
+                                                        }
+                    },
+    "index":  {
+                  "method":  {
+                                 "GET":  [
+                                             "ai:search",
+                                             "ai:search-autocomplete",
+                                             "ai:search-product",
+                                             "ai:search-product-autocomplete",
+                                             "ai:search-experience",
+                                             "ai:search-experience-autocomplete",
+                                             "ai:recommendations-personalized",
+                                             "ai:recommendations-recipes",
+                                             "ai:recommendations-similar",
+                                             "ai:seasonality-detect"
+                                         ],
+                                 "POST":  [
+                                              "ai:recommendations-recipes-test",
+                                              "ai:seasonality-init",
+                                              "ai:datagen-amplify",
+                                              "ai:datagen-dummy-logs",
+                                              "ai:datagen-user-profile-embedding",
+                                              "ai:reviews-batch-refresh",
+                                              "ai:reviews-batch-refresh-all"
+                                          ]
+                             }
+              }
+}

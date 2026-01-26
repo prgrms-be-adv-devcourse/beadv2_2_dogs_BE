@@ -19,12 +19,23 @@
                                                       "roles":  [
                                                                     "ADMIN"
                                                                 ]
+                                                  },
+                        "auth:admin-user-state":  {
+                                                      "name":  "auth:admin-user-state",
+                                                      "path":  "^(/auth-service)?/api/v1/auth/[^/]+/state$",
+                                                      "methods":  [
+                                                                      "POST"
+                                                                  ],
+                                                      "roles":  [
+                                                                    "ADMIN"
+                                                                ]
                                                   }
                     },
     "index":  {
                   "method":  {
                                  "POST":  [
-                                              "auth:auth-seller-status"
+                                              "auth:auth-seller-status",
+                                              "auth:admin-user-state"
                                           ],
                                  "GET":  [
                                              "auth:admin-users-list"

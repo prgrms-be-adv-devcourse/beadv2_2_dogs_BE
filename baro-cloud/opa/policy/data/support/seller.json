@@ -2,7 +2,7 @@
     "rules_by_id":  {
                         "support:deliveries-ship":  {
                                                         "name":  "support:deliveries-ship",
-                                                        "path":  "^/api/v1/deliveries/[^/]+/ship$",
+                                                        "path":  "^(/support-service)?/api/v1/deliveries/[^/]+/ship$",
                                                         "methods":  [
                                                                         "PATCH"
                                                                     ],
@@ -11,20 +11,9 @@
                                                                       "ADMIN"
                                                                   ]
                                                     },
-                        "support:deliveries-order":  {
-                                                         "name":  "support:deliveries-order",
-                                                         "path":  "^/api/v1/deliveries/orders/[^/]+$",
-                                                         "methods":  [
-                                                                         "GET"
-                                                                     ],
-                                                         "roles":  [
-                                                                       "SELLER",
-                                                                       "ADMIN"
-                                                                   ]
-                                                     },
                         "support:experiences-create":  {
                                                            "name":  "support:experiences-create",
-                                                           "path":  "^/api/v1/experiences$",
+                                                           "path":  "^(/support-service)?/api/v1/experiences$",
                                                            "methods":  [
                                                                            "POST"
                                                                        ],
@@ -38,7 +27,7 @@
                                                        },
                         "support:experiences-update-delete":  {
                                                                   "name":  "support:experiences-update-delete",
-                                                                  "path":  "^/api/v1/experiences/[^/]+$",
+                                                                  "path":  "^(/support-service)?/api/v1/experiences/[^/]+$",
                                                                   "methods":  [
                                                                                   "PUT",
                                                                                   "DELETE"
@@ -53,7 +42,7 @@
                                                               },
                         "support:experiences-my-farm":  {
                                                             "name":  "support:experiences-my-farm",
-                                                            "path":  "^/api/v1/experiences/my-farm$",
+                                                            "path":  "^(/support-service)?/api/v1/experiences/my-farm$",
                                                             "methods":  [
                                                                             "GET"
                                                                         ],
@@ -64,7 +53,7 @@
                                                         },
                         "support:reservations-status":  {
                                                             "name":  "support:reservations-status",
-                                                            "path":  "^/api/v1/reservations/[^/]+/status$",
+                                                            "path":  "^(/support-service)?/api/v1/reservations/[^/]+/status$",
                                                             "methods":  [
                                                                             "PUT"
                                                                         ],
@@ -72,18 +61,7 @@
                                                                           "SELLER",
                                                                           "ADMIN"
                                                                       ]
-                                                        },
-                        "support:settlements-me":  {
-                                                       "name":  "support:settlements-me",
-                                                       "path":  "^/api/v1/settlements/me$",
-                                                       "methods":  [
-                                                                       "GET"
-                                                                   ],
-                                                       "roles":  [
-                                                                     "SELLER",
-                                                                     "ADMIN"
-                                                                 ]
-                                                   }
+                                                        }
                     },
     "index":  {
                   "method":  {
@@ -91,9 +69,7 @@
                                                "support:deliveries-ship"
                                            ],
                                  "GET":  [
-                                             "support:deliveries-order",
-                                             "support:experiences-my-farm",
-                                             "support:settlements-me"
+                                             "support:experiences-my-farm"
                                          ],
                                  "POST":  [
                                               "support:experiences-create"

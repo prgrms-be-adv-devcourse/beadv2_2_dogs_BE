@@ -142,6 +142,11 @@ spec:
                 secretKeyRef:
                   name: baro-secrets
                   key: SPRING_MAIL_PASSWORD
+            - name: MANAGEMENT_HEALTH_MAIL_ENABLED
+              value: "false"  # 메일 헬스체크 비활성화 (메일 서버 장애 시 전체 헬스체크 영향 방지)
+            # 알림(FCM) 설정
+            - name: NOTIFICATION_DELIVERY_FCM_ENABLED
+              value: "false"
             # 로그 디렉토리 설정
             - name: LOG_DIR
               value: "/mnt/s3/logs/support"

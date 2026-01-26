@@ -50,6 +50,8 @@ spec:
               env:
                 - name: SPRING_PROFILES_ACTIVE
                   value: "prod,batch"
+                - name: SETTLEMENT_SCHEDULER_ENABLED
+                  value: "false"  # K8s CronJob이 배치 실행, 앱 내부 스케줄러 비활성화
                 - name: SPRING_CONFIG_IMPORT
                   value: "optional:configserver:http://CHANGE_ME_TO_EC2_IP:8888"
                 - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE

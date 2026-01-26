@@ -99,6 +99,9 @@ spec:
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: "CHANGE_ME_TO_EC2_IP:29092"  # 배포 스크립트가 자동으로 Public EC2 IP로 치환
               # value: "http://localhost:29092" # Kafka는 같은 Private EC2에 docker-compose로 실행됨
+            # Feign: baro-buyer 호출 URL (같은 Private EC2에 배포되므로 localhost 사용)
+            - name: BUYER_SERVICE_URL
+              value: "http://localhost:8082"
             # Redis 설정
             - name: SPRING_DATA_REDIS_HOST
               value: "CHANGE_ME_TO_EC2_IP"

@@ -86,7 +86,7 @@ logging:
 #     operations-sorter: alpha
 #   default-consumes-media-type: application/json
 #   default-produces-media-type: application/json
-# 
+#
 management:
   endpoints:
     web:
@@ -129,7 +129,7 @@ oauth:
     # 카카오 디벨로퍼스 앱 키/콜백 설정을 주입한다.
     client-id: ${KAKAO_CLIENT_ID:}
     client-secret: ${KAKAO_CLIENT_SECRET:}
-    redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:8081/api/v1/auth/oauth/callback?provider=kakao}
+    redirect-uri: ${KAKAO_REDIRECT_URI:http://3.34.14.73:3000/api/v1/auth/oauth/callback?provider=kakao}
     token-uri: ${KAKAO_TOKEN_URI:https://kauth.kakao.com/oauth/token}
     user-info-uri: ${KAKAO_USERINFO_URI:https://kapi.kakao.com/v2/user/me}
 
