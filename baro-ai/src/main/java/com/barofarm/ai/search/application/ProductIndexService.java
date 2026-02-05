@@ -14,6 +14,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -75,14 +77,15 @@ public class ProductIndexService {
     }
 
     /**
-     * 상품 자동완성 검색
+     * 상품 자동완성 검색 (Redis 캐시: product:autocomplete, 키 = query:size)
      */
-    @Cacheable(value = "autocomplete", key = "#query")
+    @Cacheable(value = "product:autocomplete", key = "#query + ':' + #size")
     public List<ProductAutoCompleteResponse> autocomplete(String query, int size) {
         if (query == null || query.length() < 2) {
             return List.of(); // 최소 2글자 이상으로 제한
         }
-        return autocompleteRepository.findByPrefix(query, size).stream()
+        Pageable pageable = PageRequest.of(0, size);
+        return autocompleteRepository.findByPrefix(query, pageable).stream()
             .map(document -> new ProductAutoCompleteResponse(document.getProductId(), document.getProductName()))
             .toList();
     }

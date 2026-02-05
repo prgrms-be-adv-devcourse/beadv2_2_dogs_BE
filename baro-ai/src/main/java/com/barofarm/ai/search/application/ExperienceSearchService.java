@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -265,12 +266,14 @@ public class ExperienceSearchService {
         );
     }
 
-    @Cacheable(value = "autocomplete", key = "#query")
+    // 체험 자동완성 검색 (Redis 캐시: experience:autocomplete, 키 = query:size)
+    @Cacheable(value = "experience:autocomplete", key = "#query + ':' + #size")
     public List<ExperienceAutoCompleteResponse> autocomplete(String query, int size) {
         if (query == null || query.length() < 2) {
             return List.of(); // 최소 2글자 이상으로 제한
         }
-        return autocompleteRepository.findByPrefix(query, size).stream()
+        Pageable pageable = PageRequest.of(0, size);
+        return autocompleteRepository.findByPrefix(query, pageable).stream()
             .map(document -> new ExperienceAutoCompleteResponse(
                 document.getExperienceId(),
                 document.getExperienceName()))

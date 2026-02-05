@@ -87,6 +87,10 @@ dependencies {
     // Kafka 연결
    implementation 'org.springframework.kafka:spring-kafka'
 
+    // Redis (application-local.yml 등 spring.data.redis 설정과 연동)
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
     // Spring AI
     implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
     implementation 'org.springframework.ai:spring-ai-ollama-spring-boot-starter'
